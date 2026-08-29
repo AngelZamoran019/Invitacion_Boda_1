@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 const sectionGroups = [
   {
     id: 'design',
@@ -45,7 +47,7 @@ function TextField({ label, value, onChange, placeholder = '', multiline = false
 }
 
 function EditorWedding({ project, setProject, activeSection, setActiveSection }) {
-  const [openGroups, setOpenGroups] = React.useState({ design: true, content: false })
+  const [openGroups, setOpenGroups] = useState({ design: true, content: false })
 
   const set = (path, value) => {
     updateAt(setProject, (current) => {
