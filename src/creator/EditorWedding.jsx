@@ -74,6 +74,7 @@ function EditorWedding({ project, setProject, activeSection, setActiveSection })
       case 'appearance':
         return (
           <div className="editor-grid">
+            <TextField label="Nombre del proyecto" value={project.name} onChange={(v) => set('name', v)} placeholder="Boda de Ana & Carlos" />
             <TextField label="Color de fondo" value={project.appearance.backgroundColor} onChange={(v) => set('appearance.backgroundColor', v)} placeholder="#0b1730" />
             <TextField label="Color de acento" value={project.appearance.accentColor} onChange={(v) => set('appearance.accentColor', v)} placeholder="#c9a86a" />
             <TextField label="Color del texto" value={project.appearance.textColor} onChange={(v) => set('appearance.textColor', v)} placeholder="#ffffff" />
@@ -161,8 +162,9 @@ function EditorWedding({ project, setProject, activeSection, setActiveSection })
             <label className="toggle-field"><span>Mostrar confirmación</span><input type="checkbox" checked={project.confirmation.enabled} onChange={(e) => set('confirmation.enabled', e.target.checked)} /></label>
             <TextField label="Título" value={project.confirmation.title} onChange={(v) => set('confirmation.title', v)} />
             <TextField label="Mensaje" value={project.confirmation.message} onChange={(v) => set('confirmation.message', v)} multiline />
-            <TextField label="URL del formulario" value={project.confirmation.url} onChange={(v) => set('confirmation.url', v)} placeholder="https://..." />
+            <TextField label="Texto después de confirmar" value={project.confirmation.successMessage} onChange={(v) => set('confirmation.successMessage', v)} multiline />
             <TextField label="Texto del botón" value={project.confirmation.buttonLabel} onChange={(v) => set('confirmation.buttonLabel', v)} />
+            <div className="editor-info-box"><strong>Formulario de invitados</strong><span>La página de confirmación ya incluye nombre, asistencia, número de invitados y mensaje. La conexión a una base de datos se habilitará posteriormente.</span></div>
           </div>
         )
       case 'closing':
@@ -192,25 +194,13 @@ function EditorWedding({ project, setProject, activeSection, setActiveSection })
 
             return (
               <div key={group.id} className={`editor-nav-group ${isOpen ? 'open' : ''} ${hasActive ? 'has-active' : ''}`}>
-                <button
-                  type="button"
-                  className="editor-nav-heading-button"
-                  aria-expanded={isOpen}
-                  onClick={() => toggleGroup(group.id)}
-                >
+                <button type="button" className="editor-nav-heading-button" aria-expanded={isOpen} onClick={() => toggleGroup(group.id)}>
                   <span>{group.title}</span>
                   <span className="editor-nav-chevron" aria-hidden="true">⌄</span>
                 </button>
-
                 <div className="editor-nav-items" aria-hidden={!isOpen}>
                   {group.items.map(([id, label]) => (
-                    <button
-                      key={id}
-                      type="button"
-                      className={activeSection === id ? 'editor-nav-item active' : 'editor-nav-item'}
-                      onClick={() => selectSection(group.id, id)}
-                      tabIndex={isOpen ? 0 : -1}
-                    >
+                    <button key={id} type="button" className={activeSection === id ? 'editor-nav-item active' : 'editor-nav-item'} onClick={() => selectSection(group.id, id)} tabIndex={isOpen ? 0 : -1}>
                       {label}
                     </button>
                   ))}
@@ -220,14 +210,10 @@ function EditorWedding({ project, setProject, activeSection, setActiveSection })
           })}
         </div>
       </aside>
-
       <section className="editor-content">
         <div className="editor-content-head">
-          <div>
-            <p className="app-kicker">Editor</p>
-            <h2>{activeLabel}</h2>
-          </div>
-          <span className="editor-status">Guardado local</span>
+          <div><p className="app-kicker">Editor</p><h2>{activeLabel}</h2></div>
+          <span className="editor-status">Guardado automático</span>
         </div>
         {renderSection()}
       </section>
