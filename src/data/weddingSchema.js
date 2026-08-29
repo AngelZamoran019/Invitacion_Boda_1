@@ -1,4 +1,6 @@
 export const createDefaultWeddingProject = () => ({
+  id: '',
+  name: 'Nueva invitación',
   version: 'wedding-v1',
   template: 'wedding-v1',
   created: new Date().toISOString(),
@@ -70,9 +72,10 @@ export const createDefaultWeddingProject = () => ({
   confirmation: {
     enabled: true,
     title: 'Confirma tu asistencia',
-    message: '',
+    message: 'Nos encantará saber si nos acompañas en este día tan especial.',
     url: '',
     buttonLabel: 'Confirmar asistencia',
+    successMessage: '¡Gracias! Hemos recibido tu confirmación.',
   },
   closing: {
     image: '',
