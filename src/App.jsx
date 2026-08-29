@@ -1,17 +1,34 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createDefaultWeddingProject } from './data/weddingSchema.js'
+import EditorWedding from './creator/EditorWedding.jsx'
+import PreviewWedding from './creator/PreviewWedding.jsx'
 import './styles/app.css'
+import './styles/wedding.css'
+
+const STORAGE_KEY = 'invitacion-boda-1-project'
+
+function loadProject() {
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY)
+    if (saved) return JSON.parse(saved)
+  } catch {
+    // Fall back to a clean project when local storage is unavailable/corrupt.
+  }
+  return createDefaultWeddingProject()
+}
 
 function App() {
-  const [project, setProject] = useState(createDefaultWeddingProject)
+  const [project, setProject] = useState(loadProject)
   const [mode, setMode] = useState('editor')
+  const [activeSection, setActiveSection] = useState('appearance')
 
-  const updateProject = (patch) => {
-    setProject((current) => ({
-      ...current,
-      ...patch,
-      updated: new Date().toISOString(),
-    }))
+  useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(project))
+  }, [project])
+
+  const resetProject = () => {
+    if (!window.confirm('¿Quieres crear una invitación nueva? Se perderán los cambios locales actuales.')) return
+    setProject(createDefaultWeddingProject())
   }
 
   return (
@@ -20,78 +37,28 @@ function App() {
         <div>
           <p className="app-kicker">Invitaciones Digitales</p>
           <h1>Editor de invitación</h1>
+          <p className="app-description">Crea una invitación de boda elegante, móvil y completamente personalizable.</p>
         </div>
-        <div className="mode-switch" role="tablist" aria-label="Modo de trabajo">
-          <button
-            className={mode === 'editor' ? 'active' : ''}
-            onClick={() => setMode('editor')}
-          >
-            Editar
-          </button>
-          <button
-            className={mode === 'preview' ? 'active' : ''}
-            onClick={() => setMode('preview')}
-          >
-            Vista previa
-          </button>
+        <div className="header-actions">
+          <div className="mode-switch" role="tablist" aria-label="Modo de trabajo">
+            <button className={mode === 'editor' ? 'active' : ''} onClick={() => setMode('editor')}>Editar</button>
+            <button className={mode === 'preview' ? 'active' : ''} onClick={() => setMode('preview')}>Vista previa</button>
+          </div>
+          <button className="reset-button" type="button" onClick={resetProject}>Nuevo</button>
         </div>
       </header>
 
       <section className="workspace">
-        <div className="workspace-panel">
-          {mode === 'editor' ? (
-            <>
-              <h2>Proyecto nuevo</h2>
-              <p className="muted">
-                La base del editor está preparada. Aquí construiremos cada sección de la
-                invitación sin alterar el template ya definido.
-              </p>
-
-              <label className="field">
-                <span>Nombre de la novia</span>
-                <input
-                  value={project.couple.name1}
-                  onChange={(event) =>
-                    setProject((current) => ({
-                      ...current,
-                      couple: { ...current.couple, name1: event.target.value },
-                      updated: new Date().toISOString(),
-                    }))
-                  }
-                  placeholder="Nombre"
-                />
-              </label>
-
-              <label className="field">
-                <span>Nombre del novio</span>
-                <input
-                  value={project.couple.name2}
-                  onChange={(event) =>
-                    setProject((current) => ({
-                      ...current,
-                      couple: { ...current.couple, name2: event.target.value },
-                      updated: new Date().toISOString(),
-                    }))
-                  }
-                  placeholder="Nombre"
-                />
-              </label>
-
-              <button
-                className="secondary-button"
-                onClick={() => updateProject({ published: false })}
-              >
-                Guardar cambios locales
-              </button>
-            </>
-          ) : (
-            <div className="preview-info">
-              <p className="app-kicker">Vista previa</p>
-              <h2>{project.couple.name1 || 'Nombre'} &amp; {project.couple.name2 || 'Nombre'}</h2>
-              <p className="muted">El template visual completo se construirá a partir de este schema.</p>
-            </div>
-          )}
-        </div>
+        {mode === 'editor' ? (
+          <EditorWedding
+            project={project}
+            setProject={setProject}
+            activeSection={activeSection}
+            setActiveSection={setActiveSection}
+          />
+        ) : (
+          <PreviewWedding project={project} />
+        )}
       </section>
     </main>
   )
