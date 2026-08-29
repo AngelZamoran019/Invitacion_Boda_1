@@ -7,23 +7,19 @@ import PreviewWedding from './creator/PreviewWedding.jsx'
 import { exportWeddingHTML } from './export/exportWedding.js'
 import './styles/app.css'
 import './styles/wedding.css'
+import './styles/dashboard.css'
 
 const LEGACY_KEY = 'invitacion-boda-1-project'
 
 function readInitialProjects() {
   const existing = getProjects()
   if (existing.length) return existing
-
   try {
     const legacy = window.localStorage.getItem(LEGACY_KEY)
-    if (legacy) {
-      const project = JSON.parse(legacy)
-      return [createProjectRecord(project)]
-    }
+    if (legacy) return [createProjectRecord(JSON.parse(legacy))]
   } catch {
     // Fall through to a fresh project.
   }
-
   return [createProjectRecord(createDefaultWeddingProject())]
 }
 
@@ -33,10 +29,7 @@ function App() {
   const [activeProjectId, setActiveProjectId] = useState(null)
   const [activeSection, setActiveSection] = useState('appearance')
 
-  const activeProject = useMemo(
-    () => projects.find((project) => project.id === activeProjectId) || null,
-    [projects, activeProjectId],
-  )
+  const activeProject = useMemo(() => projects.find((project) => project.id === activeProjectId) || null, [projects, activeProjectId])
 
   const openEditor = (id) => {
     setActiveProjectId(id)
@@ -71,26 +64,13 @@ function App() {
     }
   }
 
-  const handleExport = (project) => {
-    exportWeddingHTML(project)
-  }
+  const handleExport = (project) => exportWeddingHTML(project)
 
   if (view === 'dashboard') {
-    return (
-      <DashboardWedding
-        projects={projects}
-        onNew={createNewProject}
-        onEdit={openEditor}
-        onDelete={handleDelete}
-        onExport={handleExport}
-      />
-    )
+    return <DashboardWedding projects={projects} onNew={createNewProject} onEdit={openEditor} onDelete={handleDelete} onExport={handleExport} />
   }
 
-  if (!activeProject) {
-    setView('dashboard')
-    return null
-  }
+  if (!activeProject) return null
 
   return (
     <main className="app-shell">
@@ -105,23 +85,11 @@ function App() {
           <button className="export-header-button" type="button" onClick={() => handleExport(activeProject)}>Exportar HTML</button>
         </div>
       </header>
-
       <section className="workspace">
         <main className="creator-editor">
-          <section className="creator-panel">
-            <EditorWedding
-              project={activeProject}
-              setProject={updateProject}
-              activeSection={activeSection}
-              setActiveSection={setActiveSection}
-            />
-          </section>
-
+          <section className="creator-panel"><EditorWedding project={activeProject} setProject={updateProject} activeSection={activeSection} setActiveSection={setActiveSection} /></section>
           <section className="creator-preview">
-            <div className="preview-toolbar">
-              <div><p className="app-kicker">Vista previa</p><strong>Invitación móvil</strong></div>
-              <span className="preview-device-label">9:16</span>
-            </div>
+            <div className="preview-toolbar"><div><p className="app-kicker">Vista previa</p><strong>Invitación móvil</strong></div><span className="preview-device-label">9:16</span></div>
             <div className="preview-stage"><PreviewWedding project={activeProject} embedded /></div>
           </section>
         </main>
