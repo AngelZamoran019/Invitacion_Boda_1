@@ -12,14 +12,13 @@ function loadProject() {
     const saved = window.localStorage.getItem(STORAGE_KEY)
     if (saved) return JSON.parse(saved)
   } catch {
-    // Fall back to a clean project when local storage is unavailable/corrupt.
+    // Use a fresh project when local storage is unavailable or invalid.
   }
   return createDefaultWeddingProject()
 }
 
 function App() {
   const [project, setProject] = useState(loadProject)
-  const [mode, setMode] = useState('editor')
   const [activeSection, setActiveSection] = useState('appearance')
 
   useEffect(() => {
@@ -29,6 +28,7 @@ function App() {
   const resetProject = () => {
     if (!window.confirm('¿Quieres crear una invitación nueva? Se perderán los cambios locales actuales.')) return
     setProject(createDefaultWeddingProject())
+    setActiveSection('appearance')
   }
 
   return (
@@ -40,25 +40,38 @@ function App() {
           <p className="app-description">Crea una invitación de boda elegante, móvil y completamente personalizable.</p>
         </div>
         <div className="header-actions">
-          <div className="mode-switch" role="tablist" aria-label="Modo de trabajo">
-            <button className={mode === 'editor' ? 'active' : ''} onClick={() => setMode('editor')}>Editar</button>
-            <button className={mode === 'preview' ? 'active' : ''} onClick={() => setMode('preview')}>Vista previa</button>
+          <div className="header-badge">
+            <span className="status-dot" />
+            Guardado local
           </div>
           <button className="reset-button" type="button" onClick={resetProject}>Nuevo</button>
         </div>
       </header>
 
       <section className="workspace">
-        {mode === 'editor' ? (
-          <EditorWedding
-            project={project}
-            setProject={setProject}
-            activeSection={activeSection}
-            setActiveSection={setActiveSection}
-          />
-        ) : (
-          <PreviewWedding project={project} />
-        )}
+        <main className="creator-editor">
+          <section className="creator-panel">
+            <EditorWedding
+              project={project}
+              setProject={setProject}
+              activeSection={activeSection}
+              setActiveSection={setActiveSection}
+            />
+          </section>
+
+          <section className="creator-preview">
+            <div className="preview-toolbar">
+              <div>
+                <p className="app-kicker">Vista previa</p>
+                <strong>Invitación móvil</strong>
+              </div>
+              <span className="preview-device-label">9:16</span>
+            </div>
+            <div className="preview-stage">
+              <PreviewWedding project={project} embedded />
+            </div>
+          </section>
+        </main>
       </section>
     </main>
   )
