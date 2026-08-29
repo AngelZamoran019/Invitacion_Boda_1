@@ -1,50 +1,108 @@
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { createDefaultWeddingProject } from './data/weddingSchema.js'
+import { createProjectRecord, deleteProject, getProjects, saveProject } from './data/projectManager.js'
+import DashboardWedding from './creator/DashboardWedding.jsx'
 import EditorWedding from './creator/EditorWedding.jsx'
 import PreviewWedding from './creator/PreviewWedding.jsx'
+import { exportWeddingHTML } from './export/exportWedding.js'
 import './styles/app.css'
 import './styles/wedding.css'
 
-const STORAGE_KEY = 'invitacion-boda-1-project'
+const LEGACY_KEY = 'invitacion-boda-1-project'
 
-function loadProject() {
+function readInitialProjects() {
+  const existing = getProjects()
+  if (existing.length) return existing
+
   try {
-    const saved = window.localStorage.getItem(STORAGE_KEY)
-    if (saved) return JSON.parse(saved)
+    const legacy = window.localStorage.getItem(LEGACY_KEY)
+    if (legacy) {
+      const project = JSON.parse(legacy)
+      return [createProjectRecord(project)]
+    }
   } catch {
-    // Use a fresh project when local storage is unavailable or invalid.
+    // Fall through to a fresh project.
   }
-  return createDefaultWeddingProject()
+
+  return [createProjectRecord(createDefaultWeddingProject())]
 }
 
 function App() {
-  const [project, setProject] = useState(loadProject)
+  const [projects, setProjects] = useState(readInitialProjects)
+  const [view, setView] = useState('dashboard')
+  const [activeProjectId, setActiveProjectId] = useState(null)
   const [activeSection, setActiveSection] = useState('appearance')
 
-  useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(project))
-  }, [project])
+  const activeProject = useMemo(
+    () => projects.find((project) => project.id === activeProjectId) || null,
+    [projects, activeProjectId],
+  )
 
-  const resetProject = () => {
-    if (!window.confirm('¿Quieres crear una invitación nueva? Se perderán los cambios locales actuales.')) return
-    setProject(createDefaultWeddingProject())
+  const openEditor = (id) => {
+    setActiveProjectId(id)
     setActiveSection('appearance')
+    setView('editor')
+  }
+
+  const updateProject = (updater) => {
+    setProjects((currentProjects) => {
+      const current = currentProjects.find((project) => project.id === activeProjectId)
+      if (!current) return currentProjects
+      const next = typeof updater === 'function' ? updater(current) : updater
+      const saved = saveProject(next)
+      return currentProjects.map((project) => project.id === saved.id ? saved : project)
+    })
+  }
+
+  const createNewProject = () => {
+    const project = createProjectRecord(createDefaultWeddingProject())
+    setProjects((current) => [project, ...current])
+    openEditor(project.id)
+  }
+
+  const handleDelete = (id) => {
+    const project = projects.find((item) => item.id === id)
+    const label = project?.name || project?.coverSection?.title || 'este proyecto'
+    if (!window.confirm(`¿Eliminar ${label}? Esta acción no se puede deshacer.`)) return
+    setProjects(deleteProject(id))
+    if (activeProjectId === id) {
+      setActiveProjectId(null)
+      setView('dashboard')
+    }
+  }
+
+  const handleExport = (project) => {
+    exportWeddingHTML(project)
+  }
+
+  if (view === 'dashboard') {
+    return (
+      <DashboardWedding
+        projects={projects}
+        onNew={createNewProject}
+        onEdit={openEditor}
+        onDelete={handleDelete}
+        onExport={handleExport}
+      />
+    )
+  }
+
+  if (!activeProject) {
+    setView('dashboard')
+    return null
   }
 
   return (
     <main className="app-shell">
-      <header className="app-header">
+      <header className="app-header editor-page-header">
         <div>
-          <p className="app-kicker">Invitaciones Digitales</p>
-          <h1>Editor de invitación</h1>
-          <p className="app-description">Crea una invitación de boda elegante, móvil y completamente personalizable.</p>
+          <button className="back-to-projects" type="button" onClick={() => setView('dashboard')}>← Mis proyectos</button>
+          <p className="app-kicker">Editor de invitación</p>
+          <h1>{activeProject.name || activeProject.coverSection.title}</h1>
         </div>
         <div className="header-actions">
-          <div className="header-badge">
-            <span className="status-dot" />
-            Guardado local
-          </div>
-          <button className="reset-button" type="button" onClick={resetProject}>Nuevo</button>
+          <div className="header-badge"><span className="status-dot" /> Guardado automático</div>
+          <button className="export-header-button" type="button" onClick={() => handleExport(activeProject)}>Exportar HTML</button>
         </div>
       </header>
 
@@ -52,8 +110,8 @@ function App() {
         <main className="creator-editor">
           <section className="creator-panel">
             <EditorWedding
-              project={project}
-              setProject={setProject}
+              project={activeProject}
+              setProject={updateProject}
               activeSection={activeSection}
               setActiveSection={setActiveSection}
             />
@@ -61,15 +119,10 @@ function App() {
 
           <section className="creator-preview">
             <div className="preview-toolbar">
-              <div>
-                <p className="app-kicker">Vista previa</p>
-                <strong>Invitación móvil</strong>
-              </div>
+              <div><p className="app-kicker">Vista previa</p><strong>Invitación móvil</strong></div>
               <span className="preview-device-label">9:16</span>
             </div>
-            <div className="preview-stage">
-              <PreviewWedding project={project} embedded />
-            </div>
+            <div className="preview-stage"><PreviewWedding project={activeProject} embedded /></div>
           </section>
         </main>
       </section>
