@@ -1,5 +1,6 @@
 const sectionGroups = [
   {
+    id: 'design',
     title: 'Diseño',
     items: [
       ['appearance', 'Apariencia'],
@@ -7,6 +8,7 @@ const sectionGroups = [
     ],
   },
   {
+    id: 'content',
     title: 'Contenido',
     items: [
       ['couple', 'Los novios'],
@@ -43,6 +45,8 @@ function TextField({ label, value, onChange, placeholder = '', multiline = false
 }
 
 function EditorWedding({ project, setProject, activeSection, setActiveSection }) {
+  const [openGroups, setOpenGroups] = React.useState({ design: true, content: false })
+
   const set = (path, value) => {
     updateAt(setProject, (current) => {
       const next = structuredClone(current)
@@ -52,6 +56,15 @@ function EditorWedding({ project, setProject, activeSection, setActiveSection })
       target[keys[keys.length - 1]] = value
       return next
     })
+  }
+
+  const selectSection = (groupId, sectionId) => {
+    setActiveSection(sectionId)
+    setOpenGroups((current) => ({ ...current, [groupId]: true }))
+  }
+
+  const toggleGroup = (groupId) => {
+    setOpenGroups((current) => ({ ...current, [groupId]: !current[groupId] }))
   }
 
   const renderSection = () => {
@@ -98,7 +111,7 @@ function EditorWedding({ project, setProject, activeSection, setActiveSection })
           <div className="editor-grid">
             <TextField label="Título" value={project.story.title} onChange={(v) => set('story.title', v)} />
             <TextField label="Historia" value={project.story.text} onChange={(v) => set('story.text', v)} multiline />
-            <TextField label="Imagen 1 (URL)" value={project.story.images[0] || ''} onChange={(v) => set('story.images', [v, ...(project.story.images.slice(1))])} placeholder="https://..." />
+            <TextField label="Imagen 1 (URL)" value={project.story.images[0] || ''} onChange={(v) => set('story.images', [v, ...project.story.images.slice(1)])} placeholder="https://..." />
           </div>
         )
       case 'event':
@@ -162,24 +175,55 @@ function EditorWedding({ project, setProject, activeSection, setActiveSection })
     }
   }
 
+  const activeLabel = sectionGroups
+    .flatMap((group) => group.items)
+    .find(([id]) => id === activeSection)?.[1] || 'Sección'
+
   return (
     <div className="editor-layout">
       <aside className="editor-sidebar">
         <div className="editor-sidebar-title">Secciones</div>
-        {sectionGroups.map((group) => (
-          <div key={group.title} className="editor-nav-group">
-            <div className="editor-nav-heading">{group.title}</div>
-            {group.items.map(([id, label]) => (
-              <button key={id} className={activeSection === id ? 'editor-nav-item active' : 'editor-nav-item'} onClick={() => setActiveSection(id)}>{label}</button>
-            ))}
-          </div>
-        ))}
+        <div className="editor-nav">
+          {sectionGroups.map((group) => {
+            const isOpen = Boolean(openGroups[group.id])
+            const hasActive = group.items.some(([id]) => id === activeSection)
+
+            return (
+              <div key={group.id} className={`editor-nav-group ${isOpen ? 'open' : ''} ${hasActive ? 'has-active' : ''}`}>
+                <button
+                  type="button"
+                  className="editor-nav-heading-button"
+                  aria-expanded={isOpen}
+                  onClick={() => toggleGroup(group.id)}
+                >
+                  <span>{group.title}</span>
+                  <span className="editor-nav-chevron" aria-hidden="true">⌄</span>
+                </button>
+
+                <div className="editor-nav-items" aria-hidden={!isOpen}>
+                  {group.items.map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      className={activeSection === id ? 'editor-nav-item active' : 'editor-nav-item'}
+                      onClick={() => selectSection(group.id, id)}
+                      tabIndex={isOpen ? 0 : -1}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </aside>
+
       <section className="editor-content">
         <div className="editor-content-head">
           <div>
             <p className="app-kicker">Editor</p>
-            <h2>{sectionGroups.flatMap((g) => g.items).find(([id]) => id === activeSection)?.[1] || 'Sección'}</h2>
+            <h2>{activeLabel}</h2>
           </div>
           <span className="editor-status">Guardado local</span>
         </div>
