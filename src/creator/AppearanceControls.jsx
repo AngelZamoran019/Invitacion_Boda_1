@@ -34,18 +34,23 @@ function GradientBuilder({ value, onChange }) {
 }
 
 function TextureControls({ appearance, set }) {
-  const enabled = appearance.backgroundTextureType === 'image' && Boolean(appearance.backgroundTextureImage)
+  // El interruptor controla únicamente el tipo. La URL puede introducirse después.
+  // Antes se ocultaban todos los controles si la URL estaba vacía, haciendo imposible
+  // activar la textura y luego pegar la imagen.
+  const enabled = appearance.backgroundTextureType === 'image'
+  const image = appearance.backgroundTextureImage || ''
   const opacity = Number.isFinite(Number(appearance.backgroundTextureOpacity)) ? Number(appearance.backgroundTextureOpacity) : 0.28
   return <section className="appearance-texture-controls">
     <div className="appearance-texture-header"><strong>Textura fotográfica</strong><small>Se coloca encima del color o degradado de todo el fondo.</small></div>
     <label className="appearance-texture-toggle"><input type="checkbox" checked={enabled} onChange={e => set('appearance.backgroundTextureType', e.target.checked ? 'image' : 'none')} /><span>Usar textura</span></label>
     {enabled && <>
-      <label>URL de la textura<input type="url" value={appearance.backgroundTextureImage || ''} onChange={e => set('appearance.backgroundTextureImage', e.target.value)} placeholder="https://.../textura.jpg" /></label>
+      <label>URL de la textura<input type="url" value={image} onChange={e => set('appearance.backgroundTextureImage', e.target.value)} placeholder="https://.../textura.jpg" /></label>
+      <small className="appearance-texture-status">{image ? 'Textura configurada. La vista previa se actualiza automáticamente.' : 'Pega una URL directa de una imagen JPG, PNG o WebP.'}</small>
       <label>Opacidad<input type="range" min="0" max="1" step="0.01" value={opacity} onChange={e => set('appearance.backgroundTextureOpacity', Number(e.target.value))} /><small>{Math.round(opacity * 100)}%</small></label>
       <label>Modo de mezcla<select value={appearance.backgroundTextureBlend || 'soft-light'} onChange={e => set('appearance.backgroundTextureBlend', e.target.value)}><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft Light</option><option value="hard-light">Hard Light</option></select></label>
       <label>Tamaño<select value={appearance.backgroundTextureSize || 'cover'} onChange={e => set('appearance.backgroundTextureSize', e.target.value)}><option value="cover">Cubrir</option><option value="contain">Contener</option><option value="100% 100%">Estirar</option><option value="auto">Original</option></select></label>
       <label>Posición<select value={appearance.backgroundTexturePosition || 'center'} onChange={e => set('appearance.backgroundTexturePosition', e.target.value)}><option value="center">Centro</option><option value="top">Arriba</option><option value="bottom">Abajo</option><option value="left">Izquierda</option><option value="right">Derecha</option></select></label>
-      <div className="appearance-texture-preview" style={{ backgroundColor: appearance.backgroundColor || '#0b1730', backgroundImage: appearance.backgroundMode === 'gradient' && appearance.backgroundGradient ? `${appearance.backgroundGradient}, url(${JSON.stringify(appearance.backgroundTextureImage)})` : `url(${JSON.stringify(appearance.backgroundTextureImage)})`, backgroundSize: appearance.backgroundTextureSize || 'cover', backgroundPosition: appearance.backgroundTexturePosition || 'center', backgroundRepeat: 'no-repeat', backgroundBlendMode: appearance.backgroundTextureBlend || 'soft-light' }} />
+      <div className="appearance-texture-preview" style={{ backgroundColor: appearance.backgroundColor || '#0b1730', backgroundImage: appearance.backgroundMode === 'gradient' && appearance.backgroundGradient && image ? `${appearance.backgroundGradient}, url(${JSON.stringify(image)})` : image ? `url(${JSON.stringify(image)})` : 'none', backgroundSize: appearance.backgroundTextureSize || 'cover', backgroundPosition: appearance.backgroundTexturePosition || 'center', backgroundRepeat: 'no-repeat', backgroundBlendMode: appearance.backgroundTextureBlend || 'soft-light' }} />
     </>}
   </section>
 }
