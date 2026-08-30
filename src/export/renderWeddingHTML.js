@@ -1,12 +1,16 @@
 import { buildWeddingHTML } from './exportWedding.js'
 
-const escCssUrl = value => String(value || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/</g, '%3C').replace(/>/g, '%3E')
+const escCssUrl = (value) => String(value || '')
+  .replace(/\\/g, '\\\\')
+  .replace(/"/g, '\\"')
+  .replace(/</g, '%3C')
+  .replace(/>/g, '%3E')
 
 export function renderWeddingHTML(project) {
-  let html = buildWeddingHTML(project)
+  const html = buildWeddingHTML(project)
   const appearance = project?.appearance || {}
-  const texture = appearance.backgroundTextureImage || ''
-  const enabled = appearance.backgroundTextureType === 'image' && Boolean(texture)
+  const texture = String(appearance.backgroundTextureImage || '').trim()
+  const enabled = appearance.backgroundTextureType === 'image' && texture.length > 0
 
   if (!enabled) return html
 
@@ -14,21 +18,22 @@ export function renderWeddingHTML(project) {
   const blend = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'hard-light'].includes(appearance.backgroundTextureBlend)
     ? appearance.backgroundTextureBlend
     : 'soft-light'
-  const size = appearance.backgroundTextureSize || 'cover'
-  const position = appearance.backgroundTexturePosition || 'center'
+  const size = ['cover', 'contain', '100% 100%', 'auto'].includes(appearance.backgroundTextureSize)
+    ? appearance.backgroundTextureSize
+    : 'cover'
+  const position = ['center', 'top', 'bottom', 'left', 'right'].includes(appearance.backgroundTexturePosition)
+    ? appearance.backgroundTexturePosition
+    : 'center'
   const url = escCssUrl(texture)
 
-  // La textura vive en una capa independiente que cubre TODO el contenido
-  // desplazable del teléfono. Así no queda limitada al primer viewport.
+  // Capa visual únicamente. No modifica el flujo ni puede tapar el contenido.
   const textureCss = `<style id="wedding-global-texture">
     .phone{position:relative;isolation:isolate;}
-    .global-texture-layer{position:absolute;left:0;top:0;width:100%;height:100%;min-height:100%;z-index:0;pointer-events:none;background-image:url("${url}");background-size:${size};background-position:${position};background-repeat:no-repeat;background-attachment:scroll;opacity:${opacity};mix-blend-mode:${blend};}
-    .phone > *:not(.global-texture-layer){position:relative;z-index:1;}
+    .phone::before{content:"";position:sticky;display:block;top:0;left:0;width:100%;height:100svh;margin-bottom:-100svh;z-index:0;pointer-events:none;background-image:url("${url}");background-size:${size};background-position:${position};background-repeat:no-repeat;background-attachment:scroll;opacity:${opacity};mix-blend-mode:${blend};}
+    .phone > *{position:relative;z-index:1;}
   </style>`
-  const textureLayer = '<div class="global-texture-layer" aria-hidden="true"></div>'
-  const textureScript = `<script>(function(){function sizeTexture(){const p=document.querySelector('.phone'),t=document.querySelector('.global-texture-layer');if(p&&t)t.style.height=Math.max(p.scrollHeight,p.clientHeight)+'px'}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',sizeTexture)}else{sizeTexture()}window.addEventListener('resize',sizeTexture);setTimeout(sizeTexture,50);setTimeout(sizeTexture,300);setTimeout(sizeTexture,1000);const p=document.querySelector('.phone');if(p&&window.ResizeObserver){new ResizeObserver(sizeTexture).observe(p)}})();</script>`
 
-  return html.replace('<main class="phone">', `<main class="phone">${textureLayer}`).replace('</body>', `${textureScript}</body>`)
+  return html.replace('</head>', `${textureCss}</head>`)
 }
 
 export default renderWeddingHTML
