@@ -18,18 +18,14 @@ export function renderWeddingHTML(project) {
   const blend = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'hard-light'].includes(appearance.backgroundTextureBlend)
     ? appearance.backgroundTextureBlend
     : 'soft-light'
-  const size = ['cover', 'contain', '100% 100%', 'auto'].includes(appearance.backgroundTextureSize)
-    ? appearance.backgroundTextureSize
-    : 'cover'
-  const position = ['center', 'top', 'bottom', 'left', 'right'].includes(appearance.backgroundTexturePosition)
-    ? appearance.backgroundTexturePosition
-    : 'center'
   const url = escCssUrl(texture)
 
-  // Capa visual únicamente. No modifica el flujo ni puede tapar el contenido.
+  // La textura es una única capa visual fija al área visible de la invitación.
+  // Siempre usa cover + center: cubre todo el fondo y recorta los bordes
+  // cuando la proporción de la imagen no coincide con la pantalla.
   const textureCss = `<style id="wedding-global-texture">
-    .phone{position:relative;isolation:isolate;}
-    .phone::before{content:"";position:sticky;display:block;top:0;left:0;width:100%;height:100svh;margin-bottom:-100svh;z-index:0;pointer-events:none;background-image:url("${url}");background-size:${size};background-position:${position};background-repeat:no-repeat;background-attachment:scroll;opacity:${opacity};mix-blend-mode:${blend};}
+    .phone{position:relative;isolation:isolate;overflow-y:auto;overflow-x:hidden;background:transparent;}
+    .phone::before{content:"";position:sticky;display:block;top:0;left:0;width:100%;height:100svh;min-height:100svh;margin-bottom:-100svh;z-index:0;pointer-events:none;background-image:url("${url}");background-size:cover;background-position:center center;background-repeat:no-repeat;background-attachment:scroll;opacity:${opacity};mix-blend-mode:${blend};}
     .phone > *{position:relative;z-index:1;}
   </style>`
 
