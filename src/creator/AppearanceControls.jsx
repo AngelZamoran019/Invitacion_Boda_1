@@ -28,10 +28,10 @@ const GRADIENTS = [
 ]
 
 const IMAGE_TEXTURES = [
-  ['Textura 1', 'https://images.weserv.nl/?url=https%3A%2F%2Fi.pinimg.com%2F474x%2Ff1%2F6b%2Fb9%2Ff16bb95f07b6eb18cbbcdf298c107f51.jpg'],
-  ['Textura 2', 'https://images.weserv.nl/?url=https%3A%2F%2Fencrypted-tbn0.gstatic.com%2Fimages%3Fq%3Dtbn%3AANd9GcQg-Uh8EmeHjMJwVf3r435jLvezrKlENVc9jS8rOuuneg%26s%3D10'],
-  ['Textura 3', 'https://images.weserv.nl/?url=https%3A%2F%2Fencrypted-tbn0.gstatic.com%2Fimages%3Fq%3Dtbn%3AANd9GcQRsP8F-oXnKJDGOkC6HrOO98F05ZQbejKP_xX8ujsvkw%26s%3D10'],
-  ['Textura 4', 'https://images.weserv.nl/?url=https%3A%2F%2Fencrypted-tbn0.gstatic.com%2Fimages%3Fq%3Dtbn%3AANd9GcTnBUt4UGggsyahvtm1av9Ms3tSk9CkUXZRtgSl2v69mQ%26s%3D10'],
+  ['Textura 1', 'https://wsrv.nl/?url=https%3A%2F%2Fi.pinimg.com%2F474x%2Ff1%2F6b%2Fb9%2Ff16bb95f07b6eb18cbbcdf298c107f51.jpg'],
+  ['Textura 2', 'https://wsrv.nl/?url=https%3A%2F%2Fencrypted-tbn0.gstatic.com%2Fimages%3Fq%3Dtbn%3AANd9GcQg-Uh8EmeHjMJwVf3r435jLvezrKlENVc9jS8rOuuneg%26s%3D10'],
+  ['Textura 3', 'https://wsrv.nl/?url=https%3A%2F%2Fencrypted-tbn0.gstatic.com%2Fimages%3Fq%3Dtbn%3AANd9GcQRsP8F-oXnKJDGOkC6HrOO98F05ZQbejKP_xX8ujsvkw%26s%3D10'],
+  ['Textura 4', 'https://wsrv.nl/?url=https%3A%2F%2Fencrypted-tbn0.gstatic.com%2Fimages%3Fq%3Dtbn%3AANd9GcTnBUt4UGggsyahvtm1av9Ms3tSk9CkUXZRtgSl2v69mQ%26s%3D10'],
 ]
 
 const TYPE_ITEMS = [
