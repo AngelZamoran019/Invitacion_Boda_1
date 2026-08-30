@@ -4,7 +4,7 @@ import { createProjectRecord, deleteProject, getProjects, saveProject } from './
 import DashboardWedding from './creator/DashboardWedding.jsx'
 import EditorWedding from './creator/EditorWedding.jsx'
 import PreviewWedding from './creator/PreviewWedding.jsx'
-import { exportWeddingHTML } from './export/exportWedding.js'
+import { buildWeddingHTML } from './export/exportWedding.js'
 import './styles/app.css'
 import './styles/wedding.css'
 import './styles/dashboard.css'
@@ -21,6 +21,19 @@ function readInitialProjects() {
     // Fall through to a fresh project.
   }
   return [createProjectRecord(createDefaultWeddingProject())]
+}
+
+function downloadWeddingHTML(project) {
+  const html = buildWeddingHTML(project)
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${(project.name || project.coverSection?.title || 'invitacion').replace(/[^a-z0-9áéíóúüñ _-]/gi, '').trim() || 'invitacion'}.html`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
 }
 
 function App() {
@@ -64,7 +77,7 @@ function App() {
     }
   }
 
-  const handleExport = (project) => exportWeddingHTML(project)
+  const handleExport = (project) => downloadWeddingHTML(project)
 
   if (view === 'dashboard') {
     return <DashboardWedding projects={projects} onNew={createNewProject} onEdit={openEditor} onDelete={handleDelete} onExport={handleExport} />
