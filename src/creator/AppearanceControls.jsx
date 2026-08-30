@@ -27,15 +27,7 @@ const GRADIENTS = [
   ['Arena', 'linear-gradient(135deg, #8c6b4f, #c7a77a, #f2e1c4)'],
 ]
 
-const TEXTURES = [
-  ['Ninguna', 'none'],
-  ['Papel', 'repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 4px)'],
-  ['Lino', 'repeating-linear-gradient(45deg, rgba(255,255,255,.045) 0 1px, transparent 1px 5px)'],
-  ['Grano', 'radial-gradient(rgba(255,255,255,.1) 1px, transparent 1px)'],
-  ['Mármol', 'radial-gradient(ellipse at 20% 20%, rgba(255,255,255,.12), transparent 42%), radial-gradient(ellipse at 80% 70%, rgba(255,255,255,.08), transparent 38%)'],
-  ['Brillo', 'radial-gradient(circle at 50% 0%, rgba(255,255,255,.18), transparent 48%)'],
-  ['Niebla', 'radial-gradient(circle at 10% 80%, rgba(255,255,255,.12), transparent 35%), radial-gradient(circle at 90% 20%, rgba(255,255,255,.1), transparent 35%)'],
-]
+const TEXTURES = [['Ninguna', 'none']]
 
 const IMAGE_TEXTURES = [
   ['Textura 1', 'https://i.pinimg.com/474x/f1/6b/b9/f16bb95f07b6eb18cbbcdf298c107f51.jpg'],
@@ -60,6 +52,7 @@ const DEFAULTS = {
 }
 
 const gradientColors = (value) => (value || '').match(/#[0-9a-fA-F]{6}/g) || []
+const paint = x => x.mode === 'gradient' && x.gradient ? x.gradient : x.color || '#fff'
 
 function ColorPicker({ value, onChange }) {
   const safe = /^#[0-9a-fA-F]{6}$/.test(value || '') ? value : '#ffffff'
@@ -75,10 +68,9 @@ function GradientBuilder({ value, onChange }) {
 }
 
 function TextureControls({ a, set }) {
-  const selected = a.backgroundTextureType || 'css'
-  const isImage = selected === 'image'
-  const active = isImage ? a.backgroundTextureImage || '' : a.backgroundTexture || 'none'
-  return <div className="appearance-texture-editor"><div className="appearance-texture-mode"><button type="button" className={selected==='css'?'active':''} onClick={()=>set('appearance.backgroundTextureType','css')}>Texturas</button><button type="button" className={selected==='image'?'active':''} onClick={()=>set('appearance.backgroundTextureType','image')}>Imágenes</button></div>{selected==='css'?<div className="appearance-texture-list">{TEXTURES.map(([name,texture])=><button key={name} type="button" className={active===texture?'selected':''} style={texture!=='none'?{backgroundImage:texture}:undefined} onClick={()=>{set('appearance.backgroundTextureType','css');set('appearance.backgroundTexture',texture)}}>{name}</button>)}</div>:<div className="appearance-texture-image-grid">{IMAGE_TEXTURES.map(([name,url])=><button key={url} type="button" className={active===url?'selected':''} style={{backgroundImage:`url("${url}")`,backgroundSize:'cover',backgroundPosition:'center'}} onClick={()=>{set('appearance.backgroundTextureType','image');set('appearance.backgroundTextureImage',url)}}><span>{name}</span></button>)}</div>}<div className="appearance-texture-controls"><label>Color / tinte<ColorPicker value={a.backgroundTextureColor||'#ffffff'} onChange={v=>set('appearance.backgroundTextureColor',v)}/></label><label>Intensidad<input type="range" min="0" max="0.8" step="0.01" value={a.backgroundTextureOpacity??0.18} onChange={e=>set('appearance.backgroundTextureOpacity',Number(e.target.value))}/></label><label>Tamaño<select value={a.backgroundTextureSize||'cover'} onChange={e=>set('appearance.backgroundTextureSize',e.target.value)}><option value="cover">Amplia</option><option value="contain">Contenida</option><option value="auto">Original</option></select></label><label>Modo de mezcla<select value={a.backgroundTextureBlend||'soft-light'} onChange={e=>set('appearance.backgroundTextureBlend',e.target.value)}><option value="soft-light">Suave</option><option value="overlay">Overlay</option><option value="multiply">Multiplicar</option><option value="screen">Aclarar</option><option value="normal">Normal</option></select></label></div></div>
+  const selected = 'image'
+  const active = a.backgroundTextureImage || ''
+  return <div className="appearance-texture-editor"><div className="appearance-texture-mode"><button type="button" className="active" disabled>Imágenes</button></div><div className="appearance-texture-image-grid">{IMAGE_TEXTURES.map(([name,url])=><button key={url} type="button" className={active===url?'selected':''} style={{backgroundImage:`url("${url}")`,backgroundSize:'cover',backgroundPosition:'center'}} onClick={()=>{set('appearance.backgroundTextureType','image');set('appearance.backgroundTextureImage',url)}}><span>{name}</span></button>)}</div><div className="appearance-texture-controls"><label>Color / tinte<ColorPicker value={a.backgroundTextureColor||'#ffffff'} onChange={v=>set('appearance.backgroundTextureColor',v)}/></label><label>Intensidad<input type="range" min="0" max="0.8" step="0.01" value={a.backgroundTextureOpacity??0.28} onChange={e=>set('appearance.backgroundTextureOpacity',Number(e.target.value))}/></label><label>Tamaño<select value={a.backgroundTextureSize||'cover'} onChange={e=>set('appearance.backgroundTextureSize',e.target.value)}><option value="cover">Amplia</option><option value="contain">Contenida</option><option value="auto">Original</option></select></label><label>Modo de mezcla<select value={a.backgroundTextureBlend||'soft-light'} onChange={e=>set('appearance.backgroundTextureBlend',e.target.value)}><option value="soft-light">Suave</option><option value="overlay">Overlay</option><option value="multiply">Multiplicar</option><option value="screen">Aclarar</option><option value="normal">Normal</option></select></label></div></div>
 }
 
 function BaseStyle({id,title,a,set,open,onToggle}){const mode=a[`${id}Mode`]||'solid',color=a[`${id}Color`]||'#ffffff',gradient=a[`${id}Gradient`]||'';return <section className="appearance-dropdown"><button type="button" className="appearance-dropdown-summary" onClick={()=>onToggle(id)}><strong>{title}</strong><span className="appearance-current" style={{background:mode==='gradient'&&gradient?gradient:color}}/><span>{mode==='gradient'?'Degradado':color}</span><b>⌄</b></button>{open&&<div className="appearance-dropdown-content"><div className="appearance-style-switch"><button type="button" className={mode==='solid'?'active':''} onClick={()=>set(`appearance.${id}Mode`,'solid')}>Color</button><button type="button" className={mode==='gradient'?'active':''} onClick={()=>set(`appearance.${id}Mode`,'gradient')}>Degradado</button></div>{mode==='gradient'?<GradientBuilder value={gradient} onChange={v=>{set(`appearance.${id}Gradient`,v);set(`appearance.${id}Mode`,'gradient')}}/>:<ColorPicker value={color} onChange={v=>{set(`appearance.${id}Color`,v);set(`appearance.${id}Mode`,'solid')}}/>}{id==='background'&&<><h4>Textura del fondo</h4><TextureControls a={a} set={set}/></>}</div>}</section>}
