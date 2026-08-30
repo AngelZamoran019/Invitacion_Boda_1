@@ -20,13 +20,18 @@ export function renderWeddingHTML(project) {
     : 'soft-light'
   const url = escCssUrl(texture)
 
-  // La textura es una única capa visual fija al área visible de la invitación.
-  // Siempre usa cover + center: cubre todo el fondo y recorta los bordes
-  // cuando la proporción de la imagen no coincide con la pantalla.
+  // La textura funciona como una sola capa visual sobre toda la invitación.
+  // En móviles se fija al viewport completo para que la niebla nunca deje
+  // franjas laterales aunque exista scroll interno o una barra de desplazamiento.
   const textureCss = `<style id="wedding-global-texture">
     .phone{position:relative;isolation:isolate;overflow-y:auto;overflow-x:hidden;background:transparent;}
     .phone::before{content:"";position:sticky;display:block;top:0;left:0;width:100%;height:100svh;min-height:100svh;margin-bottom:-100svh;z-index:0;pointer-events:none;background-image:url("${url}");background-size:cover;background-position:center center;background-repeat:no-repeat;background-attachment:scroll;opacity:${opacity};mix-blend-mode:${blend};}
     .phone > *{position:relative;z-index:1;}
+    @media(max-width:699px){
+      html,body{width:100%;max-width:100%;overflow-x:hidden;}
+      .phone{width:100%;max-width:none;min-height:100dvh;}
+      .phone::before{position:fixed;inset:0;width:100vw;height:100dvh;min-height:100dvh;margin:0;background-size:cover;background-position:center center;background-repeat:no-repeat;}
+    }
   </style>`
 
   return html.replace('</head>', `${textureCss}</head>`)
