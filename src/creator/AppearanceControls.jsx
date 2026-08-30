@@ -1,102 +1,13 @@
 import { useState } from 'react'
 
-const GRADIENTS = [
-  ['Azul noche', 'linear-gradient(135deg,#0b1730,#243b53)'], ['Azul elegante', 'linear-gradient(135deg,#16213e,#3b5b7a)'],
-  ['Dorado suave', 'linear-gradient(135deg,#8b6f47,#c9a86a,#f4efe8)'], ['Rosa romántico', 'linear-gradient(135deg,#8f5f6d,#d8b4a0)'],
-  ['Verde salvia', 'linear-gradient(135deg,#3f5147,#a8b5a5)'], ['Marfil', 'linear-gradient(135deg,#f4efe8,#ffffff)'],
-  ['Negro elegante', 'linear-gradient(135deg,#111827,#374151)'], ['Atardecer', 'linear-gradient(135deg,#7c3aed,#b76e79,#c9a86a)'],
-]
-
-const FONTS = [
-  ['Playfair Display', "'Playfair Display',serif"],
-  ['Cormorant Garamond', "'Cormorant Garamond',serif"],
-  ['Lora', "'Lora',serif"],
-  ['Libre Baskerville', "'Libre Baskerville',serif"],
-  ['Montserrat', "'Montserrat',sans-serif"],
-  ['Poppins', "'Poppins',sans-serif"],
-  ['Cinzel', "'Cinzel',serif"],
-  ['Great Vibes', "'Great Vibes',cursive"],
-  ['Amoresa', "'Amoresa',cursive"],
-  ['Georgia', 'Georgia,serif'],
-  ['Arial', 'Arial,sans-serif'],
-]
-
-function StyleSection({ id, title, open, onToggle, mode, color, gradient, set }) {
-  const prefix = `appearance.${id}`
-  const isGradient = mode === 'gradient'
-  const safeColor = /^#[0-9a-fA-F]{6}$/.test(color || '') ? color : '#ffffff'
-
-  return <section className="appearance-dropdown">
-    <button type="button" className="appearance-dropdown-summary" onClick={() => onToggle(id)} aria-expanded={open}>
-      <strong>{title}</strong>
-      <span className="appearance-current" style={isGradient ? { background: gradient || GRADIENTS[0][1] } : { backgroundColor: safeColor }} />
-      <span>{isGradient ? 'Degradado' : safeColor}</span>
-      <b>⌄</b>
-    </button>
-
-    {open && <div className="appearance-dropdown-content">
-      <div className="appearance-style-switch">
-        <button type="button" className={!isGradient ? 'active' : ''} onClick={() => set(`${prefix}Mode`, 'solid')}>Color</button>
-        <button type="button" className={isGradient ? 'active' : ''} onClick={() => set(`${prefix}Mode`, 'gradient')}>Degradado</button>
-      </div>
-
-      {!isGradient ? <div className="appearance-color-editor">
-        <div className="appearance-color-picker-wrap">
-          <input className="appearance-color-picker" type="color" value={safeColor} onChange={e => set(`${prefix}Color`, e.target.value)} />
-          <span>Elegir cualquier color</span>
-        </div>
-        <input className="appearance-hex-input" value={color || ''} onChange={e => set(`${prefix}Color`, e.target.value)} placeholder="#FFFFFF" />
-        <small>Paleta completa. El selector permite elegir cualquier color disponible.</small>
-      </div> : <div className="appearance-gradient-editor">
-        <small>Selecciona un degradado. Se guardará para {title.toLowerCase()} y activará el modo degradado.</small>
-        <div className="appearance-gradient-list">
-          {GRADIENTS.map(([name, value]) => <button key={name} type="button" className="appearance-gradient" style={{ background: value }} onClick={() => {
-            set(`${prefix}Gradient`, value)
-            set(`${prefix}Mode`, 'gradient')
-          }}><span>{name}</span></button>)}
-        </div>
-      </div>}
-    </div>}
-  </section>
-}
-
-export default function AppearanceControls({ project, set }) {
-  const [open, setOpen] = useState(null)
-  const a = project.appearance || {}
-  const toggle = id => setOpen(v => v === id ? null : id)
-
-  return <div className="appearance-editor">
-    <label className="editor-field"><span>Nombre del proyecto</span><input value={project.name || ''} onChange={e => set('name', e.target.value)} /></label>
-
-    <div className="appearance-card">
-      <strong>Apariencia</strong>
-      <small>Configura cada elemento por separado.</small>
-
-      <StyleSection id="background" title="Fondo" open={open === 'background'} onToggle={toggle} mode={a.backgroundMode || 'solid'} color={a.backgroundColor} gradient={a.backgroundGradient} set={set} />
-      <StyleSection id="accent" title="Acento" open={open === 'accent'} onToggle={toggle} mode={a.accentMode || 'solid'} color={a.accentColor} gradient={a.accentGradient} set={set} />
-      <StyleSection id="text" title="Texto" open={open === 'text'} onToggle={toggle} mode={a.textMode || 'solid'} color={a.textColor} gradient={a.textGradient} set={set} />
-
-      <section className="appearance-dropdown">
-        <button type="button" className="appearance-dropdown-summary" onClick={() => toggle('font')} aria-expanded={open === 'font'}>
-          <strong>Tipografía</strong>
-          <span>{FONTS.find(f => f[1] === a.fontFamily)?.[0] || 'Playfair Display'}</span>
-          <b>⌄</b>
-        </button>
-
-        {open === 'font' && <div className="appearance-dropdown-content">
-          <select value={a.fontFamily || FONTS[0][1]} onChange={e => set('appearance.fontFamily', e.target.value)}>
-            {FONTS.map(([name, value]) => <option key={value} value={value}>{name}</option>)}
-          </select>
-
-          <div className="appearance-font-preview" style={{ fontFamily: a.fontFamily || FONTS[0][1] }}>
-            Nuestra historia • Ana & Carlos
-          </div>
-
-          {a.fontFamily === "'Amoresa',cursive" && <small className="appearance-font-note">
-            Amoresa está seleccionada. Para que se vea exactamente igual que en Canva también en la vista previa, el HTML y el teléfono, necesitamos incorporar el archivo webfont con su licencia correspondiente.
-          </small>}
-        </div>}
-      </section>
-    </div>
-  </div>
-}
+const FONTS=[['Playfair Display',"'Playfair Display',serif"],['Cormorant Garamond',"'Cormorant Garamond',serif"],['Lora',"'Lora',serif"],['Libre Baskerville',"'Libre Baskerville',serif"],['Montserrat',"'Montserrat',sans-serif"],['Poppins',"'Poppins',sans-serif"],['Cinzel',"'Cinzel',serif"],['Great Vibes',"'Great Vibes',cursive"],['Amoresa',"'Amoresa',cursive"],['Georgia','Georgia,serif'],['Arial','Arial,sans-serif']]
+const GRADIENTS=[['Dorado','linear-gradient(135deg,#8b6f47,#c9a86a,#f4efe8)'],['Atardecer','linear-gradient(135deg,#7c3aed,#b76e79,#c9a86a)'],['Romántico','linear-gradient(135deg,#8f5f6d,#d8b4a0,#f4efe8)'],['Océano','linear-gradient(135deg,#071b35,#1d4e68,#6ea7b8)'],['Salvia','linear-gradient(135deg,#34463d,#879b8e,#d5ded8)'],['Marfil','linear-gradient(135deg,#d8d0c2,#f4efe8,#fffdf8)'],['Noche','linear-gradient(135deg,#05070d,#111827,#374151)'],['Cielo','linear-gradient(135deg,#172554,#2563eb,#93c5fd)'],['Borgoña','linear-gradient(135deg,#350d19,#7f1d35,#d6a0a8)'],['Arena','linear-gradient(135deg,#8c6b4f,#c7a77a,#f2e1c4)']]
+const TEXTURES=[['Ninguna','none'],['Papel','repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 4px)'],['Lino','repeating-linear-gradient(45deg,rgba(255,255,255,.045) 0 1px,transparent 1px 5px)'],['Grano','radial-gradient(rgba(255,255,255,.1) 1px,transparent 1px)'],['Mármol','radial-gradient(ellipse at 20% 20%,rgba(255,255,255,.12),transparent 42%),radial-gradient(ellipse at 80% 70%,rgba(255,255,255,.08),transparent 38%)'],['Brillo','radial-gradient(circle at 50% 0%,rgba(255,255,255,.18),transparent 48%)'],['Niebla','radial-gradient(circle at 10% 80%,rgba(255,255,255,.12),transparent 35%),radial-gradient(circle at 90% 20%,rgba(255,255,255,.1),transparent 35%)']]
+const TYPE_ITEMS=[['title','Título'],['subtitle','Subtítulo'],['paragraph','Párrafos'],['sectionTitle','Títulos de sección'],['label','Etiquetas / encabezados pequeños'],['small','Texto pequeño'],['button','Botones']]
+const DEFAULTS={title:{fontFamily:FONTS[0][1],fontSize:42,color:'#ffffff',mode:'solid',gradient:'',fontWeight:500,lineHeight:1.08,letterSpacing:0},subtitle:{fontFamily:FONTS[0][1],fontSize:16,color:'#ffffff',mode:'solid',gradient:'',fontWeight:400,lineHeight:1.5,letterSpacing:0},paragraph:{fontFamily:FONTS[0][1],fontSize:16,color:'#ffffff',mode:'solid',gradient:'',fontWeight:400,lineHeight:1.7,letterSpacing:0},sectionTitle:{fontFamily:FONTS[0][1],fontSize:32,color:'#ffffff',mode:'solid',gradient:'',fontWeight:500,lineHeight:1.15,letterSpacing:0},label:{fontFamily:FONTS[9][1],fontSize:11,color:'#c9a86a',mode:'solid',gradient:'',fontWeight:700,lineHeight:1.4,letterSpacing:2},small:{fontFamily:FONTS[9][1],fontSize:12,color:'#ffffff',mode:'solid',gradient:'',fontWeight:400,lineHeight:1.5,letterSpacing:0},button:{fontFamily:FONTS[9][1],fontSize:13,color:'#ffffff',mode:'solid',gradient:'',fontWeight:600,lineHeight:1.2,letterSpacing:.5}}
+const paint=s=>s.mode==='gradient'&&s.gradient?s.gradient:s.color||'#fff'
+function ColorPicker({value,onChange}){return <div className="appearance-color-editor"><div className="appearance-color-picker-wrap"><input className="appearance-color-picker" type="color" value={/^#[0-9a-fA-F]{6}$/.test(value||'')?value:'#ffffff'} onChange={e=>onChange(e.target.value)}/><span>Elegir cualquier color</span></div><input className="appearance-hex-input" value={value||''} onChange={e=>onChange(e.target.value)} placeholder="#FFFFFF"/></div>}
+function GradientBuilder({value,onChange}){const matches=(value||'').match(/#[0-9a-fA-F]{6}/g);const [colors,setColors]=useState(matches?.length?matches:['#8b6f47','#c9a86a','#f4efe8']);const [type,setType]=useState(value?.startsWith('radial-gradient')?'radial':'linear');const [angle,setAngle]=useState('135');const sync=(next,typeValue=type,angleValue=angle)=>{setColors(next);onChange(typeValue==='linear'?`linear-gradient(${angleValue}deg,${next.join(',')})`:`radial-gradient(${next.join(',')})`)};return <div className="appearance-gradient-builder"><label>Tipo<select value={type} onChange={e=>{setType(e.target.value);sync(colors,e.target.value)}}><option value="linear">Lineal</option><option value="radial">Radial</option></select></label>{type==='linear'&&<label>Dirección<select value={angle} onChange={e=>{setAngle(e.target.value);sync(colors,type,e.target.value)}}><option value="0">→</option><option value="45">↗</option><option value="90">↑</option><option value="135">↖</option><option value="180">←</option><option value="225">↙</option><option value="270">↓</option><option value="315">↘</option></select></label>}<div className="appearance-gradient-preview" style={{background:value||GRADIENTS[0][1]}}/>{colors.map((color,index)=><div className="appearance-gradient-stop" key={`${index}-${color}`}><input type="color" value={color} onChange={e=>{const n=[...colors];n[index]=e.target.value;sync(n)}}/><input value={color} onChange={e=>{const n=[...colors];n[index]=e.target.value;sync(n)}}/><button type="button" disabled={colors.length<=2} onClick={()=>sync(colors.filter((_,i)=>i!==index))}>×</button></div>)}<button type="button" className="appearance-add-color" onClick={()=>sync([...colors,'#ffffff'])}>+ Agregar color</button><div className="appearance-gradient-list">{GRADIENTS.map(([name,g])=><button key={name} type="button" className="appearance-gradient" style={{background:g}} onClick={()=>{const m=g.match(/#[0-9a-fA-F]{6}/g)||colors;setColors(m);setType('linear');setAngle('135');onChange(g)}}><span>{name}</span></button>)}</div></div>}
+function BaseStyle({id,title,a,set,open,onToggle}){const mode=a[`${id}Mode`]||'solid',color=a[`${id}Color`]||'#ffffff',gradient=a[`${id}Gradient`]||'';return <section className="appearance-dropdown"><button type="button" className="appearance-dropdown-summary" onClick={()=>onToggle(id)}><strong>{title}</strong><span className="appearance-current" style={{background:mode==='gradient'&&gradient?gradient:color}}/><span>{mode==='gradient'?'Degradado':color}</span><b>⌄</b></button>{open&&<div className="appearance-dropdown-content"><div className="appearance-style-switch"><button type="button" className={mode==='solid'?'active':''} onClick={()=>set(`appearance.${id}Mode`,'solid')}>Color</button><button type="button" className={mode==='gradient'?'active':''} onClick={()=>set(`appearance.${id}Mode`,'gradient')}>Degradado</button></div>{mode==='gradient'?<GradientBuilder value={gradient} onChange={v=>{set(`appearance.${id}Gradient`,v);set(`appearance.${id}Mode`,'gradient')}}/>:<ColorPicker value={color} onChange={v=>{set(`appearance.${id}Color`,v);set(`appearance.${id}Mode`,'solid')}}/>}{id==='background'&&<><h4>Textura del fondo</h4><div className="appearance-texture-list">{TEXTURES.map(([name,texture])=><button key={name} type="button" className={a.backgroundTexture===texture?'selected':''} style={texture!=='none'?{backgroundImage:texture}:undefined} onClick={()=>set('appearance.backgroundTexture',texture)}>{name}</button>)}</div><label>Intensidad de textura<input type="range" min="0" max="0.5" step="0.01" value={a.backgroundTextureOpacity??.12} onChange={e=>set('appearance.backgroundTextureOpacity',Number(e.target.value))}/></label></>}</div>}</section>}
+function Typography({project,set,open,onToggle}){const [item,setItem]=useState('title');const a=project.appearance||{};const current={...DEFAULTS[item],...(a.typography?.[item]||{})};const write=(key,value)=>set(`appearance.typography.${item}.${key}`,value);const gradient=current.mode==='gradient';return <section className="appearance-dropdown"><button type="button" className="appearance-dropdown-summary" onClick={()=>onToggle('typography')}><strong>Texto y tipografía</strong><span>Por elemento</span><b>⌄</b></button>{open&&<div className="appearance-dropdown-content"><label>Elemento<select value={item} onChange={e=>setItem(e.target.value)}>{TYPE_ITEMS.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label><label>Fuente<select value={current.fontFamily} onChange={e=>write('fontFamily',e.target.value)}>{FONTS.map(([name,value])=><option key={value} value={value}>{name}</option>)}</select></label><div className="appearance-type-grid"><label>Tamaño<input type="number" min="8" max="120" value={current.fontSize} onChange={e=>write('fontSize',Number(e.target.value))}/></label><label>Peso<select value={current.fontWeight} onChange={e=>write('fontWeight',Number(e.target.value))}><option value="300">Ligero</option><option value="400">Normal</option><option value="500">Medio</option><option value="600">Seminegrita</option><option value="700">Negrita</option></select></label><label>Interlineado<input type="number" min=".8" max="3" step=".05" value={current.lineHeight} onChange={e=>write('lineHeight',Number(e.target.value))}/></label><label>Espaciado<input type="number" min="-5" max="20" step=".5" value={current.letterSpacing} onChange={e=>write('letterSpacing',Number(e.target.value))}/></label></div><div className="appearance-style-switch"><button type="button" className={!gradient?'active':''} onClick={()=>write('mode','solid')}>Color</button><button type="button" className={gradient?'active':''} onClick={()=>write('mode','gradient')}>Degradado</button></div>{gradient?<GradientBuilder value={current.gradient} onChange={v=>{write('gradient',v);write('mode','gradient')}}/>:<ColorPicker value={current.color} onChange={v=>{write('color',v);write('mode','solid')}}/><div className="appearance-live-type" style={{fontFamily:current.fontFamily,fontSize:current.fontSize,fontWeight:current.fontWeight,lineHeight:current.lineHeight,letterSpacing:current.letterSpacing,background:paint(current),WebkitBackgroundClip:gradient?'text':'initial',color:gradient?'transparent':current.color}}>Vista previa de {TYPE_ITEMS.find(x=>x[0]===item)?.[1]}</div></div>}</section>}
+export default function AppearanceControls({project,set}){const [open,setOpen]=useState(null);const a=project.appearance||{};const toggle=id=>setOpen(v=>v===id?null:id);return <div className="appearance-editor"><label className="editor-field"><span>Nombre del proyecto</span><input value={project.name||''} onChange={e=>set('name',e.target.value)}/></label><div className="appearance-card"><strong>Apariencia</strong><small>Control total del diseño, por elemento.</small><BaseStyle id="background" title="Fondo" a={a} set={set} open={open==='background'} onToggle={toggle}/><BaseStyle id="accent" title="Acento" a={a} set={set} open={open==='accent'} onToggle={toggle}/><BaseStyle id="text" title="Texto base" a={a} set={set} open={open==='text'} onToggle={toggle}/><Typography project={project} set={set} open={open==='typography'} onToggle={toggle}/></div></div>}
