@@ -1,142 +1,32 @@
 import { useEffect, useState } from 'react'
 
+const defaults={title:{fontFamily:"'Playfair Display',serif",fontSize:42,color:'#fff',mode:'solid',gradient:'',fontWeight:500,lineHeight:1.08,letterSpacing:0},subtitle:{fontFamily:"'Playfair Display',serif",fontSize:16,color:'#fff',mode:'solid',gradient:'',fontWeight:400,lineHeight:1.5,letterSpacing:0},paragraph:{fontFamily:"'Playfair Display',serif",fontSize:16,color:'#fff',mode:'solid',gradient:'',fontWeight:400,lineHeight:1.7,letterSpacing:0},sectionTitle:{fontFamily:"'Playfair Display',serif",fontSize:32,color:'#fff',mode:'solid',gradient:'',fontWeight:500,lineHeight:1.15,letterSpacing:0},label:{fontFamily:'Arial,sans-serif',fontSize:11,color:'#c9a86a',mode:'solid',gradient:'',fontWeight:700,lineHeight:1.4,letterSpacing:2},small:{fontFamily:'Arial,sans-serif',fontSize:12,color:'#fff',mode:'solid',gradient:'',fontWeight:400,lineHeight:1.5,letterSpacing:0},button:{fontFamily:'Arial,sans-serif',fontSize:13,color:'#fff',mode:'solid',gradient:'',fontWeight:600,lineHeight:1.2,letterSpacing:.5}}
+const paint=x=>x.mode==='gradient'&&x.gradient?x.gradient:x.color||'#fff'
+
 function PreviewWedding({ project }) {
-  const [remaining,setRemaining]=useState(null)
-  const [rsvp,setRsvp]=useState({name:'',attendance:'',guests:'1',message:''})
-  const [submitted,setSubmitted]=useState(false)
-
-  useEffect(()=>{
-    if(!project.countdown.enabled||!project.countdown.targetDate){setRemaining(null);return undefined}
-    const tick=()=>{
-      const d=new Date(project.countdown.targetDate).getTime()-Date.now()
-      if(d<=0){setRemaining({days:0,hours:0,minutes:0,seconds:0});return}
-      setRemaining({days:Math.floor(d/86400000),hours:Math.floor(d/3600000)%24,minutes:Math.floor(d/60000)%60,seconds:Math.floor(d/1000)%60})
-    }
-    tick()
-    const t=window.setInterval(tick,1000)
-    return()=>window.clearInterval(t)
-  },[project.countdown.enabled,project.countdown.targetDate])
-
-  const a=project.appearance||{}
-  const bg=a.backgroundMode==='gradient'&&a.backgroundGradient?a.backgroundGradient:a.backgroundColor||'#0b1730'
-  const accent=a.accentMode==='gradient'&&a.accentGradient?a.accentGradient:a.accentColor||'#c9a86a'
-  const textGradient=a.textMode==='gradient'&&a.textGradient?a.textGradient:null
-  const text=a.textColor||'#fff'
-  const font=a.fontFamily||"'Playfair Display',serif"
-  const title=project.coverSection.title||`${project.couple.name1||'Nombre'} & ${project.couple.name2||'Nombre'}`
-  const storyImage=project.story.images?.[0]
-
-  const style={
-    background:bg,
-    color:text,
-    fontFamily:font,
-    '--wedding-bg':bg,
-    '--wedding-accent':accent,
-    '--wedding-text':text,
-    '--wedding-font':font
-  }
-
-  const gradientTextStyle=textGradient
-    ? {background:textGradient,WebkitBackgroundClip:'text',backgroundClip:'text',color:'transparent'}
-    : {color:text}
-
-  // El diamante tiene su propia identidad visual: SIEMPRE toma Acento,
-  // nunca Texto. Esto también funciona cuando Acento es un degradado.
-  const accentPaintStyle=a.accentMode==='gradient'&&a.accentGradient
-    ? {background:a.accentGradient,WebkitBackgroundClip:'text',backgroundClip:'text',color:'transparent'}
-    : {color:accent}
-
-  const submitRsvp=e=>{
-    e.preventDefault()
-    try{
-      const key=`wedding-rsvp-${project.id||'preview'}`
-      const saved=JSON.parse(localStorage.getItem(key)||'[]')
-      saved.push({...rsvp,submittedAt:new Date().toISOString()})
-      localStorage.setItem(key,JSON.stringify(saved))
-    }catch{}
-    setSubmitted(true)
-  }
-
-  return <div className="wedding-phone" style={style}>
-    <div className="wedding-cover" style={project.coverSection.backgroundImage?{backgroundImage:`linear-gradient(rgb(5 12 28 / 60%),rgb(5 12 28 / 82%)),url(${project.coverSection.backgroundImage})`}:undefined}>
-      <div className="cover-ornament accent-ornament" style={accentPaintStyle}>✦</div>
-      <p className="cover-eyebrow" style={gradientTextStyle}>{project.coverSection.eyebrow}</p>
-      <h2 style={gradientTextStyle}>{title}</h2>
-      {project.coverSection.subtitle&&<p className="cover-subtitle">{project.coverSection.subtitle}</p>}
-      <div className="cover-line" style={{background:accent}}/>
-      {project.coverSection.date&&<p className="cover-date">{project.coverSection.date}</p>}
-      {project.coverSection.venue&&<p className="cover-venue">{project.coverSection.venue}</p>}
-      <button className="cover-button" style={{borderColor:a.accentMode==='gradient'?'transparent':accent,color:'#101828',background:accent}} type="button" onClick={()=>document.querySelector('.wedding-phone .couple-section')?.scrollIntoView({behavior:'smooth'})}>Abrir invitación</button>
-    </div>
-
-    <section className="wedding-section couple-section">
-      {project.couple.photo?<img className="couple-photo" src={project.couple.photo} alt="Los novios"/>:<div className="photo-placeholder">Foto de los novios</div>}
-      <p className="section-eyebrow" style={gradientTextStyle}>Con amor</p>
-      <h3 style={gradientTextStyle}>{project.couple.name1||'Nombre'} <span className="text-ampersand">&</span> {project.couple.name2||'Nombre'}</h3>
-      {project.couple.quote&&<p className="section-text">“{project.couple.quote}”</p>}
-    </section>
-
-    {project.music.enabled&&project.music.url&&<section className="wedding-section music-section">
-      <p className="section-eyebrow" style={gradientTextStyle}>Nuestra canción</p>
-      <h3 style={gradientTextStyle}>{project.music.title||'Una canción especial'}</h3>
-      <audio controls src={project.music.url}/>
-    </section>}
-
-    <section className="wedding-section story-section">
-      <p className="section-eyebrow" style={gradientTextStyle}>Nuestra historia</p>
-      <h3 style={gradientTextStyle}>{project.story.title}</h3>
-      {storyImage&&<img className="story-image" src={storyImage} alt="Nuestra historia"/>}
-      <p className="section-text">{project.story.text||'Aquí aparecerá la historia de ustedes.'}</p>
-    </section>
-
-    <section className="wedding-section event-section">
-      <p className="section-eyebrow" style={gradientTextStyle}>El gran día</p>
-      <h3 style={gradientTextStyle}>{project.event.date?new Date(`${project.event.date}T12:00:00`).toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'}):'Nuestra fecha'}</h3>
-      {project.event.time&&<p className="event-time">{project.event.time}</p>}
-      <div className="event-card"><strong>{project.event.ceremonyTitle}</strong><span>{project.event.ceremonyVenue||'Lugar de ceremonia'}</span><small>{project.event.ceremonyAddress||'Dirección pendiente'}</small>{project.event.ceremonyMapsUrl&&<a href={project.event.ceremonyMapsUrl} target="_blank" rel="noreferrer">Ver ubicación</a>}</div>
-      <div className="event-card"><strong>{project.event.receptionTitle}</strong><span>{project.event.receptionVenue||'Lugar de recepción'}</span><small>{project.event.receptionAddress||'Dirección pendiente'}</small>{project.event.receptionMapsUrl&&<a href={project.event.receptionMapsUrl} target="_blank" rel="noreferrer">Ver ubicación</a>}</div>
-    </section>
-
-    {remaining&&<section className="wedding-section countdown-section">
-      <p className="section-eyebrow" style={gradientTextStyle}>La cuenta regresiva comienza</p>
-      <div className="countdown-grid">{Object.entries(remaining).map(([k,v])=><div key={k}><strong>{String(v).padStart(2,'0')}</strong><span>{k==='days'?'días':k==='hours'?'horas':k==='minutes'?'min':'seg'}</span></div>)}</div>
-    </section>}
-
-    {project.dressCode.enabled&&<section className="wedding-section dress-section">
-      <p className="section-eyebrow" style={gradientTextStyle}>Código de vestimenta</p>
-      <h3 style={gradientTextStyle}>Elegancia para celebrar</h3>
-      <div className="dress-grid"><div><span>Ellas</span><strong>{project.dressCode.women||'Por definir'}</strong></div><div><span>Ellos</span><strong>{project.dressCode.men||'Por definir'}</strong></div></div>
-      {project.dressCode.note&&<p className="section-text">{project.dressCode.note}</p>}
-    </section>}
-
-    {project.gifts.enabled&&<section className="wedding-section simple-section">
-      <p className="section-eyebrow" style={gradientTextStyle}>Un detalle especial</p>
-      <h3 style={gradientTextStyle}>{project.gifts.title}</h3>
-      <p className="section-text">{project.gifts.message||'Su presencia es nuestro mejor regalo.'}</p>
-      {project.gifts.url&&<a className="gold-button" href={project.gifts.url} target="_blank" rel="noreferrer">{project.gifts.buttonLabel}</a>}
-    </section>}
-
-    {project.confirmation.enabled&&<section className="wedding-section confirmation-section" id="confirmation">
-      <p className="section-eyebrow" style={gradientTextStyle}>Por favor</p>
-      <h3 style={gradientTextStyle}>{project.confirmation.title}</h3>
-      <p className="section-text">{project.confirmation.message||'Ayúdanos confirmando tu asistencia.'}</p>
-      {!submitted?<form className="rsvp-form" onSubmit={submitRsvp}>
-        <label><span>Nombre</span><input required value={rsvp.name} onChange={e=>setRsvp({...rsvp,name:e.target.value})}/></label>
-        <label><span>¿Asistirás?</span><select required value={rsvp.attendance} onChange={e=>setRsvp({...rsvp,attendance:e.target.value})}><option value="">Selecciona una opción</option><option>Sí asistiré</option><option>No podré asistir</option></select></label>
-        <label><span>Número de invitados</span><input required type="number" min="1" max="20" value={rsvp.guests} onChange={e=>setRsvp({...rsvp,guests:e.target.value})}/></label>
-        <label><span>Mensaje (opcional)</span><textarea rows="3" value={rsvp.message} onChange={e=>setRsvp({...rsvp,message:e.target.value})}/></label>
-        <button className="gold-button" type="submit">{project.confirmation.buttonLabel}</button>
-      </form>:<div className="rsvp-success">{project.confirmation.successMessage}</div>}
-    </section>}
-
-    <section className="wedding-closing">
-      {project.closing.image&&<img src={project.closing.image} alt="Cierre"/>}
-      <div>
-        <p className="cover-ornament accent-ornament" style={accentPaintStyle}>✦</p>
-        <p>{project.closing.message||'Gracias por ser parte de este momento.'}</p>
-      </div>
-    </section>
-  </div>
+ const [remaining,setRemaining]=useState(null),[rsvp,setRsvp]=useState({name:'',attendance:'',guests:'1',message:''}),[submitted,setSubmitted]=useState(false)
+ useEffect(()=>{if(!project.countdown.enabled||!project.countdown.targetDate){setRemaining(null);return}const tick=()=>{const d=new Date(project.countdown.targetDate).getTime()-Date.now();setRemaining(d<=0?{days:0,hours:0,minutes:0,seconds:0}:{days:Math.floor(d/86400000),hours:Math.floor(d/3600000)%24,minutes:Math.floor(d/60000)%60,seconds:Math.floor(d/1000)%60})};tick();const t=setInterval(tick,1000);return()=>clearInterval(t)},[project.countdown.enabled,project.countdown.targetDate])
+ const a=project.appearance||{},t=a.typography||{},get=k=>({...defaults[k],...(t[k]||{})}),titleStyle=get('title'),subtitleStyle=get('subtitle'),paragraphStyle=get('paragraph'),sectionStyle=get('sectionTitle'),labelStyle=get('label'),smallStyle=get('small'),buttonStyle=get('button')
+ const bg=a.backgroundMode==='gradient'&&a.backgroundGradient?a.backgroundGradient:a.backgroundColor||'#0b1730',accent=a.accentMode==='gradient'&&a.accentGradient?a.accentGradient:a.accentColor||'#c9a86a',text=a.textMode==='gradient'&&a.textGradient?a.textGradient:a.textColor||'#fff',font=a.fontFamily||"'Playfair Display',serif",texture=a.backgroundTexture&&a.backgroundTexture!=='none'?a.backgroundTexture:null,textureOpacity=a.backgroundTextureOpacity??.12
+ const title=project.coverSection.title||`${project.couple.name1||'Nombre'} & ${project.couple.name2||'Nombre'}`,storyImage=project.story.images?.[0]
+ const textPaint=paint({mode:a.textMode,color:a.textColor,gradient:a.textGradient}),accentPaint=paint({mode:a.accentMode,color:a.accentColor,gradient:a.accentGradient})
+ const cssText=s=>`font-family:${s.fontFamily};font-size:${s.fontSize}px;font-weight:${s.fontWeight};line-height:${s.lineHeight};letter-spacing:${s.letterSpacing}px;${s.mode==='gradient'&&s.gradient?`background:${s.gradient};-webkit-background-clip:text;background-clip:text;color:transparent`:`color:${s.color}`}`
+ const globalStyle=`.wedding-phone,.wedding-phone *{box-sizing:border-box}.wedding-phone{background:${bg};color:${text};font-family:${font};position:relative}.wedding-phone:before{content:"";position:absolute;inset:0;pointer-events:none;background:${texture||'none'};opacity:${textureOpacity};z-index:0}.wedding-phone>*{position:relative;z-index:1}.wedding-phone .cover-eyebrow,.wedding-phone .section-eyebrow{${cssText(labelStyle)}}.wedding-phone .cover-subtitle{${cssText(subtitleStyle)}}.wedding-phone .section-text{${cssText(paragraphStyle)}}.wedding-phone .wedding-cover h2{${cssText(titleStyle)}}.wedding-phone .wedding-section h3{${cssText(sectionStyle)}}.wedding-phone .event-time,.wedding-phone .event-card span,.wedding-phone .event-card small,.wedding-phone .dress-grid span,.wedding-phone .dress-grid strong{${cssText(smallStyle)}}.wedding-phone .cover-button,.wedding-phone .gold-button{${cssText(buttonStyle)}}.wedding-phone .cover-line{background:${accent}!important}.wedding-phone .cover-button{background:${accent}!important;color:#101828!important;border-color:transparent!important}.wedding-phone .text-ampersand{color:${a.textMode==='gradient'&&a.textGradient?'transparent':text};background:${a.textMode==='gradient'&&a.textGradient?a.textGradient:'none'};-webkit-background-clip:text;background-clip:text}.wedding-phone .accent-ornament{${a.accentMode==='gradient'&&a.accentGradient?`background:${accentPaint};-webkit-background-clip:text;background-clip:text;color:transparent`:`color:${accent}`}}`
+ const style={background:bg,color:text,fontFamily:font,'--wedding-bg':bg,'--wedding-accent':accent,'--wedding-text':text,'--wedding-font':font}
+ const gradientTextStyle=a.textMode==='gradient'&&a.textGradient?{background:a.textGradient,WebkitBackgroundClip:'text',backgroundClip:'text',color:'transparent'}:{color:text}
+ const accentPaintStyle=a.accentMode==='gradient'&&a.accentGradient?{background:a.accentGradient,WebkitBackgroundClip:'text',backgroundClip:'text',color:'transparent'}:{color:accent}
+ const submitRsvp=e=>{e.preventDefault();try{const key=`wedding-rsvp-${project.id||'preview'}`,saved=JSON.parse(localStorage.getItem(key)||'[]');saved.push({...rsvp,submittedAt:new Date().toISOString()});localStorage.setItem(key,JSON.stringify(saved))}catch{}setSubmitted(true)}
+ return <div className="wedding-phone" style={style}><style>{globalStyle}</style>
+  <div className="wedding-cover" style={project.coverSection.backgroundImage?{backgroundImage:`linear-gradient(rgb(5 12 28 / 60%),rgb(5 12 28 / 82%)),url(${project.coverSection.backgroundImage})`}:undefined}><div className="cover-ornament accent-ornament" style={accentPaintStyle}>✦</div><p className="cover-eyebrow">{project.coverSection.eyebrow}</p><h2>{title}</h2>{project.coverSection.subtitle&&<p className="cover-subtitle">{project.coverSection.subtitle}</p>}<div className="cover-line"/>{project.coverSection.date&&<p className="cover-date">{project.coverSection.date}</p>}{project.coverSection.venue&&<p className="cover-venue">{project.coverSection.venue}</p>}<button className="cover-button" type="button" onClick={()=>document.querySelector('.wedding-phone .couple-section')?.scrollIntoView({behavior:'smooth'})}>Abrir invitación</button></div>
+  <section className="wedding-section couple-section">{project.couple.photo?<img className="couple-photo" src={project.couple.photo} alt="Los novios"/>:<div className="photo-placeholder">Foto de los novios</div>}<p className="section-eyebrow">Con amor</p><h3>{project.couple.name1||'Nombre'} <span className="text-ampersand">&</span> {project.couple.name2||'Nombre'}</h3>{project.couple.quote&&<p className="section-text">“{project.couple.quote}”</p>}</section>
+  {project.music.enabled&&project.music.url&&<section className="wedding-section music-section"><p className="section-eyebrow">Nuestra canción</p><h3>{project.music.title||'Una canción especial'}</h3><audio controls src={project.music.url}/></section>}
+  <section className="wedding-section story-section"><p className="section-eyebrow">Nuestra historia</p><h3>{project.story.title}</h3>{storyImage&&<img className="story-image" src={storyImage} alt="Nuestra historia"/>}<p className="section-text">{project.story.text||'Aquí aparecerá la historia de ustedes.'}</p></section>
+  <section className="wedding-section event-section"><p className="section-eyebrow">El gran día</p><h3>{project.event.date?new Date(`${project.event.date}T12:00:00`).toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'}):'Nuestra fecha'}</h3>{project.event.time&&<p className="event-time">{project.event.time}</p>}<div className="event-card"><strong>{project.event.ceremonyTitle}</strong><span>{project.event.ceremonyVenue||'Lugar de ceremonia'}</span><small>{project.event.ceremonyAddress||'Dirección pendiente'}</small>{project.event.ceremonyMapsUrl&&<a href={project.event.ceremonyMapsUrl} target="_blank" rel="noreferrer">Ver ubicación</a>}</div><div className="event-card"><strong>{project.event.receptionTitle}</strong><span>{project.event.receptionVenue||'Lugar de recepción'}</span><small>{project.event.receptionAddress||'Dirección pendiente'}</small>{project.event.receptionMapsUrl&&<a href={project.event.receptionMapsUrl} target="_blank" rel="noreferrer">Ver ubicación</a>}</div></section>
+  {remaining&&<section className="wedding-section countdown-section"><p className="section-eyebrow">La cuenta regresiva comienza</p><div className="countdown-grid">{Object.entries(remaining).map(([k,v])=><div key={k}><strong>{String(v).padStart(2,'0')}</strong><span>{k==='days'?'días':k==='hours'?'horas':k==='minutes'?'min':'seg'}</span></div>)}</div></section>}
+  {project.dressCode.enabled&&<section className="wedding-section dress-section"><p className="section-eyebrow">Código de vestimenta</p><h3>Elegancia para celebrar</h3><div className="dress-grid"><div><span>Ellas</span><strong>{project.dressCode.women||'Por definir'}</strong></div><div><span>Ellos</span><strong>{project.dressCode.men||'Por definir'}</strong></div></div>{project.dressCode.note&&<p className="section-text">{project.dressCode.note}</p>}</section>}
+  {project.gifts.enabled&&<section className="wedding-section simple-section"><p className="section-eyebrow">Un detalle especial</p><h3>{project.gifts.title}</h3><p className="section-text">{project.gifts.message||'Su presencia es nuestro mejor regalo.'}</p>{project.gifts.url&&<a className="gold-button" href={project.gifts.url} target="_blank" rel="noreferrer">{project.gifts.buttonLabel}</a>}</section>}
+  {project.confirmation.enabled&&<section className="wedding-section confirmation-section" id="confirmation"><p className="section-eyebrow">Por favor</p><h3>{project.confirmation.title}</h3><p className="section-text">{project.confirmation.message||'Ayúdanos confirmando tu asistencia.'}</p>{!submitted?<form className="rsvp-form" onSubmit={submitRsvp}><label><span>Nombre</span><input required value={rsvp.name} onChange={e=>setRsvp({...rsvp,name:e.target.value})}/></label><label><span>¿Asistirás?</span><select required value={rsvp.attendance} onChange={e=>setRsvp({...rsvp,attendance:e.target.value})}><option value="">Selecciona una opción</option><option>Sí asistiré</option><option>No podré asistir</option></select></label><label><span>Número de invitados</span><input required type="number" min="1" max="20" value={rsvp.guests} onChange={e=>setRsvp({...rsvp,guests:e.target.value})}/></label><label><span>Mensaje (opcional)</span><textarea rows="3" value={rsvp.message} onChange={e=>setRsvp({...rsvp,message:e.target.value})}/></label><button className="gold-button" type="submit">{project.confirmation.buttonLabel}</button></form>:<div className="rsvp-success">{project.confirmation.successMessage}</div>}</section>}
+  <section className="wedding-closing">{project.closing.image&&<img src={project.closing.image} alt="Cierre"/>}<div><p className="cover-ornament accent-ornament" style={accentPaintStyle}>✦</p><p>{project.closing.message||'Gracias por ser parte de este momento.'}</p></div></section>
+ </div>
 }
-
 export default PreviewWedding
