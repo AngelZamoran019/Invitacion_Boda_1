@@ -1,7 +1,7 @@
-import { buildWeddingHTML } from '../export/exportWedding.js'
+import { renderWeddingHTML } from '../export/renderWeddingHTML.js'
 
 function PreviewWedding({ project }) {
-  const html = buildWeddingHTML(project)
+  const html = renderWeddingHTML(project)
 
   return (
     <iframe
