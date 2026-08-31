@@ -49,12 +49,25 @@ export function renderWeddingHTML(project) {
   const specialSectionScript = `<script id="wedding-special-section-titles">(()=>{const targets=new Set(${JSON.stringify(specialSectionTexts)});const normalize=value=>String(value||'').trim().toLowerCase().replace(/[áàä]/g,'a').replace(/[éèë]/g,'e').replace(/[íìï]/g,'i').replace(/[óòö]/g,'o').replace(/[úùü]/g,'u');document.querySelectorAll('.eyebrow').forEach(el=>{if(targets.has(normalize(el.textContent)))el.classList.add('section-title-special')})})()</script>`
   html = html.replace('</body>', `${specialSectionScript}</body>`)
 
+  // FONDO DE INVITACIÓN: se conserva la configuración anterior.
+  // La textura solo se activa cuando está seleccionada como textura por URL.
   const texture = String(appearance.backgroundTextureImage || '').trim()
-  if (texture) {
+  const enabled = appearance.backgroundTextureType === 'image' && texture.length > 0
+
+  if (enabled) {
     const opacity = Math.max(0, Math.min(1, Number(appearance.backgroundTextureOpacity ?? 0.28)))
     const blend = ['normal','multiply','screen','overlay','soft-light','hard-light'].includes(appearance.backgroundTextureBlend) ? appearance.backgroundTextureBlend : 'soft-light'
     const url = escCssUrl(texture)
-    const textureCss = `<style id="wedding-global-texture">/* TEXTURA SOLO PARA LA PÁGINA DE INVITACIÓN */.phone{position:relative;isolation:isolate;overflow-x:hidden;background:var(--bg)!important}.phone::before{content:"";position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;background-image:url("${url}");background-size:cover;background-position:center center;background-repeat:no-repeat;opacity:${opacity};mix-blend-mode:${blend};will-change:transform}.phone>.cover{z-index:3}.phone>.section,.phone>.closing{position:relative;z-index:2;background:transparent!important}.phone.invite-open{background:var(--bg)!important}.phone.invite-open::before{display:block}.phone:not(.invite-open)::before{display:none}@media(max-width:699px){html,body{width:100%;max-width:100%;overflow-x:hidden}.phone{width:100vw;max-width:none;min-height:100dvh}.phone::before{width:100%;height:100%;background-size:cover;background-position:center center}}</style>`
+    const textureCss = `<style id="wedding-global-texture">
+      .phone{position:relative;isolation:isolate;overflow-x:hidden;background:var(--bg)!important}
+      .phone::before{content:"";position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;background-image:url("${url}");background-size:cover;background-position:center center;background-repeat:no-repeat;opacity:${opacity};mix-blend-mode:${blend};will-change:transform}
+      .phone>.cover{z-index:3}
+      .phone>.section,.phone>.closing{position:relative;z-index:2;background:transparent!important}
+      .phone.invite-open{background:var(--bg)!important}
+      .phone.invite-open::before{display:block}
+      .phone:not(.invite-open)::before{display:none}
+      @media(max-width:699px){html,body{width:100%;max-width:100%;overflow-x:hidden}.phone{width:100vw;max-width:none;min-height:100dvh}.phone::before{width:100%;height:100%;background-size:cover;background-position:center center}}
+    </style>`
     html = html.replace('</head>', `${textureCss}</head>`)
   }
 
@@ -66,13 +79,9 @@ export function renderWeddingHTML(project) {
     html = html.replace('</head>', `${coupleBackgroundCss}</head>`)
   }
 
-  // PORTADA COMO PRIMERA PÁGINA: el scroll queda bloqueado y únicamente
-  // la portada es visible hasta pulsar "Abrir invitación".
   const pageNavigationCss = `<style id="wedding-page-navigation">html,body{width:100%;min-height:100%;margin:0;overflow:hidden;background:var(--bg)}body{display:grid;place-items:center}.phone{height:100dvh;min-height:100dvh;max-height:100dvh;overflow:hidden;overscroll-behavior:none;scrollbar-width:none;background:var(--bg)!important}.phone::-webkit-scrollbar{display:none}.phone>.section,.phone>.closing{display:none!important}.phone.invite-open{height:100dvh;min-height:100dvh;max-height:100dvh;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:auto}.phone.invite-open>.cover{display:none!important}.phone.invite-open>.section,.phone.invite-open>.closing{display:flex!important}.phone.invite-open>.section:first-of-type{padding-top:48px}@media(max-width:699px){html,body{width:100%;height:100%;overflow:hidden}.phone{width:100vw;height:100dvh;min-height:100dvh;max-height:100dvh;border-radius:0;box-shadow:none}.phone.invite-open{width:100vw;height:100dvh;min-height:100dvh;max-height:100dvh}}</style>`
   html = html.replace('</head>', `${pageNavigationCss}</head>`)
 
-  // Sustituimos el comportamiento anterior de scrollIntoView por un cambio
-  // explícito de página. Se conserva el botón existente y su apariencia.
   const pageNavigationScript = `<script id="wedding-page-navigation-script">(()=>{const open=()=>{const phone=document.querySelector('.phone');if(!phone)return;phone.classList.add('invite-open');phone.scrollTop=0;};document.addEventListener('DOMContentLoaded',()=>{const button=document.querySelector('.cover .button');if(!button)return;button.onclick=(event)=>{event.preventDefault();open();};});})();</script>`
   html = html.replace('</body>', `${pageNavigationScript}</body>`)
 
