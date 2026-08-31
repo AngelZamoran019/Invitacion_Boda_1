@@ -5,16 +5,10 @@ const escapeHtml = (value = '') => String(value).replace(/[&<>\"']/g, (char) => 
 
 const applyStorySectionTitle = (html, project) => {
   const title = escapeHtml(project?.story?.sectionTitle || 'Nuestra historia')
-  const marker = '<p class="eyebrow" style='
   const source = String(html || '')
-  const storyIndex = source.indexOf('<section class="section"><p class="eyebrow"')
-  if (storyIndex < 0) return source
-  const markerIndex = source.indexOf(marker, storyIndex)
-  if (markerIndex < 0) return source
-  const contentStart = source.indexOf('>', markerIndex) + 1
-  const contentEnd = source.indexOf('</p>', contentStart)
-  if (contentStart <= 0 || contentEnd < 0) return source
-  return `${source.slice(0, contentStart)}${title}${source.slice(contentEnd)}`
+  const storyMarker = /(<section\s+class=[\"']section[\"'][^>]*>\s*<p\s+class=[\"']eyebrow[\"'][^>]*>)Nuestra historia(<\/p>)/i
+  if (!storyMarker.test(source)) return source
+  return source.replace(storyMarker, `$1${title}$2`)
 }
 
 export function renderWeddingHTML(project) {
