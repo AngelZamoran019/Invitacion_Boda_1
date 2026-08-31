@@ -15,11 +15,8 @@ function PreviewWedding({ project }) {
     const buildBridgeHTML = (html) => {
       const bridge = `<script id="wedding-preview-bridge">(()=>{
   const phone=()=>document.querySelector('.phone')
-  const capture=()=>{const el=phone();return {top:el?.scrollTop||0,left:el?.scrollLeft||0,open:el?.classList.contains('invite-open')||false}}
-  const restore=(state)=>{
-    const apply=()=>{const el=phone();if(!el)return;if(state.open)el.classList.add('invite-open');else el.classList.remove('invite-open');el.scrollTop=state.top||0;el.scrollLeft=state.left||0}
-    apply();requestAnimationFrame(apply);requestAnimationFrame(()=>requestAnimationFrame(apply));setTimeout(apply,50);setTimeout(apply,150)
-  }
+  const capture=()=>{const el=phone();const cover=el?.querySelector('.cover');return {top:el?.scrollTop||0,left:el?.scrollLeft||0,open:el?.classList.contains('invite-open')||false,animationDone:cover?.classList.contains('cover-animation-finished')||false}}
+  const restore=(state)=>{const apply=()=>{const el=phone();if(!el)return;if(state.open)el.classList.add('invite-open');else el.classList.remove('invite-open');const cover=el.querySelector('.cover');if(state.animationDone&&cover){cover.classList.add('cover-animation-finished');cover.setAttribute('data-animation-finished','true')}el.scrollTop=state.top||0;el.scrollLeft=state.left||0};apply();requestAnimationFrame(apply);requestAnimationFrame(()=>requestAnimationFrame(apply));setTimeout(apply,50);setTimeout(apply,150)}
 
   // El listener vive fuera de .phone para que nunca se pierda al actualizar la VP.
   document.addEventListener('click',event=>{
@@ -42,17 +39,14 @@ function PreviewWedding({ project }) {
     const nextPhone=parsed.querySelector('.phone')
     if(!currentPhone||!nextPhone)return
 
-    // Actualizamos TODOS los estilos generados por la invitación, incluidos
-    // los estilos sin id. Esto permite que color, degradado y textura cambien
-    // en tiempo real sin reconstruir el iframe.
+    // Actualizamos todos los estilos generados por la invitacion sin reconstruir el iframe.
     const currentHead=document.head
     const nextHead=parsed.head
     const existingBridge=currentHead.querySelector('#wedding-preview-head-bridge')
     currentHead.replaceChildren(...Array.from(nextHead.childNodes).map(node=>node.cloneNode(true)))
     if(existingBridge)currentHead.appendChild(existingBridge)
 
-    // Importante: NO reemplazar .phone. Si se reemplaza, el navegador pierde
-    // su posición de scroll y vuelve al inicio. Solo sincronizamos sus hijos.
+    // No reemplazar .phone: asi no se pierde la posicion del scroll.
     const nextChildren=Array.from(nextPhone.children)
     const currentChildren=Array.from(currentPhone.children)
 
@@ -66,9 +60,15 @@ function PreviewWedding({ project }) {
       currentPhone.lastElementChild?.remove()
     }
 
-    // Mantener exactamente el estado de página y el scroll anterior.
+    // Mantener exactamente el estado de pagina y el scroll anterior.
     if(state.open)currentPhone.classList.add('invite-open')
     else currentPhone.classList.remove('invite-open')
+
+    const nextCover=currentPhone.querySelector('.cover')
+    if(state.animationDone&&nextCover){
+      nextCover.classList.add('cover-animation-finished')
+      nextCover.setAttribute('data-animation-finished','true')
+    }
 
     const restore=()=>{
       currentPhone.scrollTop=state.top||0
@@ -116,7 +116,7 @@ function PreviewWedding({ project }) {
         html,
       }, '*')
     } catch {
-      // Evitar que un cambio de edición rompa el editor.
+      // Evitar que un cambio de edicion rompa el editor.
     }
   }, [project])
 
