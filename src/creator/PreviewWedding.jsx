@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { renderWeddingHTML } from '../export/renderWeddingHTML.js'
 
-function PreviewWedding({ project }) {
+function PreviewWedding({ project, refreshKey = 0 }) {
   const iframeRef = useRef(null)
   const projectRef = useRef(project)
   const initializedRef = useRef(false)
@@ -16,9 +16,7 @@ function PreviewWedding({ project }) {
       const bridge = `<script id="wedding-preview-bridge">(()=>{
   const phone=()=>document.querySelector('.phone')
   const capture=()=>{const el=phone();const cover=el?.querySelector('.cover');return {top:el?.scrollTop||0,left:el?.scrollLeft||0,open:el?.classList.contains('invite-open')||false,animationDone:cover?.classList.contains('cover-animation-finished')||false}}
-  const restore=(state)=>{const apply=()=>{const el=phone();if(!el)return;if(state.open)el.classList.add('invite-open');else el.classList.remove('invite-open');const cover=el.querySelector('.cover');if(state.animationDone&&cover){cover.classList.add('cover-animation-finished');cover.setAttribute('data-animation-finished','true')}el.scrollTop=state.top||0;el.scrollLeft=state.left||0};apply();requestAnimationFrame(apply);requestAnimationFrame(()=>requestAnimationFrame(apply));setTimeout(apply,50);setTimeout(apply,150)}
 
-  // El listener vive fuera de .phone para que nunca se pierda al actualizar la VP.
   document.addEventListener('click',event=>{
     const button=event.target.closest('.cover .button')
     if(!button)return
@@ -39,14 +37,12 @@ function PreviewWedding({ project }) {
     const nextPhone=parsed.querySelector('.phone')
     if(!currentPhone||!nextPhone)return
 
-    // Actualizamos todos los estilos generados por la invitacion sin reconstruir el iframe.
     const currentHead=document.head
     const nextHead=parsed.head
     const existingBridge=currentHead.querySelector('#wedding-preview-head-bridge')
     currentHead.replaceChildren(...Array.from(nextHead.childNodes).map(node=>node.cloneNode(true)))
     if(existingBridge)currentHead.appendChild(existingBridge)
 
-    // No reemplazar .phone: asi no se pierde la posicion del scroll.
     const nextChildren=Array.from(nextPhone.children)
     const currentChildren=Array.from(currentPhone.children)
 
@@ -60,7 +56,6 @@ function PreviewWedding({ project }) {
       currentPhone.lastElementChild?.remove()
     }
 
-    // Mantener exactamente el estado de pagina y el scroll anterior.
     if(state.open)currentPhone.classList.add('invite-open')
     else currentPhone.classList.remove('invite-open')
 
@@ -84,26 +79,22 @@ function PreviewWedding({ project }) {
       return html.replace('</body>', `${bridge}</body>`)
     }
 
-    const renderInitial = () => {
-      try {
-        const html = buildBridgeHTML(renderWeddingHTML(projectRef.current))
-        const doc = iframe.contentDocument || iframe.contentWindow?.document
-        if (!doc) return
-        doc.open()
-        doc.write(html)
-        doc.close()
-        initializedRef.current = true
-      } catch {
-        // Mantener la VP viva aunque exista un cambio durante la carga.
-      }
+    try {
+      const html = buildBridgeHTML(renderWeddingHTML(projectRef.current))
+      const doc = iframe.contentDocument || iframe.contentWindow?.document
+      if (!doc) return undefined
+      doc.open()
+      doc.write(html)
+      doc.close()
+      initializedRef.current = true
+    } catch {
+      // Mantener la VP viva aunque exista un cambio durante la carga.
     }
-
-    renderInitial()
 
     return () => {
       initializedRef.current = false
     }
-  }, [])
+  }, [refreshKey])
 
   useEffect(() => {
     const iframe = iframeRef.current
