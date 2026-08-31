@@ -17,6 +17,18 @@ function PreviewWedding({ project, refreshKey = 0 }) {
   const phone=()=>document.querySelector('.phone')
   const capture=()=>{const el=phone();const cover=el?.querySelector('.cover');return {top:el?.scrollTop||0,left:el?.scrollLeft||0,open:el?.classList.contains('invite-open')||false,animationDone:cover?.classList.contains('cover-animation-finished')||false}}
 
+  const runDocumentScripts=(scripts)=>{
+    scripts.forEach(source=>{
+      if(!source||source.id==='wedding-preview-bridge')return
+      const current=document.getElementById(source.id)
+      if(current)current.remove()
+      const script=document.createElement('script')
+      Array.from(source.attributes||[]).forEach(attribute=>script.setAttribute(attribute.name,attribute.value))
+      script.textContent=source.textContent||''
+      document.body.appendChild(script)
+    })
+  }
+
   document.addEventListener('click',event=>{
     const button=event.target.closest('.cover .button')
     if(!button)return
@@ -64,6 +76,8 @@ function PreviewWedding({ project, refreshKey = 0 }) {
       nextCover.classList.add('cover-animation-finished')
       nextCover.setAttribute('data-animation-finished','true')
     }
+
+    runDocumentScripts(Array.from(parsed.querySelectorAll('script')))
 
     const restore=()=>{
       currentPhone.scrollTop=state.top||0
