@@ -29,6 +29,15 @@ const applyEventDate = (html, project) => {
   if (!date.trim()) return String(html || '')
   const source = String(html || '')
   const escapedDate = escapeHtml(date)
+
+  // La plantilla base todavía puede intentar convertir la fecha a Date().
+  // El campo Evento > Fecha debe ser texto libre, así que cualquier "Invalid Date"
+  // generado por la plantilla se sustituye directamente por el texto escrito por el usuario.
+  const normalized = source.replace(/Invalid Date/gi, escapedDate)
+  if (normalized !== source) return normalized
+
+  // Respaldo: si la plantilla cambia y no genera "Invalid Date", sustituir
+  // igualmente el contenido del h2 de la sección Evento por el texto libre.
   const eventSection = /(<section\s+class=["']section["'][^>]*>\s*<p\s+class=["']eyebrow["'][^>]*>\s*(?:El gran día|[^<]*)<\/p>[\s\S]*?)(<div\s+class=["']event-card["'])/i
   if (!eventSection.test(source)) return source
   return source.replace(eventSection, (fullMatch, beforeCards, firstCard) => beforeCards.replace(/(<h2\b[^>]*>)[\s\S]*?(<\/h2>)/i, `$1${escapedDate}$2`) + firstCard)
