@@ -20,9 +20,8 @@ export function renderWeddingHTML(project) {
   const appearance = project?.appearance || {}
   const typography = appearance.typography || {}
   const title = typography.title || {}
+  const specialSection = typography.sectionTitleSpecial || typography.sectionTitle || {}
 
-  // El elemento "Título" de Apariencia también controla el nombre
-  // de los novios en la sección "Con amor".
   const titleFont = escCssValue(title.fontFamily || "'Playfair Display', serif")
   const titleSize = Number(title.fontSize) || 42
   const titleWeight = Number(title.fontWeight) || 500
@@ -50,9 +49,21 @@ export function renderWeddingHTML(project) {
   const subtitleStyle = styleFor('subtitle', '#ffffff')
   const paragraphStyle = styleFor('paragraph', '#ffffff')
   const sectionStyle = styleFor('sectionTitle', '#ffffff')
+  const specialSectionStyle = {
+    ...styleFor('sectionTitleSpecial', '#ffffff'),
+  }
   const labelStyle = styleFor('label', '#c9a86a')
   const smallStyle = styleFor('small', '#ffffff')
   const buttonStyle = styleFor('button', '#ffffff')
+
+  const specialFont = escCssValue(specialSection.fontFamily || typography.sectionTitle?.fontFamily || "'Playfair Display', serif")
+  const specialSize = Number(specialSection.fontSize) || Number(typography.sectionTitle?.fontSize) || 32
+  const specialWeight = Number(specialSection.fontWeight) || Number(typography.sectionTitle?.fontWeight) || 500
+  const specialLineHeight = Number(specialSection.lineHeight) || Number(typography.sectionTitle?.lineHeight) || 1.15
+  const specialLetterSpacing = Number(specialSection.letterSpacing) || Number(typography.sectionTitle?.letterSpacing) || 0
+  const specialGradient = escCssValue(validGradient(specialSection.gradient || ''))
+  const specialIsGradient = specialSection.mode === 'gradient' && Boolean(specialGradient)
+  const specialColor = escCssValue(specialSection.color || typography.sectionTitle?.color || '#ffffff')
 
   const titleTypographyCss = `<style id="wedding-typography">
     #couple h2{
@@ -77,13 +88,22 @@ export function renderWeddingHTML(project) {
     .eyebrow{${labelStyle.paint}}
     .date,.venue,.event-card strong,.event-card span,.event-card small,.countdown span,.dress-card span,.dress-card strong,.rsvp-form label{${smallStyle.paint}}
     .button{${buttonStyle.paint}}
+
+    /* Títulos de sección especiales (*) */
+    .section-title-special{
+      font-family:${specialFont} !important;
+      font-size:${specialSize}px !important;
+      font-weight:${specialWeight} !important;
+      line-height:${specialLineHeight} !important;
+      letter-spacing:${specialLetterSpacing}px !important;
+      ${specialIsGradient
+        ? `background:${specialGradient} !important;-webkit-background-clip:text !important;background-clip:text !important;color:transparent !important;`
+        : `background:none !important;color:${specialColor} !important;`}
+    }
   </style>`
 
   html = html.replace('</head>', `${titleTypographyCss}</head>`)
 
-  // Tarjetas, campos y botones con efecto traslúcido uniforme.
-  // Se aplica después del CSS base para que también sobrescriba la capa
-  // anterior del formulario de confirmación sin alterar la estructura.
   const translucentCardsCss = `<style id="wedding-translucent-cards">
     .event-card,
     .countdown div,
@@ -107,8 +127,6 @@ export function renderWeddingHTML(project) {
       box-shadow:inset 0 1px 0 rgb(255 255 255 / 7%);
     }
 
-    /* La confirmación no tendrá una capa opaca propia: solo sus campos
-       traslúcidos, igual que las demás tarjetas de la invitación. */
     #confirmacion .rsvp-form{
       background:transparent !important;
       border:0 !important;
@@ -133,6 +151,34 @@ export function renderWeddingHTML(project) {
 
   html = html.replace('</head>', `${translucentCardsCss}</head>`)
 
+  // Estos textos pertenecen exclusivamente al elemento "Títulos de sección *".
+  // Se clasifican por su texto para que el cambio sea estable aunque alguna
+  // sección opcional esté desactivada y cambie el orden del documento.
+  const specialSectionTexts = [
+    'estas cordialmente invitado a la boda de',
+    'nuestra cancion',
+    'nuestra canción',
+    'nuestra historia',
+    'el gran día',
+    'la cuenta regresiva comienza',
+    'codigo de vestimenta',
+    'código de vestimenta',
+    'un detalle especial',
+    'por favor',
+  ]
+
+  const specialSectionScript = `<script id="wedding-special-section-titles">(() => {
+    const targets = new Set(${JSON.stringify(specialSectionTexts)});
+    const normalize = value => String(value || '').trim().toLowerCase().replace(/[áàä]/g,'a').replace(/[éèë]/g,'e').replace(/[íìï]/g,'i').replace(/[óòö]/g,'o').replace(/[úùü]/g,'u');
+    document.querySelectorAll('.eyebrow').forEach(el => {
+      if (targets.has(normalize(el.textContent))) {
+        el.classList.add('section-title-special');
+      }
+    });
+  })();</script>`
+
+  html = html.replace('</body>', `${specialSectionScript}</body>`)
+
   const texture = String(appearance.backgroundTextureImage || '').trim()
   const enabled = appearance.backgroundTextureType === 'image' && texture.length > 0
 
@@ -144,9 +190,6 @@ export function renderWeddingHTML(project) {
     : 'soft-light'
   const url = escCssUrl(texture)
 
-  // La textura funciona como una sola capa visual sobre toda la invitación.
-  // En móviles se fija al viewport completo para que la niebla nunca deje
-  // franjas laterales aunque exista scroll interno o una barra de desplazamiento.
   const textureCss = `<style id="wedding-global-texture">
     .phone{position:relative;isolation:isolate;overflow-y:auto;overflow-x:hidden;background:transparent;}
     .phone::before{content:"";position:sticky;display:block;top:0;left:0;width:100%;height:100svh;min-height:100svh;margin-bottom:-100svh;z-index:0;pointer-events:none;background-image:url("${url}");background-size:cover;background-position:center center;background-repeat:no-repeat;background-attachment:scroll;opacity:${opacity};mix-blend-mode:${blend};}
