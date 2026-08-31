@@ -51,21 +51,26 @@ export function renderWeddingHTML(project) {
 
   const texture = String(appearance.backgroundTextureImage || '').trim()
   const enabled = appearance.backgroundTextureType === 'image' && texture.length > 0
+  const colorOverlayEnabled = appearance.backgroundTextureColorOverlay !== false
 
   if (enabled) {
     const opacity = Math.max(0, Math.min(1, Number(appearance.backgroundTextureOpacity ?? 0.28)))
     const blend = ['normal','multiply','screen','overlay','soft-light','hard-light'].includes(appearance.backgroundTextureBlend) ? appearance.backgroundTextureBlend : 'soft-light'
     const url = escCssUrl(texture)
+    const overlayRule = colorOverlayEnabled
+      ? '.phone::after{content:"";position:fixed;inset:0;width:100vw;height:100dvh;z-index:1;pointer-events:none;background:var(--bg);opacity:.72;will-change:auto}'
+      : '.phone::after{display:none!important}'
     const textureCss = `<style id="wedding-global-texture">
       /* Fondo fijo: la textura no pertenece al contenido que hace scroll. */
       .phone{position:relative;isolation:isolate;overflow-x:hidden;background:transparent!important}
       .phone::before{content:"";position:fixed;inset:0;width:100vw;height:100dvh;z-index:0;pointer-events:none;background-image:url("${url}");background-size:cover;background-position:center center;background-repeat:no-repeat;opacity:${opacity};mix-blend-mode:${blend};will-change:auto}
-      /* Capa de color/degradado sobre la textura. */
-      .phone::after{content:"";position:fixed;inset:0;width:100vw;height:100dvh;z-index:1;pointer-events:none;background:var(--bg);opacity:.72;will-change:auto}
+      /* La capa de color/degradado puede activarse o desactivarse desde Apariencia > Fondo. */
+      ${overlayRule}
       .phone>.cover{position:relative;z-index:3}
       .phone>.section,.phone>.closing{position:relative;z-index:2;background:transparent!important}
       .phone.invite-open{background:transparent!important}
-      .phone.invite-open::before,.phone.invite-open::after{display:block}
+      .phone.invite-open::before{display:block}
+      .phone.invite-open::after{${colorOverlayEnabled ? 'display:block' : 'display:none!important'}}
       .phone:not(.invite-open)::before,.phone:not(.invite-open)::after{display:none}
       @media(max-width:699px){html,body{width:100%;max-width:100%;overflow-x:hidden}.phone{width:100vw;max-width:none;min-height:100dvh}.phone::before,.phone::after{width:100vw;height:100dvh;background-position:center center}}
     </style>`
@@ -74,7 +79,7 @@ export function renderWeddingHTML(project) {
 
   const coverBackgroundImage = String(project?.coverSection?.backgroundImage || '').trim()
   if (coverBackgroundImage) {
-    const darkness = Math.max(0, Math.min(1, Number(project?.couple?.photoOverlayOpacity ?? 0.55)))
+    const darkness = Math.max(0, Math.min(1, Number(project?.coverSection?.photoOverlayOpacity ?? project?.couple?.photoOverlayOpacity ?? 0.55)))
     const photoUrl = escCssUrl(coverBackgroundImage)
     const coverBackgroundCss = `<style id="wedding-cover-background">.phone{position:relative;isolation:isolate;background:var(--bg)!important}.phone>.cover{position:relative;isolation:isolate;overflow:hidden;background:transparent!important;z-index:3}.phone>.cover::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:url("${photoUrl}");background-size:cover;background-position:center;background-repeat:no-repeat}.phone>.cover::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:rgb(0 0 0 / ${darkness})}.phone>.cover>*{position:relative;z-index:2}.phone>.section,.phone>.closing{position:relative;z-index:4;background:transparent!important}@media(max-width:699px){.phone>.cover{min-height:100dvh}.phone>.cover::before{background-size:cover;background-position:center}}</style>`
     html = html.replace('</head>', `${coverBackgroundCss}</head>`)
