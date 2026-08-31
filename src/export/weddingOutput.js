@@ -131,9 +131,16 @@ const buildCountdownTarget = (project) => {
 
 const normalizeCountdownTimer = (html) => {
   const source = String(html || '')
-  return source
-    .replace('<script>const target=', '<script>if(window.__weddingCountdownInterval){clearInterval(window.__weddingCountdownInterval)};const target=')
-    .replace('setInterval(tick,1000)', 'window.__weddingCountdownInterval=setInterval(tick,1000)')
+  const removeCountdownScripts = source.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, (script) => {
+    const body = script.replace(/^<script\b[^>]*>|<\/script>$/gi, '')
+    const isCountdownScript = /(?:getElementById\s*\(\s*["'](?:days|hours|minutes|seconds)["']\s*\)|\.countdown\b)/i.test(body) && /setInterval|Date\s*\(/.test(body)
+    return isCountdownScript ? '' : script
+  })
+  const targetMatch = source.match(/data-countdown-target=["']([^"']*)["']/i)
+  const target = targetMatch ? targetMatch[1] : ''
+  if (!target) return removeCountdownScripts
+  const countdownScript = `<script id="wedding-countdown-timer">(()=>{const raw=${JSON.stringify(target)};const match=String(raw).match(/^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2})$/);if(!match)return;const target=new Date(Number(match[1]),Number(match[2])-1,Number(match[3]),Number(match[4]),Number(match[5]),0,0).getTime();const tick=()=>{const diff=Math.max(0,target-Date.now());const total=Math.floor(diff/1000);const days=Math.floor(total/86400);const hours=Math.floor(total%86400/3600);const minutes=Math.floor(total%3600/60);const seconds=total%60;const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=String(value).padStart(2,'0')};set('days',days);set('hours',hours);set('minutes',minutes);set('seconds',seconds)};tick();setInterval(tick,1000)})()</script>`
+  return removeCountdownScripts.replace('</body>', `${countdownScript}</body>`)
 }
 
 const preserveEditableCase = (html) => `${String(html || '')}<style id="wedding-preserve-editable-case">.eyebrow,.section-title-special,.cover h1,.cover-subtitle,.date,.venue,.text,.section h2,.event-card strong,.event-card span,.event-card small,.countdown span,.dress-card span,.dress-card strong,.rsvp-form label,.success,.button{ text-transform:none !important; }</style>`
@@ -147,7 +154,9 @@ export function renderWeddingHTML(project) {
       targetDate: countdownTarget,
     },
   }
-  const html = normalizeCountdownTimer(renderBaseWeddingHTML(renderProject))
+  let html = renderBaseWeddingHTML(renderProject)
+  if (countdownTarget) html = html.replace(/<section\s+class=["']section["'][^>]*>(?=\s*<p\s+class=["']eyebrow["'][^>]*>La cuenta regresiva comienza)/i, match => match.replace('>', ` data-countdown-target="${escapeHtml(countdownTarget)}">`))
+  html = normalizeCountdownTimer(html)
   const withEventDate = applyEventDate(removeEventVenues(applyCountdownSectionTitle(applyEventSectionTitle(applyStorySectionTitle(stripUnconfiguredCoupleEyebrow(html), project), project), project), project), project)
   return preserveEditableCase(withEventDate.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
 }
