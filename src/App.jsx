@@ -4,7 +4,7 @@ import { createProjectRecord, deleteProject, getProjects, saveProject } from './
 import DashboardWedding from './creator/DashboardWedding.jsx'
 import EditorWedding from './creator/EditorWedding.jsx'
 import PreviewWedding from './creator/PreviewWedding.jsx'
-import { renderWeddingHTML } from './export/renderWeddingHTML.js'
+import { renderWeddingHTML } from './export/weddingOutput.js'
 import './styles/app.css'
 import './styles/wedding.css'
 import './styles/dashboard.css'
