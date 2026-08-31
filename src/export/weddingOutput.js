@@ -54,6 +54,21 @@ const applyDressCodeFields = (html, project) => {
   })
 }
 
+const applyGiftsFields = (html, project) => {
+  const gifts = project?.gifts || {}
+  const sectionTitle = escapeHtml(gifts.sectionTitle ?? 'Un detalle especial')
+  const subtitle = escapeHtml(gifts.subtitle ?? 'subtitulo')
+  const source = String(html || '')
+  const sectionMarker = /<section\s+class=["']section["'][^>]*>\s*<p\s+class=["']eyebrow["'][^>]*>\s*Un detalle especial\s*<\/p>[\s\S]*?<\/section>/i
+  if (!sectionMarker.test(source)) return source
+
+  return source.replace(sectionMarker, (section) => {
+    let result = section.replace(/(<p\s+class=["']eyebrow["'][^>]*>)[\s\S]*?(<\/p>)/i, `$1${sectionTitle}$2`)
+    result = result.replace(/(<h2\b[^>]*>)[\s\S]*?(<\/h2>)/i, `$1${subtitle}$2`)
+    return result
+  })
+}
+
 const removeEventVenues = (html) => {
   const source = String(html || '')
   return source.replace(/(<div\s+class=["']event-card["'][^>]*>[\s\S]*?)<span\b[^>]*>[\s\S]*?<\/span>/gi, '$1')
@@ -180,12 +195,18 @@ export function renderWeddingHTML(project) {
       ...(project?.countdown || {}),
       targetDate: countdownTarget,
     },
+    gifts: {
+      ...(project?.gifts || {}),
+      title: project?.gifts?.subtitle ?? 'subtitulo',
+      message: '',
+    },
   }
   let html = renderBaseWeddingHTML(renderProject)
   if (countdownTarget) html = html.replace(/<section\s+class=["']section["'][^>]*>(?=\s*<p\s+class=["']eyebrow["'][^>]*>La cuenta regresiva comienza)/i, match => match.replace('>', ` data-countdown-target="${escapeHtml(countdownTarget)}">`))
   html = normalizeCountdownTimer(html)
   const withDressCode = applyDressCodeFields(html, project)
-  const withEventDate = applyEventDate(removeEventVenues(applyCountdownSectionTitle(applyEventSectionTitle(applyStorySectionTitle(stripUnconfiguredCoupleEyebrow(withDressCode), project), project), project), project), project)
+  const withGifts = applyGiftsFields(withDressCode, project)
+  const withEventDate = applyEventDate(removeEventVenues(applyCountdownSectionTitle(applyEventSectionTitle(applyStorySectionTitle(stripUnconfiguredCoupleEyebrow(withGifts), project), project), project), project), project)
   return preserveEditableCase(withEventDate.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
 }
 
