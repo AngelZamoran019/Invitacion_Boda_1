@@ -100,9 +100,6 @@ const buildCountdownTarget = (project) => {
   const raw = String(project?.countdown?.targetDate ?? '').trim()
   if (!raw) return ''
 
-  // Acepta tanto el valor nativo de datetime-local (YYYY-MM-DDTHH:mm)
-  // como el formato que ya se había guardado desde el campo de texto
-  // (YYYY-MM-DD T2000).
   let match = raw.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})\s*[Tt]\s*(\d{1,2})(?::?(\d{2}))?$/)
   if (match) {
     const year = Number(match[1])
@@ -132,6 +129,13 @@ const buildCountdownTarget = (project) => {
   return `${year}-${pad(month)}-${pad(day)}T${pad(time.hours)}:${pad(time.minutes)}`
 }
 
+const normalizeCountdownTimer = (html) => {
+  const source = String(html || '')
+  return source
+    .replace('<script>const target=', '<script>if(window.__weddingCountdownInterval){clearInterval(window.__weddingCountdownInterval)};const target=')
+    .replace('setInterval(tick,1000)', 'window.__weddingCountdownInterval=setInterval(tick,1000)')
+}
+
 const preserveEditableCase = (html) => `${String(html || '')}<style id="wedding-preserve-editable-case">.eyebrow,.section-title-special,.cover h1,.cover-subtitle,.date,.venue,.text,.section h2,.event-card strong,.event-card span,.event-card small,.countdown span,.dress-card span,.dress-card strong,.rsvp-form label,.success,.button{ text-transform:none !important; }</style>`
 
 export function renderWeddingHTML(project) {
@@ -143,8 +147,8 @@ export function renderWeddingHTML(project) {
       targetDate: countdownTarget,
     },
   }
-  const html = renderBaseWeddingHTML(renderProject)
-  const withEventDate = applyEventDate(removeEventVenues(applyCountdownSectionTitle(applyEventSectionTitle(applyStorySectionTitle(stripUnconfiguredCoupleEyebrow(html), project), project), project), project), project)
+  const html = normalizeCountdownTimer(renderBaseWeddingHTML(renderProject))
+  const withEventDate = applyEventDate(removeEventVenues(applyCountdownSectionTitle(applyEventSectionTitle(applyStorySectionTitle(stripUnconfiguredCoupleEyrow(html), project), project), project), project), project)
   return preserveEditableCase(withEventDate.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
 }
 
