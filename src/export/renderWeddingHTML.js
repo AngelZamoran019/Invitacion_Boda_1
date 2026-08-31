@@ -6,9 +6,50 @@ const escCssUrl = (value) => String(value || '')
   .replace(/</g, '%3C')
   .replace(/>/g, '%3E')
 
+const escCssValue = (value) => String(value || '')
+  .replace(/\\/g, '\\\\')
+  .replace(/</g, '')
+  .replace(/>/g, '')
+  .replace(/"/g, '\\"')
+  .replace(/;/g, '')
+
 export function renderWeddingHTML(project) {
-  const html = buildWeddingHTML(project)
+  let html = buildWeddingHTML(project)
   const appearance = project?.appearance || {}
+  const typography = appearance.typography || {}
+  const title = typography.title || {}
+
+  // El elemento "Título" de Apariencia también controla el nombre
+  // de los novios en la sección "Con amor".
+  const titleFont = escCssValue(title.fontFamily || "'Playfair Display', serif")
+  const titleSize = Number(title.fontSize) || 42
+  const titleWeight = Number(title.fontWeight) || 500
+  const titleLineHeight = Number(title.lineHeight) || 1.08
+  const titleLetterSpacing = Number(title.letterSpacing) || 0
+  const titleIsGradient = title.mode === 'gradient' && typeof title.gradient === 'string' && title.gradient.includes('gradient(')
+  const titleColor = escCssValue(title.color || '#ffffff')
+  const titleGradient = escCssValue(title.gradient || '')
+
+  const titleTypographyCss = `<style id="wedding-title-typography">
+    #couple h2{
+      font-family:${titleFont} !important;
+      font-size:${titleSize}px !important;
+      font-weight:${titleWeight} !important;
+      line-height:${titleLineHeight} !important;
+      letter-spacing:${titleLetterSpacing}px !important;
+      ${titleIsGradient
+        ? `background:${titleGradient} !important;-webkit-background-clip:text !important;background-clip:text !important;color:transparent !important;`
+        : `background:none !important;color:${titleColor} !important;`}
+    }
+    #couple h2 span{
+      ${titleIsGradient
+        ? `background:${titleGradient} !important;-webkit-background-clip:text !important;background-clip:text !important;color:transparent !important;`
+        : `background:none !important;color:${titleColor} !important;`}
+    }
+  </style>`
+
+  html = html.replace('</head>', `${titleTypographyCss}</head>`)
+
   const texture = String(appearance.backgroundTextureImage || '').trim()
   const enabled = appearance.backgroundTextureType === 'image' && texture.length > 0
 
