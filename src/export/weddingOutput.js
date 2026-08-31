@@ -32,9 +32,11 @@ const removeEventVenues = (html) => {
   return source.replace(/(<div\s+class=["']event-card["'][^>]*>[\s\S]*?)<span\b[^>]*>[\s\S]*?<\/span>/gi, '$1')
 }
 
+const cleanEventDateText = (value) => String(value ?? '').replace(/\s*<\/h2>\s*$/i, '').trim()
+
 const applyEventDate = (html, project) => {
-  const date = String(project?.event?.date ?? '')
-  if (!date.trim()) return String(html || '')
+  const date = cleanEventDateText(project?.event?.date)
+  if (!date) return String(html || '')
   const source = String(html || '')
   const escapedDate = escapeHtml(date)
   const eventSection = /(<section\s+class=["']section["'][^>]*>\s*<p\s+class=["']eyebrow["'][^>]*>\s*(?:El gran día|[^<]*)<\/p>[\s\S]*?)(<div\s+class=["']event-card["'])/i
@@ -118,7 +120,7 @@ export function renderWeddingHTML(project) {
   }
   const html = renderBaseWeddingHTML(renderProject)
   const withEventDate = applyEventDate(removeEventVenues(applyCountdownSectionTitle(applyEventSectionTitle(applyStorySectionTitle(stripUnconfiguredCoupleEyebrow(html), project), project), project)), project)
-  return preserveEditableCase(withEventDate.replace(/>Invalid Date</gi, `>${escapeHtml(project?.event?.date || '')}`))
+  return preserveEditableCase(withEventDate.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
 }
 
 export default renderWeddingHTML
