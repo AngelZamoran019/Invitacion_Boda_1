@@ -1,7 +1,7 @@
 export const createDefaultWeddingProject = () => ({
   id: '', name: 'Nueva invitación', version: 'wedding-v1', template: 'wedding-v1', created: new Date().toISOString(), updated: new Date().toISOString(), published: false, publishedDate: null, cover: '',
   appearance: {
-    backgroundColor:'#0b1730', backgroundMode:'solid', backgroundGradient:'', backgroundTextureType:'image', backgroundTextureImage:'', backgroundTexture:'none', backgroundTextureOpacity:0.45, backgroundTextureColor:'#ffffff', backgroundTextureBlend:'normal', backgroundTextureSize:'cover',
+    backgroundColor:'#0b1730', backgroundMode:'solid', backgroundGradient:'', backgroundTextureType:'image', backgroundTextureImage:'', backgroundTexture:'none', backgroundTextureOpacity:0.45, backgroundTextureColor:'#ffffff', backgroundTextureBlend:'normal', backgroundTextureSize:'cover', backgroundTextureColorOverlay:true,
     accentColor:'#c9a86a', accentMode:'solid', accentGradient:'', textColor:'#ffffff', textMode:'solid', textGradient:'', fontFamily:"'Playfair Display',serif",
     typography: {
       title:{fontFamily:"'Playfair Display',serif",fontSize:42,color:'#ffffff',mode:'solid',gradient:'',fontWeight:500,lineHeight:1.08,letterSpacing:0},
