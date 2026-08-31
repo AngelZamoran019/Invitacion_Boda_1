@@ -50,11 +50,11 @@ export function renderWeddingHTML(project) {
   html = html.replace('</body>', `${specialSectionScript}</body>`)
 
   const texture = String(appearance.backgroundTextureImage || '').trim()
-  if (appearance.backgroundTextureType === 'image' && texture) {
+  if (texture) {
     const opacity = Math.max(0, Math.min(1, Number(appearance.backgroundTextureOpacity ?? 0.28)))
     const blend = ['normal','multiply','screen','overlay','soft-light','hard-light'].includes(appearance.backgroundTextureBlend) ? appearance.backgroundTextureBlend : 'soft-light'
     const url = escCssUrl(texture)
-    const textureCss = `<style id="wedding-global-texture">.phone{position:relative;isolation:isolate;overflow-x:hidden;background:var(--bg)!important}.phone::before{content:"";position:fixed;inset:0;width:100vw;height:100dvh;z-index:0;pointer-events:none;background-image:url("${url}");background-size:cover;background-position:center;background-repeat:no-repeat;opacity:${opacity};mix-blend-mode:${blend}}.phone>*{position:relative;z-index:2}.phone>.cover{z-index:3}.phone>.section,.phone>.closing{background:transparent!important}@media(max-width:699px){html,body{width:100%;max-width:100%;overflow-x:hidden}.phone{width:100%;max-width:none;min-height:100dvh}.phone::before{width:100vw;height:100dvh}}</style>`
+    const textureCss = `<style id="wedding-global-texture">/* TEXTURA SOLO PARA LA PÁGINA DE INVITACIÓN */.phone{position:relative;isolation:isolate;overflow-x:hidden;background:var(--bg)!important}.phone::before{content:"";position:fixed;inset:0;width:100vw;height:100dvh;z-index:0;pointer-events:none;background-image:url("${url}");background-size:cover;background-position:center center;background-repeat:no-repeat;opacity:${opacity};mix-blend-mode:${blend}}.phone>.cover{z-index:3}.phone>.section,.phone>.closing{position:relative;z-index:2;background:transparent!important}.phone.invite-open{background:var(--bg)!important}.phone.invite-open::before{display:block}.phone:not(.invite-open)::before{display:none}@media(max-width:699px){html,body{width:100%;max-width:100%;overflow-x:hidden}.phone{width:100%;max-width:none;min-height:100dvh}.phone::before{width:100vw;height:100dvh;background-size:cover;background-position:center center}}</style>`
     html = html.replace('</head>', `${textureCss}</head>`)
   }
 
