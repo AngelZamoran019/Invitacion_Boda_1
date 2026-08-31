@@ -96,7 +96,41 @@ const parseEventTime = (value) => {
   return { hours, minutes }
 }
 
-const buildCountdownTarget = (project) => String(project?.countdown?.targetDate ?? '').trim()
+const buildCountdownTarget = (project) => {
+  const raw = String(project?.countdown?.targetDate ?? '').trim()
+  if (!raw) return ''
+
+  // Acepta tanto el valor nativo de datetime-local (YYYY-MM-DDTHH:mm)
+  // como el formato que ya se había guardado desde el campo de texto
+  // (YYYY-MM-DD T2000).
+  let match = raw.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})\s*[Tt]\s*(\d{1,2})(?::?(\d{2}))?$/)
+  if (match) {
+    const year = Number(match[1])
+    const month = Number(match[2])
+    const day = Number(match[3])
+    const hours = Number(match[4])
+    const minutes = Number(match[5] || 0)
+    if (hours <= 23 && minutes <= 59) {
+      const date = new Date(year, month - 1, day, hours, minutes, 0, 0)
+      if (date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
+        const pad = value => String(value).padStart(2, '0')
+        return `${year}-${pad(month)}-${pad(day)}T${pad(hours)}:${pad(minutes)}`
+      }
+    }
+  }
+
+  const normalized = raw.replace(/\s+/g, ' ')
+  const parsedDate = parseEventDate(normalized)
+  if (!parsedDate) return raw
+  const timeMatch = normalized.match(/(?:T|\s)(\d{1,2})(?::?(\d{2}))?\s*(a\.?\s*m\.?|p\.?\s*m\.?)?$/i)
+  if (!timeMatch) return raw
+  const time = parseEventTime(`${timeMatch[1]}:${timeMatch[2] || '00'}${timeMatch[3] || ''}`)
+  const { year, month, day } = parsedDate
+  const date = new Date(year, month - 1, day, time.hours, time.minutes, 0, 0)
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return raw
+  const pad = value => String(value).padStart(2, '0')
+  return `${year}-${pad(month)}-${pad(day)}T${pad(time.hours)}:${pad(time.minutes)}`
+}
 
 const preserveEditableCase = (html) => `${String(html || '')}<style id="wedding-preserve-editable-case">.eyebrow,.section-title-special,.cover h1,.cover-subtitle,.date,.venue,.text,.section h2,.event-card strong,.event-card span,.event-card small,.countdown span,.dress-card span,.dress-card strong,.rsvp-form label,.success,.button{ text-transform:none !important; }</style>`
 
@@ -110,7 +144,7 @@ export function renderWeddingHTML(project) {
     },
   }
   const html = renderBaseWeddingHTML(renderProject)
-  const withEventDate = applyEventDate(removeEventVenues(applyCountdownSectionTitle(applyEventSectionTitle(applyStorySectionTitle(stripUnconfiguredCoupleEyebrow(html), project), project), project)), project)
+  const withEventDate = applyEventDate(removeEventVenues(applyCountdownSectionTitle(applyEventSectionTitle(applyStorySectionTitle(stripUnconfiguredCoupleEyebrow(html), project), project), project), project), project)
   return preserveEditableCase(withEventDate.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
 }
 
