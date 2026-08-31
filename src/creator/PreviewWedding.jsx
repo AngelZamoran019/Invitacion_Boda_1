@@ -1,105 +1,76 @@
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { renderWeddingHTML } from '../export/renderWeddingHTML.js'
+
+const INITIAL_STATE = {
+  inviteOpen: false,
+  scrollTop: 0,
+  scrollLeft: 0,
+}
 
 function PreviewWedding({ project }) {
   const iframeRef = useRef(null)
-  const viewStateRef = useRef({
-    inviteOpen: false,
-    scrollTop: 0,
-    scrollLeft: 0,
-  })
+  const viewStateRef = useRef({ ...INITIAL_STATE })
+  const firstRenderRef = useRef(true)
+  const projectRef = useRef(project)
 
-  const html = useMemo(() => {
-    const rendered = renderWeddingHTML(project)
-    const state = viewStateRef.current
+  projectRef.current = project
 
-    // Si el usuario ya abrió la invitación, el nuevo documento de la VP
-    // nace directamente en esa página para evitar regresar visualmente a portada.
-    if (state.inviteOpen) {
-      return rendered.replace('<main class="phone">', '<main class="phone invite-open">')
-    }
-
-    return rendered
-  }, [project])
-
-  useLayoutEffect(() => {
+  useEffect(() => {
     const iframe = iframeRef.current
     if (!iframe) return undefined
 
-    const getScrollState = () => {
+    const captureState = () => {
       try {
         const doc = iframe.contentDocument
-        const phone = doc?.querySelector('.phone')
-        if (!phone) return null
+        if (!doc) return
 
-        // .phone es el contenedor principal de scroll de la invitación.
-        // También contemplamos html/body/window para que el estado no se
-        // pierda si cambia alguna regla de overflow en el futuro.
-        const scrollTop = Math.max(
-          Number(phone.scrollTop) || 0,
-          Number(doc.documentElement?.scrollTop) || 0,
-          Number(doc.body?.scrollTop) || 0,
-          Number(iframe.contentWindow?.scrollY) || 0,
-        )
+        const phone = doc.querySelector('.phone')
+        const scrollingElement = doc.scrollingElement || doc.documentElement
 
-        const scrollLeft = Math.max(
-          Number(phone.scrollLeft) || 0,
-          Number(doc.documentElement?.scrollLeft) || 0,
-          Number(doc.body?.scrollLeft) || 0,
-          Number(iframe.contentWindow?.scrollX) || 0,
-        )
+        if (!phone && !scrollingElement) return
 
-        return {
-          inviteOpen: phone.classList.contains('invite-open'),
-          scrollTop,
-          scrollLeft,
+        const target = phone || scrollingElement
+
+        viewStateRef.current = {
+          inviteOpen: Boolean(phone?.classList.contains('invite-open')),
+          scrollTop: target.scrollTop || 0,
+          scrollLeft: target.scrollLeft || 0,
         }
       } catch {
-        return null
-      }
-    }
-
-    const captureState = () => {
-      const state = getScrollState()
-      if (state) {
-        viewStateRef.current = state
+        // El iframe puede estar en proceso de actualización.
       }
     }
 
     const restoreState = () => {
       try {
         const doc = iframe.contentDocument
-        const phone = doc?.querySelector('.phone')
-        if (!phone) return
+        if (!doc) return
 
+        const phone = doc.querySelector('.phone')
+        const scrollingElement = doc.scrollingElement || doc.documentElement
         const state = viewStateRef.current
 
-        if (state.inviteOpen) {
+        if (!phone && !scrollingElement) return
+
+        if (state.inviteOpen && phone) {
           phone.classList.add('invite-open')
         }
 
         const restoreScroll = () => {
-          const top = Number(state.scrollTop) || 0
-          const left = Number(state.scrollLeft) || 0
+          const currentPhone = doc.querySelector('.phone')
+          const currentScrollingElement = doc.scrollingElement || doc.documentElement
+          const target = currentPhone || currentScrollingElement
 
-          phone.scrollTop = top
-          phone.scrollLeft = left
+          if (!target) return
 
-          if (doc.documentElement) {
-            doc.documentElement.scrollTop = top
-            doc.documentElement.scrollLeft = left
+          target.scrollTop = state.scrollTop || 0
+          target.scrollLeft = state.scrollLeft || 0
+
+          if (doc.defaultView) {
+            doc.defaultView.scrollTo(state.scrollLeft || 0, state.scrollTop || 0)
           }
-
-          if (doc.body) {
-            doc.body.scrollTop = top
-            doc.body.scrollLeft = left
-          }
-
-          iframe.contentWindow?.scrollTo(left, top)
         }
 
-        // El iframe puede terminar de calcular el layout después de load.
-        // Por eso restauramos en varios frames sin alterar la posición del usuario.
         restoreScroll()
         requestAnimationFrame(restoreScroll)
         requestAnimationFrame(() => requestAnimationFrame(restoreScroll))
@@ -107,56 +78,93 @@ function PreviewWedding({ project }) {
         setTimeout(restoreScroll, 150)
 
         const onScroll = () => {
-          const nextState = getScrollState()
-          if (nextState) {
-            viewStateRef.current = nextState
+          const currentPhone = doc.querySelector('.phone')
+          const currentScrollingElement = doc.scrollingElement || doc.documentElement
+          const target = currentPhone || currentScrollingElement
+
+          if (!target) return
+
+          viewStateRef.current = {
+            inviteOpen: Boolean(currentPhone?.classList.contains('invite-open')),
+            scrollTop: target.scrollTop || 0,
+            scrollLeft: target.scrollLeft || 0,
           }
         }
 
-        phone.addEventListener('scroll', onScroll, { passive: true })
-        doc.addEventListener('scroll', onScroll, { passive: true, capture: true })
+        const scrollTargets = [phone, scrollingElement, doc.defaultView].filter(Boolean)
+        scrollTargets.forEach((target) => target.addEventListener('scroll', onScroll, { passive: true }))
 
-        const observer = new MutationObserver(() => {
-          viewStateRef.current.inviteOpen = phone.classList.contains('invite-open')
-        })
-        observer.observe(phone, {
-          attributes: true,
-          attributeFilter: ['class'],
-        })
+        const observer = phone
+          ? new MutationObserver(() => {
+              viewStateRef.current.inviteOpen = phone.classList.contains('invite-open')
+            })
+          : null
+
+        observer?.observe(phone, { attributes: true, attributeFilter: ['class'] })
 
         iframe.__previewCleanup = () => {
-          phone.removeEventListener('scroll', onScroll)
-          doc.removeEventListener('scroll', onScroll, true)
-          observer.disconnect()
+          scrollTargets.forEach((target) => target.removeEventListener('scroll', onScroll))
+          observer?.disconnect()
         }
       } catch {
-        // Ignorar durante la navegación interna del iframe.
+        // Ignorar durante la carga o reconstrucción del documento.
       }
     }
 
-    const onLoad = () => {
-      iframe.__previewCleanup?.()
-      restoreState()
+    const renderIntoIframe = () => {
+      try {
+        // IMPORTANTE: el iframe no recibe srcDoc dinámico desde React.
+        // Así nunca se desmonta ni se recrea el elemento al editar el proyecto.
+        // Capturamos el scroll antes de reemplazar su documento.
+        if (!firstRenderRef.current) {
+          captureState()
+        }
+
+        const rendered = renderWeddingHTML(projectRef.current)
+        const state = viewStateRef.current
+        const html = state.inviteOpen
+          ? rendered.replace('<main class="phone">', '<main class="phone invite-open">')
+          : rendered
+
+        iframe.__previewCleanup?.()
+
+        const doc = iframe.contentDocument || iframe.contentWindow?.document
+        if (!doc) return
+
+        doc.open()
+        doc.write(html)
+        doc.close()
+
+        firstRenderRef.current = false
+
+        const onReady = () => {
+          restoreState()
+        }
+
+        if (doc.readyState === 'loading') {
+          doc.addEventListener('DOMContentLoaded', onReady, { once: true })
+        } else {
+          onReady()
+        }
+      } catch {
+        // Mantener la VP viva aunque el documento se encuentre cambiando.
+      }
     }
 
-    // useLayoutEffect es intencional: su cleanup captura la posición ANTES
-    // de que React cambie srcDoc y el iframe vuelva a cargar.
-    iframe.addEventListener('load', onLoad)
+    renderIntoIframe()
 
     return () => {
       captureState()
-      iframe.removeEventListener('load', onLoad)
       iframe.__previewCleanup?.()
       iframe.__previewCleanup = null
     }
-  }, [html])
+  }, [project])
 
   return (
     <iframe
       ref={iframeRef}
       className="wedding-preview-frame"
       title="Vista previa de la invitación"
-      srcDoc={html}
       scrolling="yes"
     />
   )
