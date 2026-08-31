@@ -81,7 +81,7 @@ export function renderWeddingHTML(project) {
 
   html = html.replace('</head>', `${titleTypographyCss}</head>`)
 
-  // Tarjetas y campos con efecto traslúcido uniforme.
+  // Tarjetas, campos y botones con efecto traslúcido uniforme.
   // Se aplica después del CSS base para que también sobrescriba la capa
   // anterior del formulario de confirmación sin alterar la estructura.
   const translucentCardsCss = `<style id="wedding-translucent-cards">
@@ -91,7 +91,8 @@ export function renderWeddingHTML(project) {
     .rsvp-form input,
     .rsvp-form select,
     .rsvp-form textarea,
-    .success{
+    .success,
+    .button{
       background:rgb(255 255 255 / 9%) !important;
       border:1px solid rgb(255 255 255 / 22%) !important;
       backdrop-filter:blur(10px);
@@ -101,7 +102,8 @@ export function renderWeddingHTML(project) {
     .event-card,
     .dress-card,
     .countdown div,
-    .success{
+    .success,
+    .button{
       box-shadow:inset 0 1px 0 rgb(255 255 255 / 7%);
     }
 
@@ -121,7 +123,8 @@ export function renderWeddingHTML(project) {
       .rsvp-form input,
       .rsvp-form select,
       .rsvp-form textarea,
-      .success{
+      .success,
+      .button{
         backdrop-filter:blur(8px);
         -webkit-backdrop-filter:blur(8px);
       }
