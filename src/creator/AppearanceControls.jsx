@@ -114,7 +114,7 @@ function BackgroundControls({ appearance, set }) {
   }
 
   const texture = String(appearance.backgroundTextureImage || '').trim()
-  const textureEnabled = appearance.backgroundTextureType === 'image' || Boolean(texture)
+  const textureEnabled = appearance.backgroundTextureType === 'image'
   const textureOpacity = Number.isFinite(Number(appearance.backgroundTextureOpacity)) ? Number(appearance.backgroundTextureOpacity) : 0.28
   const textureBlend = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'hard-light'].includes(appearance.backgroundTextureBlend) ? appearance.backgroundTextureBlend : 'soft-light'
 
