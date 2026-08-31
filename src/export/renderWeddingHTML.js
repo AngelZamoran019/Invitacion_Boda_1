@@ -80,6 +80,37 @@ export function renderWeddingHTML(project) {
     html = html.replace('</head>', `${coupleBackgroundCss}</head>`)
   }
 
+  const coverAnimationCss = `<style id="wedding-cover-animations">
+    @keyframes wedding-photo-reveal{0%{opacity:0;transform:scale(1.08);filter:blur(14px)}45%{opacity:.65;transform:scale(1.035);filter:blur(5px)}100%{opacity:1;transform:scale(1);filter:blur(0)}}
+    @keyframes wedding-overlay-darken{0%{opacity:0}100%{opacity:1}}
+    @keyframes wedding-diamond-reveal{0%{opacity:0;transform:scale(.35) rotate(-20deg);filter:blur(12px)}55%{opacity:1;transform:scale(1.12) rotate(4deg);filter:blur(0)}100%{opacity:1;transform:scale(1) rotate(0)}}
+    @keyframes wedding-focus-in{0%{opacity:0;transform:scale(.96);filter:blur(14px)}65%{opacity:1;transform:scale(1.01);filter:blur(0)}100%{opacity:1;transform:scale(1);filter:blur(0)}}
+    @keyframes wedding-explosion-in{0%{opacity:0;transform:scale(.58);filter:blur(12px)}55%{opacity:1;transform:scale(1.08);filter:blur(0)}78%{transform:scale(.97)}100%{opacity:1;transform:scale(1)}}
+    @keyframes wedding-line-reveal{0%{opacity:0;transform:scaleX(0)}55%{opacity:1;transform:scaleX(1.12)}100%{opacity:1;transform:scaleX(1)}}
+    @keyframes wedding-date-reveal{0%{opacity:0;transform:translateY(12px) scale(.97);filter:blur(8px)}65%{opacity:1;transform:translateY(-2px) scale(1.01);filter:blur(0)}100%{opacity:1;transform:translateY(0) scale(1)}}
+    @keyframes wedding-rise-in{0%{opacity:0;transform:translateY(42px) scale(.96);filter:blur(5px)}65%{opacity:1;transform:translateY(-5px) scale(1.01);filter:blur(0)}100%{opacity:1;transform:translateY(0) scale(1)}}
+
+    .phone>.cover::before{animation:wedding-photo-reveal 1.45s cubic-bezier(.22,1,.36,1) both}
+    .phone>.cover::after{animation:wedding-overlay-darken .85s cubic-bezier(.22,1,.36,1) 1.45s both}
+    .phone>.cover>.ornament{opacity:0;animation:wedding-diamond-reveal .72s cubic-bezier(.22,1,.36,1) 2.38s both}
+    .phone>.cover>.eyebrow{opacity:0;animation:wedding-focus-in .72s cubic-bezier(.22,1,.36,1) 3.12s both}
+    .phone>.cover>h1{opacity:0;animation:wedding-explosion-in .82s cubic-bezier(.16,1,.3,1) 3.84s both}
+    .phone>.cover>.line{opacity:0;transform-origin:center;animation:wedding-line-reveal .62s cubic-bezier(.22,1,.36,1) 4.68s both;background:linear-gradient(90deg,transparent,var(--accent),transparent)!important}
+    .phone>.cover>.cover-subtitle,.phone>.cover>.date,.phone>.cover>.venue{opacity:0;animation:wedding-date-reveal .68s cubic-bezier(.22,1,.36,1) 5.32s both}
+    .phone>.cover>.button{opacity:0;animation:wedding-rise-in .76s cubic-bezier(.22,1,.36,1) 6.04s both}
+
+    .phone>.cover.cover-animation-finished::before,.phone>.cover.cover-animation-finished::after{animation:none!important;opacity:1!important;transform:none!important;filter:none!important}
+    .phone>.cover.cover-animation-finished>.ornament,.phone>.cover.cover-animation-finished>.eyebrow,.phone>.cover.cover-animation-finished>h1,.phone>.cover.cover-animation-finished>.line,.phone>.cover.cover-animation-finished>.cover-subtitle,.phone>.cover.cover-animation-finished>.date,.phone>.cover.cover-animation-finished>.venue,.phone>.cover.cover-animation-finished>.button{animation:none!important;opacity:1!important;transform:none!important;filter:none!important}
+
+    @media(prefers-reduced-motion:reduce){
+      .phone>.cover::before,.phone>.cover::after,.phone>.cover>*{animation:none!important;opacity:1!important;transform:none!important;filter:none!important}
+    }
+  </style>`
+  html = html.replace('</head>', `${coverAnimationCss}</head>`)
+
+  const coverAnimationScript = `<script id="wedding-cover-animation-script">(()=>{const finish=()=>{const cover=document.querySelector('.phone>.cover');if(!cover)return;cover.classList.add('cover-animation-finished');cover.setAttribute('data-animation-finished','true')};document.addEventListener('DOMContentLoaded',()=>{const button=document.querySelector('.phone>.cover>.button');if(!button){finish();return}if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches){finish();return}button.addEventListener('animationend',event=>{if(event.animationName==='wedding-rise-in')finish()},{once:true});setTimeout(finish,7100)})})()</script>`
+  html = html.replace('</body>', `${coverAnimationScript}</body>`)
+
   const pageNavigationCss = `<style id="wedding-page-navigation">html,body{width:100%;min-height:100%;margin:0;overflow:hidden;background:var(--bg)}body{display:block}.phone{width:100vw;max-width:none;height:100dvh;min-height:100dvh;max-height:100dvh;margin:0;overflow:hidden;overscroll-behavior:none;scrollbar-width:none;background:var(--bg)!important;border-radius:0;box-shadow:none}.phone::-webkit-scrollbar{display:none}.phone>.section,.phone>.closing{display:none!important}.phone.invite-open{width:100vw;height:100dvh;min-height:100dvh;max-height:100dvh;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:auto}.phone.invite-open>.cover{display:none!important}.phone.invite-open>.section,.phone.invite-open>.closing{display:flex!important}.phone.invite-open>.section:first-of-type{padding-top:48px}@media(max-width:699px){html,body{width:100%;height:100%;overflow:hidden}.phone{width:100vw;height:100dvh;min-height:100dvh;max-height:100dvh;border-radius:0;box-shadow:none}.phone.invite-open{width:100vw;height:100dvh;min-height:100dvh;max-height:100dvh}}</style>`
   html = html.replace('</head>', `${pageNavigationCss}</head>`)
 
