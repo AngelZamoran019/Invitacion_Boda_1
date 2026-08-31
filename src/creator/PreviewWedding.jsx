@@ -1,6 +1,21 @@
 import { useEffect, useRef } from 'react'
 import { renderWeddingHTML } from '../export/weddingOutput.js'
 
+const applyConfirmationTexts = (html, project) => {
+  const confirmation = project?.confirmation || {}
+  const sectionTitle = String(confirmation.sectionTitle ?? 'Por favor').trim() || 'Por favor'
+  const subtitle = String(confirmation.subtitle ?? 'Confirma tu asistencia').trim() || 'Confirma tu asistencia'
+  const source = String(html || '')
+  const confirmationSection = /(<section\s+class=["']section["'][^>]*id=["']confirmacion["'][^>]*>[\s\S]*?<\/section>)/i
+  if (!confirmationSection.test(source)) return source
+
+  return source.replace(confirmationSection, (section) => {
+    let result = section.replace(/(<p\s+class=["']eyebrow["'][^>]*>)[\s\S]*?(<\/p>)/i, `$1${sectionTitle.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))}$2`)
+    result = result.replace(/(<h2\b[^>]*>)[\s\S]*?(<\/h2>)/i, `$1${subtitle.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))}$2`)
+    return result
+  })
+}
+
 function PreviewWedding({ project, refreshKey = 0 }) {
   const iframeRef = useRef(null)
   const projectRef = useRef(project)
@@ -94,7 +109,7 @@ function PreviewWedding({ project, refreshKey = 0 }) {
     }
 
     try {
-      const html = buildBridgeHTML(renderWeddingHTML(projectRef.current))
+      const html = buildBridgeHTML(applyConfirmationTexts(renderWeddingHTML(projectRef.current), projectRef.current))
       const doc = iframe.contentDocument || iframe.contentWindow?.document
       if (!doc) return undefined
       doc.open()
@@ -115,7 +130,7 @@ function PreviewWedding({ project, refreshKey = 0 }) {
     if (!iframe || !initializedRef.current) return
 
     try {
-      const html = renderWeddingHTML(project)
+      const html = applyConfirmationTexts(renderWeddingHTML(project), project)
       iframe.contentWindow?.postMessage({
         type: 'WEDDING_PREVIEW_UPDATE',
         html,
