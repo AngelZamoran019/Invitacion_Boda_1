@@ -81,6 +81,55 @@ export function renderWeddingHTML(project) {
 
   html = html.replace('</head>', `${titleTypographyCss}</head>`)
 
+  // Tarjetas y campos con efecto traslúcido uniforme.
+  // Se aplica después del CSS base para que también sobrescriba la capa
+  // anterior del formulario de confirmación sin alterar la estructura.
+  const translucentCardsCss = `<style id="wedding-translucent-cards">
+    .event-card,
+    .countdown div,
+    .dress-card,
+    .rsvp-form input,
+    .rsvp-form select,
+    .rsvp-form textarea,
+    .success{
+      background:rgb(255 255 255 / 9%) !important;
+      border:1px solid rgb(255 255 255 / 22%) !important;
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+    }
+
+    .event-card,
+    .dress-card,
+    .countdown div,
+    .success{
+      box-shadow:inset 0 1px 0 rgb(255 255 255 / 7%);
+    }
+
+    /* La confirmación no tendrá una capa opaca propia: solo sus campos
+       traslúcidos, igual que las demás tarjetas de la invitación. */
+    #confirmacion .rsvp-form{
+      background:transparent !important;
+      border:0 !important;
+      box-shadow:none !important;
+      padding:0 !important;
+    }
+
+    @media(max-width:699px){
+      .event-card,
+      .countdown div,
+      .dress-card,
+      .rsvp-form input,
+      .rsvp-form select,
+      .rsvp-form textarea,
+      .success{
+        backdrop-filter:blur(8px);
+        -webkit-backdrop-filter:blur(8px);
+      }
+    }
+  </style>`
+
+  html = html.replace('</head>', `${translucentCardsCss}</head>`)
+
   const texture = String(appearance.backgroundTextureImage || '').trim()
   const enabled = appearance.backgroundTextureType === 'image' && texture.length > 0
 
