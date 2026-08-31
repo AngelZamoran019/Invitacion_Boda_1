@@ -11,9 +11,11 @@ const applyStorySectionTitle = (html, project) => {
   return source.replace(storyMarker, `$1${title}$2`)
 }
 
+const preserveEditableCase = (html) => `${String(html || '')}<style id="wedding-preserve-editable-case">.eyebrow,.section-title-special,.cover h1,.cover-subtitle,.date,.venue,.text,.section h2,.event-card strong,.event-card span,.event-card small,.countdown span,.dress-card span,.dress-card strong,.rsvp-form label,.success,.button{ text-transform:none !important; }</style>`
+
 export function renderWeddingHTML(project) {
   const html = renderBaseWeddingHTML(project)
-  return applyStorySectionTitle(stripUnconfiguredCoupleEyebrow(html), project)
+  return preserveEditableCase(applyStorySectionTitle(stripUnconfiguredCoupleEyebrow(html), project))
 }
 
 export default renderWeddingHTML
