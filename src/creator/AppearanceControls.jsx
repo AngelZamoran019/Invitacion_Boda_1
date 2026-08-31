@@ -6,6 +6,7 @@ const FONTS = [
 const GRADIENTS = [
   ['Dorado', 'linear-gradient(135deg, #8b6f47, #c9a86a, #f4efe8)'], ['Atardecer', 'linear-gradient(135deg, #7c3aed, #b76e79, #c9a86a)'], ['Romántico', 'linear-gradient(135deg, #8f5f6d, #d8b4a0, #f4efe8)'], ['Océano', 'linear-gradient(135deg, #071b35, #1d4e68, #6ea7b8)'], ['Salvia', 'linear-gradient(135deg, #34463d, #879b8e, #d5ded8)'], ['Marfil', 'linear-gradient(135deg, #d8d0c2, #f4efe8, #fffdf8)'], ['Noche', 'linear-gradient(135deg, #05070d, #111827, #374151)'], ['Cielo', 'linear-gradient(135deg, #172554, #2563eb, #93c5fd)'], ['Borgoña', 'linear-gradient(135deg, #350d19, #7f1d35, #d6a0a8)'], ['Arena', 'linear-gradient(135deg, #8c6b4f, #c7a77a, #f2e1c4)'],
 ]
+const DEFAULT_GRADIENT = GRADIENTS[0][1]
 const TYPE_ITEMS = [['title', 'Título'], ['subtitle', 'Subtítulo'], ['paragraph', 'Párrafos'], ['sectionTitle', 'Títulos de sección'], ['label', 'Etiquetas / encabezados pequeños'], ['small', 'Texto pequeño'], ['button', 'Botones']]
 const DEFAULTS = {
   title: { fontFamily: FONTS[0][1], fontSize: 42, color: '#ffffff', mode: 'solid', gradient: '', fontWeight: 500, lineHeight: 1.08, letterSpacing: 0 }, subtitle: { fontFamily: FONTS[0][1], fontSize: 16, color: '#ffffff', mode: 'solid', gradient: '', fontWeight: 400, lineHeight: 1.5, letterSpacing: 0 }, paragraph: { fontFamily: FONTS[0][1], fontSize: 16, color: '#ffffff', mode: 'solid', gradient: '', fontWeight: 400, lineHeight: 1.7, letterSpacing: 0 }, sectionTitle: { fontFamily: FONTS[0][1], fontSize: 32, color: '#ffffff', mode: 'solid', gradient: '', fontWeight: 500, lineHeight: 1.15, letterSpacing: 0 }, label: { fontFamily: FONTS[9][1], fontSize: 11, color: '#c9a86a', mode: 'solid', gradient: '', fontWeight: 700, lineHeight: 1.4, letterSpacing: 2 }, small: { fontFamily: FONTS[9][1], fontSize: 12, color: '#ffffff', mode: 'solid', gradient: '', fontWeight: 400, lineHeight: 1.5, letterSpacing: 0 }, button: { fontFamily: FONTS[9][1], fontSize: 13, color: '#ffffff', mode: 'solid', gradient: '', fontWeight: 600, lineHeight: 1.2, letterSpacing: 0.5 },
@@ -44,19 +45,40 @@ function ColorPicker({ value, onChange }) {
 }
 
 function GradientBuilder({ value, onChange }) {
-  const initialColors = gradientColors(value)
-  const [colors, setColors] = useState(initialColors.length >= 2 ? initialColors : ['#8b6f47', '#c9a86a', '#f4efe8'])
-  const [type, setType] = useState(() => value?.startsWith('radial-gradient') ? 'radial' : 'linear')
-  const [angle, setAngle] = useState('135')
+  const readValue = value => {
+    const gradient = safeGradient(value)
+    const colors = gradientColors(gradient)
+    const radial = gradient.startsWith('radial-gradient')
+    const angleMatch = gradient.match(/linear-gradient\(\s*(-?\d+(?:\.\d+)?)deg/i)
+    return {
+      colors: colors.length >= 2 ? colors : gradientColors(DEFAULT_GRADIENT),
+      type: radial ? 'radial' : 'linear',
+      angle: angleMatch ? angleMatch[1] : '135',
+    }
+  }
+
+  const initial = readValue(value)
+  const [colors, setColors] = useState(initial.colors)
+  const [type, setType] = useState(initial.type)
+  const [angle, setAngle] = useState(initial.angle)
+
+  useEffect(() => {
+    const next = readValue(value)
+    setColors(next.colors)
+    setType(next.type)
+    setAngle(next.angle)
+  }, [value])
+
   const sync = (nextColors, nextType = type, nextAngle = angle) => {
     const validColors = nextColors.map(safeColor)
     setColors(validColors)
     onChange(nextType === 'linear' ? `linear-gradient(${nextAngle}deg, ${validColors.join(', ')})` : `radial-gradient(${validColors.join(', ')})`)
   }
+
   return <div className="appearance-gradient-builder">
     <label>Tipo<select value={type} onChange={e => { const next = e.target.value; setType(next); sync(colors, next) }}><option value="linear">Lineal</option><option value="radial">Radial</option></select></label>
     {type === 'linear' && <label>Dirección<select value={angle} onChange={e => { const next = e.target.value; setAngle(next); sync(colors, type, next) }}><option value="0">→</option><option value="45">↗</option><option value="90">↑</option><option value="135">↖</option><option value="180">←</option><option value="225">↙</option><option value="270">↓</option><option value="315">↘</option></select></label>}
-    <div className="appearance-gradient-preview" style={{ background: safeGradient(value) || GRADIENTS[0][1] }} />
+    <div className="appearance-gradient-preview" style={{ background: safeGradient(value) || DEFAULT_GRADIENT }} />
     {colors.map((color, index) => <div className="appearance-gradient-stop" key={`${index}-${color}`}><input type="color" value={safeColor(color)} onChange={e => { const next = [...colors]; next[index] = e.target.value; sync(next) }} /><input value={color} maxLength={7} onChange={e => { const raw = e.target.value; const next = [...colors]; next[index] = HEX_RE.test(raw) ? raw.toLowerCase() : color; if (HEX_RE.test(raw)) sync(next) }} /><button type="button" disabled={colors.length <= 2} onClick={() => sync(colors.filter((_, i) => i !== index))}>×</button></div>)}
     <button type="button" className="appearance-add-color" onClick={() => sync([...colors, '#ffffff'])}>+ Agregar color</button>
     <div className="appearance-gradient-list">{GRADIENTS.map(([name, gradient]) => <button key={name} type="button" className="appearance-gradient" style={{ background: gradient }} onClick={() => { setColors(gradientColors(gradient)); setType('linear'); setAngle('135'); onChange(gradient) }}><span>{name}</span></button>)}</div>
@@ -86,19 +108,28 @@ function BaseStyle({ id, title, appearance, set, open, onToggle }) {
   const gradient = safeGradient(appearance[`${id}Gradient`] || '')
   const isGradient = mode === 'gradient' && Boolean(gradient)
   const preview = isGradient ? gradient : color
-  return <section className="appearance-dropdown"><button type="button" className="appearance-dropdown-summary" onClick={() => onToggle(id)} aria-expanded={open}><strong>{title}</strong><span className="appearance-current" style={{ background: preview }} /><span>{isGradient ? 'Degradado' : color}</span><b>⌄</b></button>{open && <div className="appearance-dropdown-content"><div className="appearance-style-switch"><button type="button" className={mode === 'solid' ? 'active' : ''} onClick={() => set(`appearance.${id}Mode`, 'solid')}>Color</button><button type="button" className={mode === 'gradient' ? 'active' : ''} onClick={() => set(`appearance.${id}Mode`, 'gradient')}>Degradado</button></div>{mode === 'gradient' ? <GradientBuilder value={gradient} onChange={value => { set(`appearance.${id}Gradient`, value); set(`appearance.${id}Mode`, 'gradient') }} /> : <ColorPicker value={color} onChange={value => { set(`appearance.${id}Color`, value); set(`appearance.${id}Mode`, 'solid') }} />}</div>}</section>
+  const activateGradient = () => {
+    set(`appearance.${id}Gradient`, gradient || DEFAULT_GRADIENT)
+    set(`appearance.${id}Mode`, 'gradient')
+  }
+  return <section className="appearance-dropdown"><button type="button" className="appearance-dropdown-summary" onClick={() => onToggle(id)} aria-expanded={open}><strong>{title}</strong><span className="appearance-current" style={{ background: preview }} /><span>{isGradient ? 'Degradado' : color}</span><b>⌄</b></button>{open && <div className="appearance-dropdown-content"><div className="appearance-style-switch"><button type="button" className={mode === 'solid' ? 'active' : ''} onClick={() => set(`appearance.${id}Mode`, 'solid')}>Color</button><button type="button" className={mode === 'gradient' ? 'active' : ''} onClick={activateGradient}>Degradado</button></div>{mode === 'gradient' ? <GradientBuilder value={gradient || DEFAULT_GRADIENT} onChange={value => { set(`appearance.${id}Gradient`, value); set(`appearance.${id}Mode`, 'gradient') }} /> : <ColorPicker value={color} onChange={value => { set(`appearance.${id}Color`, value); set(`appearance.${id}Mode`, 'solid') }} />}</div>}</section>
 }
 
 function Typography({ project, set, open, onToggle }) {
   const [item, setItem] = useState('title')
   const appearance = project.appearance || {}
   const current = { ...DEFAULTS[item], ...(appearance.typography?.[item] || {}) }
-  const gradient = current.mode === 'gradient' && Boolean(safeGradient(current.gradient))
+  const currentGradient = safeGradient(current.gradient)
+  const previewGradient = current.mode === 'gradient'
   const currentColor = safeColor(current.color)
   const write = (key, value) => set(`appearance.typography.${item}.${key}`, value)
-  const titleContent = project.coverSection?.title || `${project.couple?.name1 || 'Nombre'} & ${project.couple?.name2 || 'Nombre'}`
+  const activateGradient = () => {
+    write('gradient', currentGradient || DEFAULT_GRADIENT)
+    write('mode', 'gradient')
+  }
+  const liveGradient = currentGradient || DEFAULT_GRADIENT
 
-  return <section className="appearance-dropdown"><button type="button" className="appearance-dropdown-summary" onClick={() => onToggle('typography')} aria-expanded={open}><strong>Texto y tipografía</strong><span>Por elemento</span><b>⌄</b></button>{open && <div className="appearance-dropdown-content"><label>Elemento<select value={item} onChange={e => setItem(e.target.value)}>{TYPE_ITEMS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>{item === 'title' && <label>Texto del título<input value={titleContent} onChange={e => set('coverSection.title', e.target.value)} placeholder="Nombre & Nombre" /></label>}<label>Fuente<select value={current.fontFamily} onChange={e => write('fontFamily', e.target.value)}>{FONTS.map(([name, value]) => <option key={value} value={value}>{name}</option>)}</select></label><div className="appearance-type-grid"><label>Tamaño<input type="number" min="8" max="120" value={Number.isFinite(Number(current.fontSize)) ? current.fontSize : DEFAULTS[item].fontSize} onChange={e => write('fontSize', Number(e.target.value))} /></label><label>Peso<select value={current.fontWeight} onChange={e => write('fontWeight', Number(e.target.value))}><option value="300">Ligero</option><option value="400">Normal</option><option value="500">Medio</option><option value="600">Seminegrita</option><option value="700">Negrita</option></select></label><label>Interlineado<input type="number" min="0.8" max="3" step="0.05" value={current.lineHeight} onChange={e => write('lineHeight', Number(e.target.value))} /></label><label>Espaciado<input type="number" min="-5" max="20" step="0.5" value={current.letterSpacing} onChange={e => write('letterSpacing', Number(e.target.value))} /></label></div><div className="appearance-style-switch"><button type="button" className={!gradient ? 'active' : ''} onClick={() => write('mode', 'solid')}>Color</button><button type="button" className={gradient ? 'active' : ''} onClick={() => write('mode', 'gradient')}>Degradado</button></div>{gradient ? <GradientBuilder value={current.gradient} onChange={value => { write('gradient', value); write('mode', 'gradient') }} /> : <ColorPicker value={currentColor} onChange={value => { write('color', value); write('mode', 'solid') }} />}<div className="appearance-live-type" style={{ fontFamily: current.fontFamily, fontSize: Number(current.fontSize) || DEFAULTS[item].fontSize, fontWeight: Number(current.fontWeight) || 400, lineHeight: Number(current.lineHeight) || 1.5, letterSpacing: Number(current.letterSpacing) || 0, background: gradient ? safeGradient(current.gradient) : 'none', WebkitBackgroundClip: gradient ? 'text' : 'initial', backgroundClip: gradient ? 'text' : 'initial', color: gradient ? 'transparent' : currentColor }}>Vista previa de {TYPE_ITEMS.find(([id]) => id === item)?.[1]}</div></div>}</section>
+  return <section className="appearance-dropdown"><button type="button" className="appearance-dropdown-summary" onClick={() => onToggle('typography')} aria-expanded={open}><strong>Texto y tipografía</strong><span>Por elemento</span><b>⌄</b></button>{open && <div className="appearance-dropdown-content"><label>Elemento<select value={item} onChange={e => setItem(e.target.value)}>{TYPE_ITEMS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>{item === 'title' && <label>Texto del título<input value={project.coverSection?.title || ''} onChange={e => set('coverSection.title', e.target.value)} placeholder="Nombre & Nombre" /></label>}<label>Fuente<select value={current.fontFamily} onChange={e => write('fontFamily', e.target.value)}>{FONTS.map(([name, value]) => <option key={value} value={value}>{name}</option>)}</select></label><div className="appearance-type-grid"><label>Tamaño<input type="number" min="8" max="120" value={Number.isFinite(Number(current.fontSize)) ? current.fontSize : DEFAULTS[item].fontSize} onChange={e => write('fontSize', Number(e.target.value))} /></label><label>Peso<select value={current.fontWeight} onChange={e => write('fontWeight', Number(e.target.value))}><option value="300">Ligero</option><option value="400">Normal</option><option value="500">Medio</option><option value="600">Seminegrita</option><option value="700">Negrita</option></select></label><label>Interlineado<input type="number" min="0.8" max="3" step="0.05" value={current.lineHeight} onChange={e => write('lineHeight', Number(e.target.value))} /></label><label>Espaciado<input type="number" min="-5" max="20" step="0.5" value={current.letterSpacing} onChange={e => write('letterSpacing', Number(e.target.value))} /></label></div><div className="appearance-style-switch"><button type="button" className={!previewGradient ? 'active' : ''} onClick={() => write('mode', 'solid')}>Color</button><button type="button" className={previewGradient ? 'active' : ''} onClick={activateGradient}>Degradado</button></div>{previewGradient ? <GradientBuilder value={liveGradient} onChange={value => { write('gradient', value); write('mode', 'gradient') }} /> : <ColorPicker value={currentColor} onChange={value => { write('color', value); write('mode', 'solid') }} />}<div className="appearance-live-type" style={{ fontFamily: current.fontFamily, fontSize: Number(current.fontSize) || DEFAULTS[item].fontSize, fontWeight: Number(current.fontWeight) || 400, lineHeight: Number(current.lineHeight) || 1.5, letterSpacing: Number(current.letterSpacing) || 0, background: previewGradient ? liveGradient : 'none', WebkitBackgroundClip: previewGradient ? 'text' : 'initial', backgroundClip: previewGradient ? 'text' : 'initial', color: previewGradient ? 'transparent' : currentColor }}>Vista previa de {TYPE_ITEMS.find(([id]) => id === item)?.[1]}</div></div>}</section>
 }
 
 export default function AppearanceControls({ project, set }) {
