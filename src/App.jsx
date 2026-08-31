@@ -41,12 +41,14 @@ function App() {
   const [view, setView] = useState('dashboard')
   const [activeProjectId, setActiveProjectId] = useState(null)
   const [activeSection, setActiveSection] = useState('appearance')
+  const [previewRefreshKey, setPreviewRefreshKey] = useState(0)
 
   const activeProject = useMemo(() => projects.find((project) => project.id === activeProjectId) || null, [projects, activeProjectId])
 
   const openEditor = (id) => {
     setActiveProjectId(id)
     setActiveSection('appearance')
+    setPreviewRefreshKey((current) => current + 1)
     setView('editor')
   }
 
@@ -95,6 +97,7 @@ function App() {
         </div>
         <div className="header-actions">
           <div className="header-badge"><span className="status-dot" /> Guardado automático</div>
+          <button className="preview-refresh-button" type="button" onClick={() => setPreviewRefreshKey((current) => current + 1)} title="Recargar únicamente la vista previa">↻ Recargar VP</button>
           <button className="export-header-button" type="button" onClick={() => handleExport(activeProject)}>Exportar HTML</button>
         </div>
       </header>
@@ -103,7 +106,7 @@ function App() {
           <section className="creator-panel"><EditorWedding project={activeProject} setProject={updateProject} activeSection={activeSection} setActiveSection={setActiveSection} /></section>
           <section className="creator-preview">
             <div className="preview-toolbar"><div><p className="app-kicker">Vista previa</p><strong>Invitación móvil</strong></div><span className="preview-device-label">9:16</span></div>
-            <div className="preview-stage"><PreviewWedding project={activeProject} embedded /></div>
+            <div className="preview-stage"><PreviewWedding project={activeProject} refreshKey={previewRefreshKey} /></div>
           </section>
         </main>
       </section>
