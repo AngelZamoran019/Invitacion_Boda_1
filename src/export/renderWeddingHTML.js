@@ -57,14 +57,17 @@ export function renderWeddingHTML(project) {
     const blend = ['normal','multiply','screen','overlay','soft-light','hard-light'].includes(appearance.backgroundTextureBlend) ? appearance.backgroundTextureBlend : 'soft-light'
     const url = escCssUrl(texture)
     const textureCss = `<style id="wedding-global-texture">
-      .phone{position:relative;isolation:isolate;overflow-x:hidden;background:var(--bg)!important}
-      .phone::before{content:"";position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;background-image:url("${url}");background-size:cover;background-position:center center;background-repeat:no-repeat;opacity:${opacity};mix-blend-mode:${blend};will-change:transform}
-      .phone>.cover{z-index:3}
+      /* Fondo fijo: la textura no pertenece al contenido que hace scroll. */
+      .phone{position:relative;isolation:isolate;overflow-x:hidden;background:transparent!important}
+      .phone::before{content:"";position:fixed;inset:0;width:100vw;height:100dvh;z-index:0;pointer-events:none;background-image:url("${url}");background-size:cover;background-position:center center;background-repeat:no-repeat;opacity:${opacity};mix-blend-mode:${blend};will-change:auto}
+      /* Capa de color/degradado sobre la textura. */
+      .phone::after{content:"";position:fixed;inset:0;width:100vw;height:100dvh;z-index:1;pointer-events:none;background:var(--bg);opacity:.72;will-change:auto}
+      .phone>.cover{position:relative;z-index:3}
       .phone>.section,.phone>.closing{position:relative;z-index:2;background:transparent!important}
-      .phone.invite-open{background:var(--bg)!important}
-      .phone.invite-open::before{display:block}
-      .phone:not(.invite-open)::before{display:none}
-      @media(max-width:699px){html,body{width:100%;max-width:100%;overflow-x:hidden}.phone{width:100vw;max-width:none;min-height:100dvh}.phone::before{width:100%;height:100%;background-size:cover;background-position:center center}}
+      .phone.invite-open{background:transparent!important}
+      .phone.invite-open::before,.phone.invite-open::after{display:block}
+      .phone:not(.invite-open)::before,.phone:not(.invite-open)::after{display:none}
+      @media(max-width:699px){html,body{width:100%;max-width:100%;overflow-x:hidden}.phone{width:100vw;max-width:none;min-height:100dvh}.phone::before,.phone::after{width:100vw;height:100dvh;background-position:center center}}
     </style>`
     html = html.replace('</head>', `${textureCss}</head>`)
   }
