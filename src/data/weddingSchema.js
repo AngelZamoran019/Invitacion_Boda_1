@@ -19,5 +19,5 @@ export const createDefaultWeddingProject = () => ({
   countdown:{enabled:true,targetDate:'',sectionTitle:'La cuenta regresiva comienza'},
   dressCode:{enabled:true,sectionTitle:'Código de vestimenta',subtitle:'Elegancia para celebrar',menLabel:'Ellas',womenLabel:'Ellos',menAttire:'Formal',womenAttire:'Formal',note:''},
   gifts:{enabled:true,sectionTitle:'Un detalle especial',subtitle:'subtitulo',url:'',buttonLabel:'Ver mesa de regalos'}, recommendations:[],gallery:[],
-  confirmation:{enabled:true,title:'Confirma tu asistencia',message:'Nos encantará saber si nos acompañas en este día tan especial.',url:'',buttonLabel:'Confirmar asistencia',successMessage:'¡Gracias! Hemos recibido tu confirmación.'}, closing:{image:'',message:''}
+  confirmation:{enabled:true,sectionTitle:'Por favor',subtitle:'Confirma tu asistencia',title:'Confirma tu asistencia',message:'Nos encantará saber si nos acompañas en este día tan especial.',url:'',buttonLabel:'Confirmar asistencia',successMessage:'¡Gracias! Hemos recibido tu confirmación.'}, closing:{image:'',message:''}
 })
