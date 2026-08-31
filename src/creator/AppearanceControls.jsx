@@ -113,10 +113,16 @@ function BackgroundControls({ appearance, set }) {
     set('appearance.backgroundMode', 'gradient')
   }
 
-  const textureEnabled = appearance.backgroundTextureType === 'image'
-  const texture = appearance.backgroundTextureImage || ''
+  const texture = String(appearance.backgroundTextureImage || '').trim()
+  const textureEnabled = appearance.backgroundTextureType === 'image' || Boolean(texture)
   const textureOpacity = Number.isFinite(Number(appearance.backgroundTextureOpacity)) ? Number(appearance.backgroundTextureOpacity) : 0.28
-  const textureBlend = appearance.backgroundTextureBlend || 'soft-light'
+  const textureBlend = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'hard-light'].includes(appearance.backgroundTextureBlend) ? appearance.backgroundTextureBlend : 'soft-light'
+
+  const updateTextureUrl = (value) => {
+    const next = String(value || '').trim()
+    set('appearance.backgroundTextureImage', value)
+    set('appearance.backgroundTextureType', next ? 'image' : 'none')
+  }
 
   return (
     <section className="appearance-dropdown">
@@ -142,7 +148,7 @@ function BackgroundControls({ appearance, set }) {
           <section className="appearance-texture-controls">
             <div className="appearance-texture-header">
               <strong>Textura fotográfica</strong>
-              <small>La imagen cubre toda la pantalla en dispositivos móviles, centrada y con zoom automático.</small>
+              <small>La imagen cubre todo el fondo en dispositivos móviles, centrada y con zoom automático.</small>
             </div>
             <label className="appearance-texture-toggle">
               <input type="checkbox" checked={textureEnabled} onChange={(e) => set('appearance.backgroundTextureType', e.target.checked ? 'image' : 'none')} />
@@ -150,7 +156,7 @@ function BackgroundControls({ appearance, set }) {
             </label>
             {textureEnabled && (
               <>
-                <label>URL de la textura<input type="url" value={texture} onChange={(e) => set('appearance.backgroundTextureImage', e.target.value)} placeholder="https://.../textura.jpg" /></label>
+                <label>URL de la textura<input type="url" value={texture} onChange={(e) => updateTextureUrl(e.target.value)} placeholder="https://.../textura.jpg" /></label>
                 <label>Opacidad<input type="range" min="0" max="1" step="0.01" value={textureOpacity} onChange={(e) => set('appearance.backgroundTextureOpacity', Number(e.target.value))} /><small>{Math.round(textureOpacity * 100)}%</small></label>
                 <label>Modo de mezcla<select value={textureBlend} onChange={(e) => set('appearance.backgroundTextureBlend', e.target.value)}><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft Light</option><option value="hard-light">Hard Light</option></select></label>
               </>
