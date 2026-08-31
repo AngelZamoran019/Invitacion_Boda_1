@@ -1,17 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { renderWeddingHTML } from '../export/renderWeddingHTML.js'
 
-const INITIAL_STATE = {
-  inviteOpen: false,
-  scrollTop: 0,
-  scrollLeft: 0,
-}
-
 function PreviewWedding({ project }) {
   const iframeRef = useRef(null)
-  const viewStateRef = useRef({ ...INITIAL_STATE })
-  const firstRenderRef = useRef(true)
   const projectRef = useRef(project)
+  const initializedRef = useRef(false)
 
   projectRef.current = project
 
@@ -19,144 +12,44 @@ function PreviewWedding({ project }) {
     const iframe = iframeRef.current
     if (!iframe) return undefined
 
-    const captureState = () => {
-      try {
-        const doc = iframe.contentDocument
-        if (!doc) return
-
-        const phone = doc.querySelector('.phone')
-        const scrollingElement = doc.scrollingElement || doc.documentElement
-
-        if (!phone && !scrollingElement) return
-
-        const target = phone || scrollingElement
-
-        viewStateRef.current = {
-          inviteOpen: Boolean(phone?.classList.contains('invite-open')),
-          scrollTop: target.scrollTop || 0,
-          scrollLeft: target.scrollLeft || 0,
-        }
-      } catch {
-        // El iframe puede estar en proceso de actualización.
-      }
+    const buildBridgeHTML = (html) => {
+      const bridge = `<script id="wedding-preview-bridge">(()=>{\n  const capture=()=>{\n    const phone=document.querySelector('.phone')\n    if(!phone)return {top:0,left:0,open:false}\n    return {top:phone.scrollTop||0,left:phone.scrollLeft||0,open:phone.classList.contains('invite-open')}\n  }\n  const runScripts=(root)=>{\n    root.querySelectorAll('script:not(#wedding-preview-bridge)').forEach(oldScript=>{\n      const script=document.createElement('script')\n      Array.from(oldScript.attributes).forEach(attr=>script.setAttribute(attr.name,attr.value))\n      script.textContent=oldScript.textContent\n      oldScript.replaceWith(script)\n    })\n  }\n  const restore=(state)=>{\n    const apply=()=>{\n      const phone=document.querySelector('.phone')\n      if(!phone)return\n      if(state.open)phone.classList.add('invite-open')\n      phone.scrollTop=state.top||0\n      phone.scrollLeft=state.left||0\n      window.scrollTo(state.left||0,state.top||0)\n    }\n    apply()\n    requestAnimationFrame(apply)\n    requestAnimationFrame(()=>requestAnimationFrame(apply))\n    setTimeout(apply,50)\n    setTimeout(apply,150)\n  }\n  window.addEventListener('message',event=>{\n    if(!event.data||event.data.type!=='WEDDING_PREVIEW_UPDATE')return\n    const state=capture()\n    const parser=new DOMParser()\n    const parsed=parser.parseFromString(event.data.html,'text/html')\n    const next=parsed.documentElement\n    const current=state.open\n    next.querySelector('.phone')?.classList.toggle('invite-open',current)\n    document.documentElement.replaceWith(next)\n    runScripts(document)\n    restore(state)\n  })\n  window.addEventListener('scroll',()=>{}, {passive:true})\n})()</script>`
+      return html.replace('</body>', `${bridge}</body>`)
     }
 
-    const restoreState = () => {
+    const renderInitial = () => {
       try {
-        const doc = iframe.contentDocument
-        if (!doc) return
-
-        const phone = doc.querySelector('.phone')
-        const scrollingElement = doc.scrollingElement || doc.documentElement
-        const state = viewStateRef.current
-
-        if (!phone && !scrollingElement) return
-
-        if (state.inviteOpen && phone) {
-          phone.classList.add('invite-open')
-        }
-
-        const restoreScroll = () => {
-          const currentPhone = doc.querySelector('.phone')
-          const currentScrollingElement = doc.scrollingElement || doc.documentElement
-          const target = currentPhone || currentScrollingElement
-
-          if (!target) return
-
-          target.scrollTop = state.scrollTop || 0
-          target.scrollLeft = state.scrollLeft || 0
-
-          if (doc.defaultView) {
-            doc.defaultView.scrollTo(state.scrollLeft || 0, state.scrollTop || 0)
-          }
-        }
-
-        restoreScroll()
-        requestAnimationFrame(restoreScroll)
-        requestAnimationFrame(() => requestAnimationFrame(restoreScroll))
-        setTimeout(restoreScroll, 50)
-        setTimeout(restoreScroll, 150)
-
-        const onScroll = () => {
-          const currentPhone = doc.querySelector('.phone')
-          const currentScrollingElement = doc.scrollingElement || doc.documentElement
-          const target = currentPhone || currentScrollingElement
-
-          if (!target) return
-
-          viewStateRef.current = {
-            inviteOpen: Boolean(currentPhone?.classList.contains('invite-open')),
-            scrollTop: target.scrollTop || 0,
-            scrollLeft: target.scrollLeft || 0,
-          }
-        }
-
-        const scrollTargets = [phone, scrollingElement, doc.defaultView].filter(Boolean)
-        scrollTargets.forEach((target) => target.addEventListener('scroll', onScroll, { passive: true }))
-
-        const observer = phone
-          ? new MutationObserver(() => {
-              viewStateRef.current.inviteOpen = phone.classList.contains('invite-open')
-            })
-          : null
-
-        observer?.observe(phone, { attributes: true, attributeFilter: ['class'] })
-
-        iframe.__previewCleanup = () => {
-          scrollTargets.forEach((target) => target.removeEventListener('scroll', onScroll))
-          observer?.disconnect()
-        }
-      } catch {
-        // Ignorar durante la carga o reconstrucción del documento.
-      }
-    }
-
-    const renderIntoIframe = () => {
-      try {
-        // IMPORTANTE: el iframe no recibe srcDoc dinámico desde React.
-        // Así nunca se desmonta ni se recrea el elemento al editar el proyecto.
-        // Capturamos el scroll antes de reemplazar su documento.
-        if (!firstRenderRef.current) {
-          captureState()
-        }
-
-        const rendered = renderWeddingHTML(projectRef.current)
-        const state = viewStateRef.current
-        const html = state.inviteOpen
-          ? rendered.replace('<main class="phone">', '<main class="phone invite-open">')
-          : rendered
-
-        iframe.__previewCleanup?.()
-
+        const html = buildBridgeHTML(renderWeddingHTML(projectRef.current))
         const doc = iframe.contentDocument || iframe.contentWindow?.document
         if (!doc) return
-
         doc.open()
         doc.write(html)
         doc.close()
-
-        firstRenderRef.current = false
-
-        const onReady = () => {
-          restoreState()
-        }
-
-        if (doc.readyState === 'loading') {
-          doc.addEventListener('DOMContentLoaded', onReady, { once: true })
-        } else {
-          onReady()
-        }
+        initializedRef.current = true
       } catch {
-        // Mantener la VP viva aunque el documento se encuentre cambiando.
+        // Mantener la VP viva aunque exista un cambio durante la carga.
       }
     }
 
-    renderIntoIframe()
+    renderInitial()
 
     return () => {
-      captureState()
-      iframe.__previewCleanup?.()
-      iframe.__previewCleanup = null
+      initializedRef.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    const iframe = iframeRef.current
+    if (!iframe || !initializedRef.current) return
+
+    try {
+      const html = renderWeddingHTML(project)
+      iframe.contentWindow?.postMessage({
+        type: 'WEDDING_PREVIEW_UPDATE',
+        html,
+      }, '*')
+    } catch {
+      // Evitar que un cambio de edición rompa el editor.
     }
   }, [project])
 
