@@ -27,6 +27,33 @@ const applyCountdownSectionTitle = (html, project) => {
   return source.replace(marker, `$1${title}$2`)
 }
 
+const applyDressCodeFields = (html, project) => {
+  const dress = project?.dressCode || {}
+  const sectionTitle = escapeHtml(dress.sectionTitle || 'Código de vestimenta')
+  const subtitle = escapeHtml(dress.subtitle || 'Elegancia para celebrar')
+  const menLabel = escapeHtml(dress.menLabel ?? 'Ellas')
+  const womenLabel = escapeHtml(dress.womenLabel ?? 'Ellos')
+  const menAttire = escapeHtml(dress.menAttire ?? dress.men ?? 'Formal')
+  const womenAttire = escapeHtml(dress.womenAttire ?? dress.women ?? 'Formal')
+  const source = String(html || '')
+  const sectionMarker = /<section\s+class=["']section["'][^>]*>\s*<p\s+class=["']eyebrow["'][^>]*>\s*Código de vestimenta\s*<\/p>[\s\S]*?<\/section>/i
+  if (!sectionMarker.test(source)) return source
+
+  return source.replace(sectionMarker, (section) => {
+    let result = section.replace(/(<p\s+class=["']eyebrow["'][^>]*>)[\s\S]*?(<\/p>)/i, `$1${sectionTitle}$2`)
+    result = result.replace(/(<h2\b[^>]*>)[\s\S]*?(<\/h2>)/i, `$1${subtitle}$2`)
+    let cardIndex = 0
+    result = result.replace(/(<div\s+class=["']dress-card["'][^>]*>[\s\S]*?<span\b[^>]*>)[\s\S]*?(<\/span>)([\s\S]*?<strong\b[^>]*>)[\s\S]*?(<\/strong>)/gi, (match, spanOpen, spanClose, strongOpen, strongClose) => {
+      const replacement = cardIndex === 0
+        ? `${spanOpen}${menLabel}${spanClose}${strongOpen}${menAttire}${strongClose}`
+        : `${spanOpen}${womenLabel}${spanClose}${strongOpen}${womenAttire}${strongClose}`
+      cardIndex += 1
+      return replacement
+    })
+    return result
+  })
+}
+
 const removeEventVenues = (html) => {
   const source = String(html || '')
   return source.replace(/(<div\s+class=["']event-card["'][^>]*>[\s\S]*?)<span\b[^>]*>[\s\S]*?<\/span>/gi, '$1')
@@ -157,7 +184,8 @@ export function renderWeddingHTML(project) {
   let html = renderBaseWeddingHTML(renderProject)
   if (countdownTarget) html = html.replace(/<section\s+class=["']section["'][^>]*>(?=\s*<p\s+class=["']eyebrow["'][^>]*>La cuenta regresiva comienza)/i, match => match.replace('>', ` data-countdown-target="${escapeHtml(countdownTarget)}">`))
   html = normalizeCountdownTimer(html)
-  const withEventDate = applyEventDate(removeEventVenues(applyCountdownSectionTitle(applyEventSectionTitle(applyStorySectionTitle(stripUnconfiguredCoupleEyebrow(html), project), project), project), project), project)
+  const withDressCode = applyDressCodeFields(html, project)
+  const withEventDate = applyEventDate(removeEventVenues(applyCountdownSectionTitle(applyEventSectionTitle(applyStorySectionTitle(stripUnconfiguredCoupleEyebrow(withDressCode), project), project), project), project), project)
   return preserveEditableCase(withEventDate.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
 }
 
