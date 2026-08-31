@@ -96,16 +96,7 @@ const parseEventTime = (value) => {
   return { hours, minutes }
 }
 
-const buildCountdownTarget = (project) => {
-  const parsedDate = parseEventDate(project?.event?.date)
-  if (!parsedDate) return ''
-  const time = parseEventTime(project?.event?.time)
-  const { year, month, day } = parsedDate
-  const date = new Date(year, month - 1, day, time.hours, time.minutes, 0, 0)
-  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return ''
-  const pad = value => String(value).padStart(2, '0')
-  return `${year}-${pad(month)}-${pad(day)}T${pad(time.hours)}:${pad(time.minutes)}`
-}
+const buildCountdownTarget = (project) => String(project?.countdown?.targetDate ?? '').trim()
 
 const preserveEditableCase = (html) => `${String(html || '')}<style id="wedding-preserve-editable-case">.eyebrow,.section-title-special,.cover h1,.cover-subtitle,.date,.venue,.text,.section h2,.event-card strong,.event-card span,.event-card small,.countdown span,.dress-card span,.dress-card strong,.rsvp-form label,.success,.button{ text-transform:none !important; }</style>`
 
