@@ -49,7 +49,6 @@ export function renderWeddingHTML(project) {
   const subtitleStyle = styleFor('subtitle', '#ffffff')
   const paragraphStyle = styleFor('paragraph', '#ffffff')
   const sectionStyle = styleFor('sectionTitle', '#ffffff')
-  const specialSectionStyle = { ...styleFor('sectionTitleSpecial', '#ffffff') }
   const labelStyle = styleFor('label', '#c9a86a')
   const smallStyle = styleFor('small', '#ffffff')
   const buttonStyle = styleFor('button', '#ffffff')
@@ -111,23 +110,27 @@ export function renderWeddingHTML(project) {
 
     const textureCss = `<style id="wedding-global-texture">
       .phone{position:relative;isolation:isolate;overflow-y:auto;overflow-x:hidden;background:transparent}
-      .phone::before{content:"";position:sticky;display:block;top:0;left:0;width:100%;height:100svh;min-height:100svh;margin-bottom:-100svh;z-index:0;pointer-events:none;background-image:url("${url}");background-size:cover;background-position:center center;background-repeat:no-repeat;background-attachment:scroll;opacity:${opacity};mix-blend-mode:${blend}}
+      .phone::before{content:"";position:fixed;inset:0;width:100%;height:100svh;min-height:100svh;z-index:0;pointer-events:none;background-image:url("${url}");background-size:cover;background-position:center center;background-repeat:no-repeat;opacity:${opacity};mix-blend-mode:${blend}}
       .phone > *{position:relative;z-index:2}
-      @media(max-width:699px){html,body{width:100%;max-width:100%;overflow-x:hidden}.phone{width:100%;max-width:none;min-height:100dvh}.phone::before{position:fixed;inset:0;width:100vw;height:100dvh;min-height:100dvh;margin:0;background-size:cover;background-position:center center;background-repeat:no-repeat}}
+      @media(max-width:699px){html,body{width:100%;max-width:100%;overflow-x:hidden}.phone{width:100%;max-width:none;min-height:100dvh}.phone::before{width:100vw;height:100dvh;min-height:100dvh;background-size:cover;background-position:center center;background-repeat:no-repeat}}
     </style>`
     html = html.replace('</head>', `${textureCss}</head>`)
   }
 
   const couplePhoto = String(project?.couple?.photo || '').trim()
-  const couplePhotoEnabled = couplePhoto.length > 0
-  if (couplePhotoEnabled) {
+  if (couplePhoto) {
     const darkness = Math.max(0, Math.min(1, Number(project?.couple?.photoOverlayOpacity ?? 0.55)))
     const photoUrl = escCssUrl(couplePhoto)
     const coupleBackgroundCss = `<style id="wedding-couple-background">
-      .phone{position:relative;isolation:isolate;overflow-x:hidden;background:transparent !important}
-      .phone::after{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;background:linear-gradient(rgb(0 0 0 / ${darkness}),rgb(0 0 0 / ${darkness})),url("${photoUrl}");background-size:cover;background-position:center center;background-repeat:no-repeat}
-      .phone > *{position:relative;z-index:2}
-      @media(max-width:699px){.phone::after{width:100vw;height:100dvh;min-height:100dvh;background-size:cover;background-position:center center;background-repeat:no-repeat}}
+      /* La fotografía pertenece exclusivamente a la pantalla inicial. */
+      .phone{background:transparent !important}
+      .phone > .cover{position:relative;isolation:isolate;overflow:hidden;background:transparent !important}
+      .phone > .cover::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:url("${photoUrl}");background-size:cover;background-position:center center;background-repeat:no-repeat}
+      .phone > .cover::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:rgb(0 0 0 / ${darkness})}
+      .phone > .cover > *{position:relative;z-index:2}
+      /* Al terminar la portada, vuelve a verse únicamente el fondo configurado en Apariencia. */
+      .phone > .section,.phone > .closing{background:var(--bg) !important}
+      @media(max-width:699px){.phone > .cover{min-height:100dvh}.phone > .cover::before{inset:0;background-size:cover;background-position:center center}}
     </style>`
     html = html.replace('</head>', `${coupleBackgroundCss}</head>`)
   }
