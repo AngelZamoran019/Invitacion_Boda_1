@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { renderWeddingHTML } from '../export/renderWeddingHTML.js'
+import { renderWeddingHTML } from '../export/weddingOutput.js'
 
 function PreviewWedding({ project, refreshKey = 0 }) {
   const iframeRef = useRef(null)
