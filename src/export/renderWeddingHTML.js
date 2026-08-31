@@ -72,12 +72,12 @@ export function renderWeddingHTML(project) {
     html = html.replace('</head>', `${textureCss}</head>`)
   }
 
-  const couplePhoto = String(project?.couple?.photo || '').trim()
-  if (couplePhoto) {
+  const coverBackgroundImage = String(project?.coverSection?.backgroundImage || '').trim()
+  if (coverBackgroundImage) {
     const darkness = Math.max(0, Math.min(1, Number(project?.couple?.photoOverlayOpacity ?? 0.55)))
-    const photoUrl = escCssUrl(couplePhoto)
-    const coupleBackgroundCss = `<style id="wedding-couple-background">.phone{position:relative;isolation:isolate;background:var(--bg)!important}.phone>.cover{position:relative;isolation:isolate;overflow:hidden;background:transparent!important;z-index:3}.phone>.cover::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:url("${photoUrl}");background-size:cover;background-position:center;background-repeat:no-repeat}.phone>.cover::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:rgb(0 0 0 / ${darkness})}.phone>.cover>*{position:relative;z-index:2}.phone>.section,.phone>.closing{position:relative;z-index:4;background:transparent!important}@media(max-width:699px){.phone>.cover{min-height:100dvh}.phone>.cover::before{background-size:cover;background-position:center}}</style>`
-    html = html.replace('</head>', `${coupleBackgroundCss}</head>`)
+    const photoUrl = escCssUrl(coverBackgroundImage)
+    const coverBackgroundCss = `<style id="wedding-cover-background">.phone{position:relative;isolation:isolate;background:var(--bg)!important}.phone>.cover{position:relative;isolation:isolate;overflow:hidden;background:transparent!important;z-index:3}.phone>.cover::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:url("${photoUrl}");background-size:cover;background-position:center;background-repeat:no-repeat}.phone>.cover::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:rgb(0 0 0 / ${darkness})}.phone>.cover>*{position:relative;z-index:2}.phone>.section,.phone>.closing{position:relative;z-index:4;background:transparent!important}@media(max-width:699px){.phone>.cover{min-height:100dvh}.phone>.cover::before{background-size:cover;background-position:center}}</style>`
+    html = html.replace('</head>', `${coverBackgroundCss}</head>`)
   }
 
   const coverAnimationCss = `<style id="wedding-cover-animations">
