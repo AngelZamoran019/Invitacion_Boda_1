@@ -117,6 +117,7 @@ function BackgroundControls({ appearance, set }) {
   const textureEnabled = appearance.backgroundTextureType === 'image'
   const textureOpacity = Number.isFinite(Number(appearance.backgroundTextureOpacity)) ? Number(appearance.backgroundTextureOpacity) : 0.28
   const textureBlend = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'hard-light'].includes(appearance.backgroundTextureBlend) ? appearance.backgroundTextureBlend : 'soft-light'
+  const colorOverlayEnabled = appearance.backgroundTextureColorOverlay !== false
 
   const updateTextureUrl = (value) => {
     const next = String(value || '').trim()
@@ -157,6 +158,11 @@ function BackgroundControls({ appearance, set }) {
             {textureEnabled && (
               <>
                 <label>URL de la textura<input type="url" value={texture} onChange={(e) => updateTextureUrl(e.target.value)} placeholder="https://.../textura.jpg" /></label>
+                <label className="appearance-texture-toggle">
+                  <input type="checkbox" checked={colorOverlayEnabled} onChange={(e) => set('appearance.backgroundTextureColorOverlay', e.target.checked)} />
+                  <span>Mantener capa de color</span>
+                </label>
+                <small>{colorOverlayEnabled ? 'La capa de color/degradado permanece sobre la foto.' : 'Solo se muestra la foto de textura, sin la capa de color.'}</small>
                 <label>Opacidad<input type="range" min="0" max="1" step="0.01" value={textureOpacity} onChange={(e) => set('appearance.backgroundTextureOpacity', Number(e.target.value))} /><small>{Math.round(textureOpacity * 100)}%</small></label>
                 <label>Modo de mezcla<select value={textureBlend} onChange={(e) => set('appearance.backgroundTextureBlend', e.target.value)}><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft Light</option><option value="hard-light">Hard Light</option></select></label>
               </>
