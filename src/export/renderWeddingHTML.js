@@ -13,6 +13,8 @@ const escCssValue = (value) => String(value || '')
   .replace(/"/g, '\\"')
   .replace(/;/g, '')
 
+const validGradient = value => typeof value === 'string' && value.includes('gradient(') && (value.match(/#[0-9a-fA-F]{6}/g) || []).length >= 2 ? value : ''
+
 export function renderWeddingHTML(project) {
   let html = buildWeddingHTML(project)
   const appearance = project?.appearance || {}
@@ -26,11 +28,33 @@ export function renderWeddingHTML(project) {
   const titleWeight = Number(title.fontWeight) || 500
   const titleLineHeight = Number(title.lineHeight) || 1.08
   const titleLetterSpacing = Number(title.letterSpacing) || 0
-  const titleIsGradient = title.mode === 'gradient' && typeof title.gradient === 'string' && title.gradient.includes('gradient(')
+  const titleGradient = escCssValue(validGradient(title.gradient || ''))
+  const titleIsGradient = title.mode === 'gradient' && Boolean(titleGradient)
   const titleColor = escCssValue(title.color || '#ffffff')
-  const titleGradient = escCssValue(title.gradient || '')
 
-  const titleTypographyCss = `<style id="wedding-title-typography">
+  const styleFor = (key, fallback) => {
+    const value = typography[key] || {}
+    const gradient = escCssValue(validGradient(value.gradient || ''))
+    const isGradient = value.mode === 'gradient' && Boolean(gradient)
+    const color = escCssValue(value.color || fallback)
+    return {
+      gradient,
+      color,
+      isGradient,
+      paint: isGradient
+        ? `background:${gradient} !important;-webkit-background-clip:text !important;background-clip:text !important;color:transparent !important;`
+        : `background:none !important;color:${color} !important;`,
+    }
+  }
+
+  const subtitleStyle = styleFor('subtitle', '#ffffff')
+  const paragraphStyle = styleFor('paragraph', '#ffffff')
+  const sectionStyle = styleFor('sectionTitle', '#ffffff')
+  const labelStyle = styleFor('label', '#c9a86a')
+  const smallStyle = styleFor('small', '#ffffff')
+  const buttonStyle = styleFor('button', '#ffffff')
+
+  const titleTypographyCss = `<style id="wedding-typography">
     #couple h2{
       font-family:${titleFont} !important;
       font-size:${titleSize}px !important;
@@ -46,6 +70,13 @@ export function renderWeddingHTML(project) {
         ? `background:${titleGradient} !important;-webkit-background-clip:text !important;background-clip:text !important;color:transparent !important;`
         : `background:none !important;color:${titleColor} !important;`}
     }
+    .cover h1{${titleIsGradient ? `background:${titleGradient} !important;-webkit-background-clip:text !important;background-clip:text !important;color:transparent !important;` : `color:${titleColor} !important;`}}
+    .cover-subtitle{${subtitleStyle.paint}}
+    .text{${paragraphStyle.paint}}
+    .section h2{${sectionStyle.paint}}
+    .eyebrow{${labelStyle.paint}}
+    .date,.venue,.event-card strong,.event-card span,.event-card small,.countdown span,.dress-card span,.dress-card strong,.rsvp-form label{${smallStyle.paint}}
+    .button{${buttonStyle.paint}}
   </style>`
 
   html = html.replace('</head>', `${titleTypographyCss}</head>`)
