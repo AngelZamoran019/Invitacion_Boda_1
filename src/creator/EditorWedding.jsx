@@ -8,18 +8,82 @@ const sectionGroups = [
 
 const updateAt = (setProject, updater) => setProject((current) => ({ ...updater(current), updated: new Date().toISOString() }))
 
+const FONT_OPTIONS = [
+  { value: 'Arial', label: 'Arial' },
+  { value: 'Amoresa', label: 'Amoresa' },
+]
+
 function TextField({ label, value, onChange, placeholder = '', multiline = false, type = 'text' }) {
   return <label className="editor-field"><span>{label}</span>{multiline ? <textarea value={value ?? ''} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={4} /> : <input type={type} value={value ?? ''} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />}</label>
 }
 
-function ColorsField({ value, mode, gradient, onColorChange, onModeChange, onGradientChange }) {
+function CoverStyleDropdown({ label, color, mode, gradient, size, font, set, prefix, includeFont = true, sizeMin = 1, sizeMax = 200 }) {
+  const [open, setOpen] = useState(null)
   const activeMode = mode === 'gradient' ? 'gradient' : 'solid'
-  return <div className="editor-field"><span>Colores</span><div className="appearance-style-switch"><button type="button" className={activeMode === 'solid' ? 'active' : ''} onClick={() => onModeChange('solid')}>Color</button><button type="button" className={activeMode === 'gradient' ? 'active' : ''} onClick={() => onModeChange('gradient')}>Degradado</button></div>{activeMode === 'gradient' ? <GradientBuilder value={gradient} onChange={onGradientChange} /> : <ColorPicker value={value} onChange={onColorChange} />}</div>
+  const safeSize = Number.isFinite(Number(size)) ? Number(size) : 0
+  const activeFont = FONT_OPTIONS.some((option) => option.value === font) ? font : 'Arial'
+
+  const toggle = (item) => setOpen((current) => current === item ? null : item)
+  const setMode = (nextMode) => set(`${prefix}Mode`, nextMode)
+  const setGradient = (value) => {
+    set(`${prefix}Gradient`, value)
+    setMode('gradient')
+  }
+
+  return (
+    <div className="cover-style-dropdown">
+      <button type="button" className="cover-style-summary" onClick={() => setOpen((current) => current === 'menu' ? null : 'menu')} aria-expanded={open === 'menu'}>
+        <span>{label}</span>
+        <b aria-hidden="true">⌄</b>
+      </button>
+      {open === 'menu' && (
+        <div className="cover-style-menu">
+          <div className="cover-style-item">
+            <button type="button" className={activeMode === 'solid' ? 'cover-style-option active' : 'cover-style-option'} onClick={() => toggle('color')} aria-expanded={open === 'color'}>
+              <span>Color</span><b aria-hidden="true">⌄</b>
+            </button>
+            {open === 'color' && <div className="cover-style-panel"><ColorPicker value={color} onChange={(value) => { set(`${prefix}Color`, value); setMode('solid') }} /></div>}
+          </div>
+
+          <div className="cover-style-item">
+            <button type="button" className={activeMode === 'gradient' ? 'cover-style-option active' : 'cover-style-option'} onClick={() => toggle('gradient')} aria-expanded={open === 'gradient'}>
+              <span>Degradado</span><b aria-hidden="true">⌄</b>
+            </button>
+            {open === 'gradient' && <div className="cover-style-panel"><GradientBuilder value={gradient} onChange={setGradient} /></div>}
+          </div>
+
+          <div className="cover-style-item">
+            <button type="button" className="cover-style-option" onClick={() => toggle('size')} aria-expanded={open === 'size'}>
+              <span>Tamaño</span><b aria-hidden="true">⌄</b>
+            </button>
+            {open === 'size' && <div className="cover-style-panel"><label className="cover-size-field"><span>Tamaño</span><div><input type="number" min={sizeMin} max={sizeMax} step="1" value={safeSize || ''} onChange={(e) => set(`${prefix}Size`, Number(e.target.value))} /><small>px</small></div></label></div>}
+          </div>
+
+          {includeFont && (
+            <div className="cover-style-item">
+              <button type="button" className="cover-style-option" onClick={() => toggle('font')} aria-expanded={open === 'font'}>
+                <span>Fuente</span><b aria-hidden="true">⌄</b>
+              </button>
+              {open === 'font' && <div className="cover-style-panel"><label className="cover-font-field"><span>Fuente</span><select value={activeFont} onChange={(e) => set(`${prefix}Font`, e.target.value)}>{FONT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label></div>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
-function CoverColors({ field, cover, set }) {
-  const prefix = `coverSection.${field}`
-  return <ColorsField value={cover[`${field}Color`]} mode={cover[`${field}Mode`]} gradient={cover[`${field}Gradient`]} onColorChange={(v) => set(`${prefix}Color`, v)} onModeChange={(v) => set(`${prefix}Mode`, v)} onGradientChange={(v) => { set(`${prefix}Gradient`, v); set(`${prefix}Mode`, 'gradient') }} />
+function CoverTextEditor({ label, value, onChange, color, mode, gradient, size, font, set, prefix, placeholder = '', sizeMin = 1, sizeMax = 200 }) {
+  return (
+    <div className="cover-text-editor">
+      <TextField label={label} value={value} onChange={onChange} placeholder={placeholder} />
+      <CoverStyleDropdown label="Colores" color={color} mode={mode} gradient={gradient} size={size} font={font} set={set} prefix={prefix} sizeMin={sizeMin} sizeMax={sizeMax} />
+    </div>
+  )
+}
+
+function CoverDecorationEditor({ label, color, mode, gradient, size, set, prefix, sizeMin = 1, sizeMax = 200 }) {
+  return <CoverStyleDropdown label={label} color={color} mode={mode} gradient={gradient} size={size} set={set} prefix={prefix} includeFont={false} sizeMin={sizeMin} sizeMax={sizeMax} />
 }
 
 function parseCoupleTitle(value, fallbackName1 = '', fallbackName2 = '') {
@@ -38,7 +102,22 @@ function EditorWedding({ project, setProject, activeSection, setActiveSection })
   const renderSection = () => {
     switch (activeSection) {
       case 'appearance': return <AppearanceControls project={project} set={set} />
-      case 'coverSection': { const cover = project.coverSection || {}; const lineFallback = project.appearance?.accentColor || '#c9a86a'; return <div className="editor-grid"><TextField label="Texto superior" value={cover.eyebrow} onChange={(v) => set('coverSection.eyebrow', v)} /><ColorsField value={cover.eyebrowColor} mode={cover.eyebrowMode} gradient={cover.eyebrowGradient} onColorChange={(v) => set('coverSection.eyebrowColor', v)} onModeChange={(v) => set('coverSection.eyebrowMode', v)} onGradientChange={(v) => { set('coverSection.eyebrowGradient', v); set('coverSection.eyebrowMode', 'gradient') }} /><TextField label="Nombres" value={cover.title} onChange={(v) => { const parsed = parseCoupleTitle(v, project.couple?.name1, project.couple?.name2); set('coverSection.title', v); set('couple.name1', parsed.name1); set('couple.name2', parsed.name2); set('couple.separator', parsed.separator) }} /><ColorsField value={cover.titleColor} mode={cover.titleMode} gradient={cover.titleGradient} onColorChange={(v) => set('coverSection.titleColor', v)} onModeChange={(v) => set('coverSection.titleMode', v)} onGradientChange={(v) => { set('coverSection.titleGradient', v); set('coverSection.titleMode', 'gradient') }} /><TextField label="Fecha" value={cover.date} onChange={(v) => set('coverSection.date', v)} placeholder="24 de octubre de 2026" /><ColorsField value={cover.dateColor} mode={cover.dateMode} gradient={cover.dateGradient} onColorChange={(v) => set('coverSection.dateColor', v)} onModeChange={(v) => set('coverSection.dateMode', v)} onGradientChange={(v) => { set('coverSection.dateGradient', v); set('coverSection.dateMode', 'gradient') }} /><TextField label="Abrir invitación" value={cover.buttonLabel ?? 'Abrir invitación'} onChange={(v) => set('coverSection.buttonLabel', v)} /><ColorsField value={cover.buttonColor} mode={cover.buttonMode} gradient={cover.buttonGradient} onColorChange={(v) => set('coverSection.buttonColor', v)} onModeChange={(v) => set('coverSection.buttonMode', v)} onGradientChange={(v) => { set('coverSection.buttonGradient', v); set('coverSection.buttonMode', 'gradient') }} /><TextField label="URL de imagen de portada" value={cover.backgroundImage || ''} onChange={(v) => set('coverSection.backgroundImage', v)} placeholder="https://..." /><ColorsField value={cover.ornamentColor} mode={cover.ornamentMode} gradient={cover.ornamentGradient} onColorChange={(v) => set('coverSection.ornamentColor', v)} onModeChange={(v) => set('coverSection.ornamentMode', v)} onGradientChange={(v) => { set('coverSection.ornamentGradient', v); set('coverSection.ornamentMode', 'gradient') }} /><ColorsField value={cover.lineColor || lineFallback} mode={cover.lineMode} gradient={cover.lineGradient} onColorChange={(v) => set('coverSection.lineColor', v)} onModeChange={(v) => set('coverSection.lineMode', v)} onGradientChange={(v) => { set('coverSection.lineGradient', v); set('coverSection.lineMode', 'gradient') }} /><label className="editor-field"><span>Oscuridad de la capa sobre la fotografía</span><input type="range" min="0" max="1" step="0.01" value={Number.isFinite(Number(cover.photoOverlayOpacity)) ? Number(cover.photoOverlayOpacity) : (Number.isFinite(Number(project.couple?.photoOverlayOpacity)) ? Number(project.couple.photoOverlayOpacity) : 0.55)} onChange={(e) => { const value = Number(e.target.value); set('coverSection.photoOverlayOpacity', value); set('couple.photoOverlayOpacity', value) }} /><small>{Math.round((Number.isFinite(Number(cover.photoOverlayOpacity)) ? Number(cover.photoOverlayOpacity) : (Number.isFinite(Number(project.couple?.photoOverlayOpacity)) ? Number(project.couple.photoOverlayOpacity) : 0.55)) * 100)}% de oscuridad</small></label></div> }
+      case 'coverSection': {
+        const cover = project.coverSection || {}
+        const lineFallback = project.appearance?.accentColor || '#c9a86a'
+        return (
+          <div className="editor-grid cover-editor-grid">
+            <CoverTextEditor label="Texto superior" value={cover.eyebrow} onChange={(v) => set('coverSection.eyebrow', v)} color={cover.eyebrowColor} mode={cover.eyebrowMode} gradient={cover.eyebrowGradient} size={cover.eyebrowSize} font={cover.eyebrowFont} set={set} prefix="coverSection.eyebrow" />
+            <CoverTextEditor label="Nombres" value={cover.title} onChange={(v) => { const parsed = parseCoupleTitle(v, project.couple?.name1, project.couple?.name2); set('coverSection.title', v); set('couple.name1', parsed.name1); set('couple.name2', parsed.name2); set('couple.separator', parsed.separator) }} color={cover.titleColor} mode={cover.titleMode} gradient={cover.titleGradient} size={cover.titleSize} font={cover.titleFont} set={set} prefix="coverSection.title" />
+            <CoverTextEditor label="Fecha" value={cover.date} onChange={(v) => set('coverSection.date', v)} placeholder="24 de octubre de 2026" color={cover.dateColor} mode={cover.dateMode} gradient={cover.dateGradient} size={cover.dateSize} font={cover.dateFont} set={set} prefix="coverSection.date" />
+            <CoverTextEditor label="Abrir invitación" value={cover.buttonLabel ?? 'Abrir invitación'} onChange={(v) => set('coverSection.buttonLabel', v)} color={cover.buttonColor} mode={cover.buttonMode} gradient={cover.buttonGradient} size={cover.buttonSize} font={cover.buttonFont} set={set} prefix="coverSection.button" />
+            <TextField label="URL de imagen de portada" value={cover.backgroundImage || ''} onChange={(v) => set('coverSection.backgroundImage', v)} placeholder="https://..." />
+            <CoverDecorationEditor label="Color del diamante" color={cover.ornamentColor} mode={cover.ornamentMode} gradient={cover.ornamentGradient} size={cover.ornamentSize} set={set} prefix="coverSection.ornament" sizeMin={8} sizeMax={100} />
+            <CoverDecorationEditor label="Color de la línea" color={cover.lineColor || lineFallback} mode={cover.lineMode} gradient={cover.lineGradient} size={cover.lineSize} set={set} prefix="coverSection.line" sizeMin={10} sizeMax={300} />
+            <label className="editor-field"><span>Oscuridad de la capa sobre la fotografía</span><input type="range" min="0" max="1" step="0.01" value={Number.isFinite(Number(cover.photoOverlayOpacity)) ? Number(cover.photoOverlayOpacity) : (Number.isFinite(Number(project.couple?.photoOverlayOpacity)) ? Number(project.couple.photoOverlayOpacity) : 0.55)} onChange={(e) => { const value = Number(e.target.value); set('coverSection.photoOverlayOpacity', value); set('couple.photoOverlayOpacity', value) }} /><small>{Math.round((Number.isFinite(Number(cover.photoOverlayOpacity)) ? Number(cover.photoOverlayOpacity) : (Number.isFinite(Number(project.couple?.photoOverlayOpacity)) ? Number(project.couple.photoOverlayOpacity) : 0.55)) * 100)}% de oscuridad</small></label>
+          </div>
+        )
+      }
       case 'couple': return <div className="editor-grid"><TextField label="Fotografía de los novios (URL)" value={project.couple.photo} onChange={(v) => set('couple.photo', v)} placeholder="https://..." /><TextField label="Frase" value={project.couple.quote} onChange={(v) => set('couple.quote', v)} multiline /></div>
       case 'music': return <div className="editor-grid"><TextField label="Título de la canción" value={project.music.title} onChange={(v) => set('music.title', v)} /><TextField label="URL del audio" value={project.music.url} onChange={(v) => set('music.url', v)} placeholder="https://..." /><label className="toggle-field"><span>Activar música</span><input type="checkbox" checked={project.music.enabled} onChange={(e) => set('music.enabled', e.target.checked)} /></label></div>
       case 'story': return <div className="editor-grid"><TextField label="Título de sección" value={project.story.sectionTitle ?? 'Nuestra historia'} onChange={(v) => set('story.sectionTitle', v)} /><TextField label="Subtítulo" value={project.story.title} onChange={(v) => set('story.title', v)} /><TextField label="Historia" value={project.story.text} onChange={(v) => set('story.text', v)} multiline /><TextField label="Imagen 1 (URL)" value={project.story.images[0] || ''} onChange={(v) => set('story.images', [v, ...project.story.images.slice(1)])} placeholder="https://..." /></div>
