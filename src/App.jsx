@@ -87,6 +87,23 @@ function App() {
 
   if (!activeProject) return null
 
+  const previewDeviceStyle = {
+    width: '42%',
+    maxWidth: '180px',
+    flex: '0 1 42%',
+  }
+
+  const previewPairStyle = {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    padding: '18px',
+    boxSizing: 'border-box',
+  }
+
   return (
     <main className="app-shell">
       <header className="app-header editor-page-header">
@@ -105,13 +122,25 @@ function App() {
         <main className="creator-editor">
           <section className="creator-panel"><EditorWedding project={activeProject} setProject={updateProject} activeSection={activeSection} setActiveSection={setActiveSection} /></section>
           <section className="creator-preview">
-            <div className="preview-toolbar"><div><p className="app-kicker">Vista previa</p><strong>POCO X8 Pro Max</strong></div><span className="preview-device-label">6.83&quot; · 19.49:9</span></div>
+            <div className="preview-toolbar">
+              <div><p className="app-kicker">Vista previa</p><strong>POCO X8 Pro Max + POCO X8 Pro</strong></div>
+              <span className="preview-device-label">2 dispositivos</span>
+            </div>
             <div className="preview-stage">
-              <div className="preview-device-shell" aria-label="Simulación del POCO X8 Pro Max">
-                <div className="preview-device-camera" aria-hidden="true" />
-                <div className="preview-device-buttons" aria-hidden="true" />
-                <div className="preview-device-screen">
-                  <PreviewWedding project={activeProject} refreshKey={previewRefreshKey} />
+              <div style={previewPairStyle}>
+                <div className="preview-device-shell preview-device-shell-max" style={previewDeviceStyle} aria-label="Simulación del POCO X8 Pro Max">
+                  <div className="preview-device-camera" aria-hidden="true" />
+                  <div className="preview-device-buttons" aria-hidden="true" />
+                  <div className="preview-device-screen">
+                    <PreviewWedding project={activeProject} refreshKey={previewRefreshKey} />
+                  </div>
+                </div>
+                <div className="preview-device-shell preview-device-shell-pro" style={previewDeviceStyle} aria-label="Simulación del POCO X8 Pro">
+                  <div className="preview-device-camera" aria-hidden="true" />
+                  <div className="preview-device-buttons" aria-hidden="true" />
+                  <div className="preview-device-screen">
+                    <PreviewWedding project={activeProject} refreshKey={previewRefreshKey} />
+                  </div>
                 </div>
               </div>
             </div>
