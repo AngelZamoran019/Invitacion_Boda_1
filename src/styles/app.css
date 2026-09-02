@@ -17,3 +17,7 @@
 .preview-device-buttons::after{content:"";position:absolute;right:0;top:38px;width:4px;height:42px;border-radius:0 3px 3px 0;background:#11151b}
 @media(max-width:860px){.creator-preview .preview-stage{padding:18px!important}.preview-device-shell{width:min(310px,calc(100% - 18px))}}
 @media(max-width:640px){.creator-panel .editor-main{padding:20px 20px 48px}.creator-preview .preview-stage{padding:14px!important}.preview-device-shell{width:min(280px,calc(100% - 12px));border-radius:28px;padding:3px}.preview-device-screen{border-radius:24px}.preview-device-camera{top:6px;width:10px;height:10px}}
+
+/* La VP conserva un lienzo móvil de 430px y lo escala dentro de cada pantalla. */
+.preview-device-screen .wedding-preview-frame{position:absolute!important;left:50%!important;top:50%!important;width:430px!important;height:931px!important;min-width:430px!important;min-height:931px!important;transform:translate(-50%,-50%) scale(.39)!important;transform-origin:center center!important}
+.preview-device-shell-pro .preview-device-screen .wedding-preview-frame{transform:translate(-50%,-50%) scale(.333)!important}
