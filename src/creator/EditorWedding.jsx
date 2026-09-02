@@ -10,7 +10,6 @@ const updateAt = (setProject, updater) => setProject((current) => ({ ...updater(
 
 const FONT_OPTIONS = [
   { value: 'Arial', label: 'Arial' },
-  { value: 'Amoresa', label: 'Amoresa' },
 ]
 
 function TextField({ label, value, onChange, placeholder = '', multiline = false, type = 'text' }) {
