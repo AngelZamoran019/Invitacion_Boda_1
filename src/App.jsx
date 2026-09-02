@@ -44,7 +44,7 @@ function App() {
   const [activeProjectId, setActiveProjectId] = useState(null)
   const [activeSection, setActiveSection] = useState('appearance')
   const [previewRefreshKey, setPreviewRefreshKey] = useState(0)
-  const [zoomedDevice, setZoomedDevice] = useState(null)
+  const [zoomedDevice, setZoomedDevice] = useState(false)
 
   const activeProject = useMemo(() => projects.find((project) => project.id === activeProjectId) || null, [projects, activeProjectId])
 
@@ -52,7 +52,7 @@ function App() {
     setActiveProjectId(id)
     setActiveSection('appearance')
     setPreviewRefreshKey((current) => current + 1)
-    setZoomedDevice(null)
+    setZoomedDevice(false)
     setView('editor')
   }
 
@@ -84,8 +84,8 @@ function App() {
   }
 
   const handleExport = (project) => downloadWeddingHTML(project)
-  const openPreviewZoom = (device) => setZoomedDevice(device)
-  const closePreviewZoom = () => setZoomedDevice(null)
+  const openPreviewZoom = () => setZoomedDevice(true)
+  const closePreviewZoom = () => setZoomedDevice(false)
 
   if (view === 'dashboard') {
     return <DashboardWedding projects={projects} onNew={createNewProject} onEdit={openEditor} onDelete={handleDelete} onExport={handleExport} />
@@ -93,22 +93,20 @@ function App() {
 
   if (!activeProject) return null
 
-  const previewMaxStyle = { width: '42%', maxWidth: '180px', flex: '0 1 42%' }
-  const previewProStyle = { width: '36%', maxWidth: '155px', flex: '0 1 36%' }
-  const previewPairStyle = { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '18px', boxSizing: 'border-box' }
-
   return (
     <main className="app-shell">
       <header className="app-header editor-page-header">
-        <div>
-          <button className="back-to-projects" type="button" onClick={() => setView('dashboard')}>← Mis proyectos</button>
-          <p className="app-kicker">Editor de invitación</p>
-          <h1>{activeProject.name || activeProject.coverSection.title}</h1>
-        </div>
-        <div className="header-actions">
-          <div className="header-badge"><span className="status-dot" /> Guardado automático</div>
-          <button className="preview-refresh-button" type="button" onClick={() => setPreviewRefreshKey((current) => current + 1)} title="Recargar únicamente la vista previa">↻ Recargar VP</button>
-          <button className="export-header-button" type="button" onClick={() => handleExport(activeProject)}>Exportar HTML</button>
+        <div className="editor-header-main">
+          <div className="editor-header-title">
+            <button className="back-to-projects" type="button" onClick={() => setView('dashboard')}>← Mis proyectos</button>
+            <p className="app-kicker">Editor de invitación</p>
+            <h1>{activeProject.name || activeProject.coverSection.title}</h1>
+          </div>
+          <div className="header-actions">
+            <div className="header-badge"><span className="status-dot" /> Guardado automático</div>
+            <button className="preview-refresh-button" type="button" onClick={() => setPreviewRefreshKey((current) => current + 1)} title="Recargar únicamente la vista previa">↻ Recargar VP</button>
+            <button className="export-header-button" type="button" onClick={() => handleExport(activeProject)}>Exportar HTML</button>
+          </div>
         </div>
       </header>
       <section className="workspace">
@@ -116,23 +114,15 @@ function App() {
           <section className="creator-panel"><EditorWedding project={activeProject} setProject={updateProject} activeSection={activeSection} setActiveSection={setActiveSection} /></section>
           <section className="creator-preview">
             <div className="preview-toolbar">
-              <div><p className="app-kicker">Vista previa</p><strong>POCO X8 Pro Max + POCO X8 Pro</strong></div>
-              <span className="preview-device-label">2 dispositivos</span>
+              <div><p className="app-kicker">Vista previa</p><strong>POCO X8 Pro</strong></div>
+              <span className="preview-device-label">Simulador</span>
             </div>
             <div className="preview-stage">
-              <div style={previewPairStyle}>
-                <div className="preview-device-shell preview-device-shell-max" style={previewMaxStyle} aria-label="Simulación del POCO X8 Pro Max">
-                  <button className="preview-zoom-button" type="button" onClick={() => openPreviewZoom('max')} title="Ampliar VP del POCO X8 Pro Max" aria-label="Ampliar VP del POCO X8 Pro Max">⌕</button>
-                  <div className="preview-device-camera" aria-hidden="true" />
-                  <div className="preview-device-buttons" aria-hidden="true" />
-                  <div className="preview-device-screen"><PreviewWedding project={activeProject} refreshKey={previewRefreshKey} /></div>
-                </div>
-                <div className="preview-device-shell preview-device-shell-pro" style={previewProStyle} aria-label="Simulación del POCO X8 Pro">
-                  <button className="preview-zoom-button" type="button" onClick={() => openPreviewZoom('pro')} title="Ampliar VP del POCO X8 Pro" aria-label="Ampliar VP del POCO X8 Pro">⌕</button>
-                  <div className="preview-device-camera" aria-hidden="true" />
-                  <div className="preview-device-buttons" aria-hidden="true" />
-                  <div className="preview-device-screen"><PreviewWedding project={activeProject} refreshKey={previewRefreshKey} /></div>
-                </div>
+              <div className="preview-device-shell preview-device-shell-pro" aria-label="Simulación del POCO X8 Pro">
+                <button className="preview-zoom-button" type="button" onClick={openPreviewZoom} title="Ampliar VP del POCO X8 Pro" aria-label="Ampliar VP del POCO X8 Pro">⌕</button>
+                <div className="preview-device-camera" aria-hidden="true" />
+                <div className="preview-device-buttons" aria-hidden="true" />
+                <div className="preview-device-screen"><PreviewWedding project={activeProject} refreshKey={previewRefreshKey} /></div>
               </div>
             </div>
           </section>
@@ -142,7 +132,7 @@ function App() {
       {zoomedDevice && (
         <div className="preview-zoom-overlay" role="dialog" aria-modal="true" aria-label="Vista previa ampliada" onMouseDown={(event) => { if (event.target === event.currentTarget) closePreviewZoom() }}>
           <div className="preview-zoom-toolbar">
-            <strong>{zoomedDevice === 'max' ? 'POCO X8 Pro Max' : 'POCO X8 Pro'}</strong>
+            <strong>POCO X8 Pro</strong>
             <button type="button" onClick={closePreviewZoom} title="Cerrar vista ampliada" aria-label="Cerrar vista ampliada">×</button>
           </div>
           <div className="preview-zoom-device-shell">
