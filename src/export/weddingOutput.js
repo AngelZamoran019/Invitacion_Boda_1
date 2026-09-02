@@ -1,4 +1,5 @@
 import { renderWeddingHTML as renderBaseWeddingHTML } from './renderWeddingHTML.js'
+import { WEDDING_FONT_FACE_CSS, getWeddingFontFamily } from '../fonts/weddingFonts.js'
 
 const stripUnconfiguredCoupleEyebrow = (html) => String(html || '').replace(/<p\b[^>]*class=["']eyebrow["'][^>]*>\s*Con amor\s*<\/p>/i, '')
 const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char])
@@ -212,6 +213,22 @@ const applyCoverPositionStyles = (html, project) => {
   return String(html || '').replace('</head>', `${positionCss}</head>`)
 }
 
+const applyWeddingFonts = (html, project) => {
+  const cover = project?.coverSection || {}
+  const eyebrowFont = getWeddingFontFamily(cover.eyebrowFont)
+  const titleFont = getWeddingFontFamily(cover.titleFont)
+  const dateFont = getWeddingFontFamily(cover.dateFont)
+  const buttonFont = getWeddingFontFamily(cover.buttonFont)
+  const css = `<style id="wedding-fonts-sync">${WEDDING_FONT_FACE_CSS}
+    .phone.phone>.cover>.eyebrow{font-family:${eyebrowFont}!important}
+    .phone.phone>.cover>h1{font-family:${titleFont}!important}
+    .phone.phone>.cover>.date{font-family:${dateFont}!important}
+    .phone.phone>.cover>.button{font-family:${buttonFont}!important}
+  </style>`
+  const source = String(html || '')
+  return source.replace('</head>', `${css}</head>`)
+}
+
 const preserveEditableCase = (html) => `${String(html || '')}<style id="wedding-preserve-editable-case">.eyebrow,.section-title-special,.cover h1,.cover-subtitle,.date,.venue,.text,.section h2,.event-card strong,.event-card span,.event-card small,.countdown span,.dress-card span,.dress-card strong,.rsvp-form label,.success,.button{ text-transform:none !important; }</style>`
 
 export function renderWeddingHTML(project) {
@@ -235,7 +252,8 @@ export function renderWeddingHTML(project) {
   const withGifts = applyGiftsFields(withDressCode, project)
   const withEventDate = applyEventDate(removeEventVenues(applyCountdownSectionTitle(applyEventSectionTitle(applyStorySectionTitle(stripUnconfiguredCoupleEyebrow(withGifts), project), project), project), project), project)
   const withCoverPositions = applyCoverPositionStyles(withEventDate, project)
-  return preserveEditableCase(withCoverPositions.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
+  const withFonts = applyWeddingFonts(withCoverPositions, project)
+  return preserveEditableCase(withFonts.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
 }
 
 export default renderWeddingHTML
