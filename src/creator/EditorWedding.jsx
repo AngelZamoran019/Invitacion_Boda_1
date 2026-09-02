@@ -17,12 +17,14 @@ function TextField({ label, value, onChange, placeholder = '', multiline = false
   return <label className="editor-field"><span>{label}</span>{multiline ? <textarea value={value ?? ''} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={4} /> : <input type={type} value={value ?? ''} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />}</label>
 }
 
-function CoverStyleDropdown({ label, color, mode, gradient, size, font, set, prefix, includeFont = true, sizeMin = 1, sizeMax = 200, defaultSize = 16 }) {
+function CoverStyleDropdown({ label, color, mode, gradient, size, font, positionY, set, prefix, includeFont = true, sizeMin = 1, sizeMax = 200, defaultSize = 16 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [openOption, setOpenOption] = useState(null)
   const activeMode = mode === 'gradient' ? 'gradient' : 'solid'
   const numericSize = Number(size)
   const safeSize = Number.isFinite(numericSize) && numericSize > 0 ? numericSize : defaultSize
+  const numericPosition = Number(positionY)
+  const safePosition = Number.isFinite(numericPosition) ? numericPosition : 0
   const activeFont = FONT_OPTIONS.some((option) => option.value === font) ? font : 'Arial'
 
   const toggleOption = (item) => setOpenOption((current) => current === item ? null : item)
@@ -69,23 +71,30 @@ function CoverStyleDropdown({ label, color, mode, gradient, size, font, set, pre
               {openOption === 'font' && <div className="cover-style-panel"><label className="cover-font-field"><span>Fuente</span><select value={activeFont} onChange={(e) => set(`${prefix}Font`, e.target.value)}>{FONT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label></div>}
             </div>
           )}
+
+          <div className="cover-style-item">
+            <button type="button" className="cover-style-option" onClick={() => toggleOption('position')} aria-expanded={openOption === 'position'}>
+              <span>Posición</span><b aria-hidden="true">⌄</b>
+            </button>
+            {openOption === 'position' && <div className="cover-style-panel"><label className="cover-size-field"><span>Arriba / abajo</span><div><input type="number" min="-300" max="300" step="1" value={safePosition} onChange={(e) => set(`${prefix}PositionY`, Number(e.target.value))} /><small>px</small></div></label><small>Negativo = arriba · Positivo = abajo</small></div>}
+          </div>
         </div>
       )}
     </div>
   )
 }
 
-function CoverTextEditor({ label, value, onChange, color, mode, gradient, size, font, set, prefix, placeholder = '', defaultSize = 16, sizeMin = 1, sizeMax = 200 }) {
+function CoverTextEditor({ label, value, onChange, color, mode, gradient, size, font, positionY, set, prefix, placeholder = '', defaultSize = 16, sizeMin = 1, sizeMax = 200 }) {
   return (
     <div className="cover-text-editor">
       <TextField label={label} value={value} onChange={onChange} placeholder={placeholder} />
-      <CoverStyleDropdown label="Colores" color={color} mode={mode} gradient={gradient} size={size} font={font} set={set} prefix={prefix} defaultSize={defaultSize} sizeMin={sizeMin} sizeMax={sizeMax} />
+      <CoverStyleDropdown label="Colores" color={color} mode={mode} gradient={gradient} size={size} font={font} positionY={positionY} set={set} prefix={prefix} defaultSize={defaultSize} sizeMin={sizeMin} sizeMax={sizeMax} />
     </div>
   )
 }
 
-function CoverDecorationEditor({ label, color, mode, gradient, size, set, prefix, defaultSize, sizeMin = 1, sizeMax = 200 }) {
-  return <CoverStyleDropdown label={label} color={color} mode={mode} gradient={gradient} size={size} set={set} prefix={prefix} includeFont={false} defaultSize={defaultSize} sizeMin={sizeMin} sizeMax={sizeMax} />
+function CoverDecorationEditor({ label, color, mode, gradient, size, positionY, set, prefix, defaultSize, sizeMin = 1, sizeMax = 200 }) {
+  return <CoverStyleDropdown label={label} color={color} mode={mode} gradient={gradient} size={size} positionY={positionY} set={set} prefix={prefix} includeFont={false} defaultSize={defaultSize} sizeMin={sizeMin} sizeMax={sizeMax} />
 }
 
 function parseCoupleTitle(value, fallbackName1 = '', fallbackName2 = '') {
@@ -109,13 +118,13 @@ function EditorWedding({ project, setProject, activeSection, setActiveSection })
         const lineFallback = project.appearance?.accentColor || '#c9a86a'
         return (
           <div className="editor-grid cover-editor-grid">
-            <CoverTextEditor label="Texto superior" value={cover.eyebrow} onChange={(v) => set('coverSection.eyebrow', v)} color={cover.eyebrowColor} mode={cover.eyebrowMode} gradient={cover.eyebrowGradient} size={cover.eyebrowSize} font={cover.eyebrowFont} set={set} prefix="coverSection.eyebrow" defaultSize={11} />
-            <CoverTextEditor label="Nombres" value={cover.title} onChange={(v) => { const parsed = parseCoupleTitle(v, project.couple?.name1, project.couple?.name2); set('coverSection.title', v); set('couple.name1', parsed.name1); set('couple.name2', parsed.name2); set('couple.separator', parsed.separator) }} color={cover.titleColor} mode={cover.titleMode} gradient={cover.titleGradient} size={cover.titleSize} font={cover.titleFont} set={set} prefix="coverSection.title" defaultSize={42} />
-            <CoverTextEditor label="Fecha" value={cover.date} onChange={(v) => set('coverSection.date', v)} placeholder="24 de octubre de 2026" color={cover.dateColor} mode={cover.dateMode} gradient={cover.dateGradient} size={cover.dateSize} font={cover.dateFont} set={set} prefix="coverSection.date" defaultSize={12} />
-            <CoverTextEditor label="Abrir invitación" value={cover.buttonLabel ?? 'Abrir invitación'} onChange={(v) => set('coverSection.buttonLabel', v)} color={cover.buttonColor} mode={cover.buttonMode} gradient={cover.buttonGradient} size={cover.buttonSize} font={cover.buttonFont} set={set} prefix="coverSection.button" defaultSize={13} />
+            <CoverTextEditor label="Texto superior" value={cover.eyebrow} onChange={(v) => set('coverSection.eyebrow', v)} color={cover.eyebrowColor} mode={cover.eyebrowMode} gradient={cover.eyebrowGradient} size={cover.eyebrowSize} font={cover.eyebrowFont} positionY={cover.eyebrowPositionY} set={set} prefix="coverSection.eyebrow" defaultSize={11} />
+            <CoverTextEditor label="Nombres" value={cover.title} onChange={(v) => { const parsed = parseCoupleTitle(v, project.couple?.name1, project.couple?.name2); set('coverSection.title', v); set('couple.name1', parsed.name1); set('couple.name2', parsed.name2); set('couple.separator', parsed.separator) }} color={cover.titleColor} mode={cover.titleMode} gradient={cover.titleGradient} size={cover.titleSize} font={cover.titleFont} positionY={cover.titlePositionY} set={set} prefix="coverSection.title" defaultSize={42} />
+            <CoverTextEditor label="Fecha" value={cover.date} onChange={(v) => set('coverSection.date', v)} placeholder="24 de octubre de 2026" color={cover.dateColor} mode={cover.dateMode} gradient={cover.dateGradient} size={cover.dateSize} font={cover.dateFont} positionY={cover.datePositionY} set={set} prefix="coverSection.date" defaultSize={12} />
+            <CoverTextEditor label="Abrir invitación" value={cover.buttonLabel ?? 'Abrir invitación'} onChange={(v) => set('coverSection.buttonLabel', v)} color={cover.buttonColor} mode={cover.buttonMode} gradient={cover.buttonGradient} size={cover.buttonSize} font={cover.buttonFont} positionY={cover.buttonPositionY} set={set} prefix="coverSection.button" defaultSize={13} />
             <TextField label="URL de imagen de portada" value={cover.backgroundImage || ''} onChange={(v) => set('coverSection.backgroundImage', v)} placeholder="https://..." />
-            <CoverDecorationEditor label="Color del diamante" color={cover.ornamentColor} mode={cover.ornamentMode} gradient={cover.ornamentGradient} size={cover.ornamentSize} set={set} prefix="coverSection.ornament" defaultSize={30} sizeMin={8} sizeMax={100} />
-            <CoverDecorationEditor label="Color de la línea" color={cover.lineColor || lineFallback} mode={cover.lineMode} gradient={cover.lineGradient} size={cover.lineSize} set={set} prefix="coverSection.line" defaultSize={70} sizeMin={10} sizeMax={300} />
+            <CoverDecorationEditor label="Color del diamante" color={cover.ornamentColor} mode={cover.ornamentMode} gradient={cover.ornamentGradient} size={cover.ornamentSize} positionY={cover.ornamentPositionY} set={set} prefix="coverSection.ornament" defaultSize={30} sizeMin={8} sizeMax={100} />
+            <CoverDecorationEditor label="Color de la línea" color={cover.lineColor || lineFallback} mode={cover.lineMode} gradient={cover.lineGradient} size={cover.lineSize} positionY={cover.linePositionY} set={set} prefix="coverSection.line" defaultSize={70} sizeMin={10} sizeMax={300} />
             <label className="editor-field"><span>Oscuridad de la capa sobre la fotografía</span><input type="range" min="0" max="1" step="0.01" value={Number.isFinite(Number(cover.photoOverlayOpacity)) ? Number(cover.photoOverlayOpacity) : (Number.isFinite(Number(project.couple?.photoOverlayOpacity)) ? Number(project.couple.photoOverlayOpacity) : 0.55)} onChange={(e) => { const value = Number(e.target.value); set('coverSection.photoOverlayOpacity', value); set('couple.photoOverlayOpacity', value) }} /><small>{Math.round((Number.isFinite(Number(cover.photoOverlayOpacity)) ? Number(cover.photoOverlayOpacity) : (Number.isFinite(Number(project.couple?.photoOverlayOpacity)) ? Number(project.couple.photoOverlayOpacity) : 0.55)) * 100)}% de oscuridad</small></label>
           </div>
         )
