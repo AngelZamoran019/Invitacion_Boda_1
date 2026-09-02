@@ -9,6 +9,7 @@ import { applyCoverPositionsToExport } from './export/applyCoverPositions.js'
 import './styles/app.css'
 import './styles/wedding.css'
 import './styles/dashboard.css'
+import './styles/previewZoom.css'
 
 const LEGACY_KEY = 'invitacion-boda-1-project'
 
@@ -83,6 +84,8 @@ function App() {
   }
 
   const handleExport = (project) => downloadWeddingHTML(project)
+  const openPreviewZoom = (device) => setZoomedDevice(device)
+  const closePreviewZoom = () => setZoomedDevice(null)
 
   if (view === 'dashboard') {
     return <DashboardWedding projects={projects} onNew={createNewProject} onEdit={openEditor} onDelete={handleDelete} onExport={handleExport} />
@@ -90,31 +93,9 @@ function App() {
 
   if (!activeProject) return null
 
-  const previewMaxStyle = {
-    width: '42%',
-    maxWidth: '180px',
-    flex: '0 1 42%',
-  }
-
-  const previewProStyle = {
-    width: '36%',
-    maxWidth: '155px',
-    flex: '0 1 36%',
-  }
-
-  const previewPairStyle = {
-    width: '100%',
-    height: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '12px',
-    padding: '18px',
-    boxSizing: 'border-box',
-  }
-
-  const openPreviewZoom = (device) => setZoomedDevice(device)
-  const closePreviewZoom = () => setZoomedDevice(null)
+  const previewMaxStyle = { width: '42%', maxWidth: '180px', flex: '0 1 42%' }
+  const previewProStyle = { width: '36%', maxWidth: '155px', flex: '0 1 36%' }
+  const previewPairStyle = { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '18px', boxSizing: 'border-box' }
 
   return (
     <main className="app-shell">
@@ -144,17 +125,13 @@ function App() {
                   <button className="preview-zoom-button" type="button" onClick={() => openPreviewZoom('max')} title="Ampliar VP del POCO X8 Pro Max" aria-label="Ampliar VP del POCO X8 Pro Max">⌕</button>
                   <div className="preview-device-camera" aria-hidden="true" />
                   <div className="preview-device-buttons" aria-hidden="true" />
-                  <div className="preview-device-screen">
-                    <PreviewWedding project={activeProject} refreshKey={previewRefreshKey} />
-                  </div>
+                  <div className="preview-device-screen"><PreviewWedding project={activeProject} refreshKey={previewRefreshKey} /></div>
                 </div>
                 <div className="preview-device-shell preview-device-shell-pro" style={previewProStyle} aria-label="Simulación del POCO X8 Pro">
                   <button className="preview-zoom-button" type="button" onClick={() => openPreviewZoom('pro')} title="Ampliar VP del POCO X8 Pro" aria-label="Ampliar VP del POCO X8 Pro">⌕</button>
                   <div className="preview-device-camera" aria-hidden="true" />
                   <div className="preview-device-buttons" aria-hidden="true" />
-                  <div className="preview-device-screen">
-                    <PreviewWedding project={activeProject} refreshKey={previewRefreshKey} />
-                  </div>
+                  <div className="preview-device-screen"><PreviewWedding project={activeProject} refreshKey={previewRefreshKey} /></div>
                 </div>
               </div>
             </div>
@@ -171,9 +148,7 @@ function App() {
           <div className="preview-zoom-device-shell">
             <div className="preview-device-camera" aria-hidden="true" />
             <div className="preview-device-buttons" aria-hidden="true" />
-            <div className="preview-device-screen">
-              <PreviewWedding project={activeProject} refreshKey={previewRefreshKey} />
-            </div>
+            <div className="preview-device-screen"><PreviewWedding project={activeProject} refreshKey={previewRefreshKey} /></div>
           </div>
         </div>
       )}
