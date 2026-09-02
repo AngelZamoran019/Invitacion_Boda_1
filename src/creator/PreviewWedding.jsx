@@ -97,6 +97,17 @@ function PreviewWedding({ project, refreshKey = 0 }) {
     const iframe = iframeRef.current
     if (!iframe) return undefined
 
+    const syncProjectToIframe = (nextProject) => {
+      if (!initializedRef.current || !iframe.contentWindow) return
+      try {
+        const baseHTML = applyPreviewTextDefaults(applyConfirmationTexts(renderWeddingHTML(nextProject), nextProject))
+        const html = applyCoverDecorationColors(baseHTML, nextProject)
+        iframe.contentWindow.postMessage({ type: 'WEDDING_PREVIEW_UPDATE', html }, '*')
+      } catch {
+        // Evitar que un cambio de edición rompa el editor.
+      }
+    }
+
     const buildBridgeHTML = (html) => {
       const bridge = `<script id="wedding-preview-bridge">(()=>{
   const phone=()=>document.querySelector('.phone')
@@ -178,20 +189,28 @@ function PreviewWedding({ project, refreshKey = 0 }) {
       return html.replace('</body>', `${bridge}</body>`)
     }
 
+    const handleLoad = () => {
+      initializedRef.current = true
+      syncProjectToIframe(projectRef.current)
+    }
+
+    iframe.addEventListener('load', handleLoad)
+
     try {
       const baseHTML = applyPreviewTextDefaults(applyConfirmationTexts(renderWeddingHTML(projectRef.current), projectRef.current))
       const html = buildBridgeHTML(applyCoverDecorationColors(baseHTML, projectRef.current))
       const doc = iframe.contentDocument || iframe.contentWindow?.document
-      if (!doc) return undefined
+      if (!doc) return () => iframe.removeEventListener('load', handleLoad)
+      initializedRef.current = false
       doc.open()
       doc.write(html)
       doc.close()
-      initializedRef.current = true
     } catch {
       // Mantener la VP viva aunque exista un cambio durante la carga.
     }
 
     return () => {
+      iframe.removeEventListener('load', handleLoad)
       initializedRef.current = false
     }
   }, [refreshKey])
@@ -199,17 +218,9 @@ function PreviewWedding({ project, refreshKey = 0 }) {
   useEffect(() => {
     const iframe = iframeRef.current
     if (!iframe || !initializedRef.current) return
-
-    try {
-      const baseHTML = applyPreviewTextDefaults(applyConfirmationTexts(renderWeddingHTML(project), project))
-      const html = applyCoverDecorationColors(baseHTML, project)
-      iframe.contentWindow?.postMessage({
-        type: 'WEDDING_PREVIEW_UPDATE',
-        html,
-      }, '*')
-    } catch {
-      // Evitar que un cambio de edicion rompa el editor.
-    }
+    const baseHTML = applyPreviewTextDefaults(applyConfirmationTexts(renderWeddingHTML(project), project))
+    const html = applyCoverDecorationColors(baseHTML, project)
+    iframe.contentWindow?.postMessage({ type: 'WEDDING_PREVIEW_UPDATE', html }, '*')
   }, [project])
 
   return (
