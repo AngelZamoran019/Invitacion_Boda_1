@@ -105,8 +105,16 @@ function App() {
         <main className="creator-editor">
           <section className="creator-panel"><EditorWedding project={activeProject} setProject={updateProject} activeSection={activeSection} setActiveSection={setActiveSection} /></section>
           <section className="creator-preview">
-            <div className="preview-toolbar"><div><p className="app-kicker">Vista previa</p><strong>Invitación móvil</strong></div><span className="preview-device-label">9:16</span></div>
-            <div className="preview-stage"><PreviewWedding project={activeProject} refreshKey={previewRefreshKey} /></div>
+            <div className="preview-toolbar"><div><p className="app-kicker">Vista previa</p><strong>POCO X8 Pro Max</strong></div><span className="preview-device-label">6.83&quot; · 19.49:9</span></div>
+            <div className="preview-stage">
+              <div className="preview-device-shell" aria-label="Simulación del POCO X8 Pro Max">
+                <div className="preview-device-camera" aria-hidden="true" />
+                <div className="preview-device-buttons" aria-hidden="true" />
+                <div className="preview-device-screen">
+                  <PreviewWedding project={activeProject} refreshKey={previewRefreshKey} />
+                </div>
+              </div>
+            </div>
           </section>
         </main>
       </section>
