@@ -10,6 +10,7 @@ import './styles/app.css'
 import './styles/wedding.css'
 import './styles/dashboard.css'
 import './styles/previewZoom.css'
+import './styles/previewClean.css'
 
 const LEGACY_KEY = 'invitacion-boda-1-project'
 
