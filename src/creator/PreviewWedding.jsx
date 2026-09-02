@@ -25,6 +25,11 @@ const applyCoverDecorationColors = (html, project) => {
     const numeric = Number(value)
     return Number.isFinite(numeric) && numeric > 0 ? numeric : fallback
   }
+  const validPosition = (value) => {
+    const numeric = Number(value)
+    return Number.isFinite(numeric) ? Math.max(-300, Math.min(300, numeric)) : 0
+  }
+  const positionRule = (value) => `transform:translateY(${validPosition(value)}px)!important;`
   const paint = (mode, color, gradient, fallback, size, font) => {
     const safeColor = validColor(color, fallback)
     const safeGradient = validGradient(gradient)
@@ -48,7 +53,7 @@ const applyCoverDecorationColors = (html, project) => {
 
   const buttonLabel = String(cover.buttonLabel ?? 'Abrir invitación')
     .replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))
-  const css = `<style id="wedding-cover-decoration-colors">.phone>.cover>.ornament{${ornamentPaint}}.phone>.cover>.eyebrow{${eyebrowPaint}}.phone>.cover>h1{${titlePaint}}.phone>.cover>.date{${datePaint}}.phone>.cover>.button{${buttonPaint}}.phone>.cover>.line{${linePaint}}</style>`
+  const css = `<style id="wedding-cover-decoration-colors">.phone>.cover>.ornament{${ornamentPaint}${positionRule(cover.ornamentPositionY)}}.phone>.cover>.eyebrow{${eyebrowPaint}${positionRule(cover.eyebrowPositionY)}}.phone>.cover>h1{${titlePaint}${positionRule(cover.titlePositionY)}}.phone>.cover>.date{${datePaint}${positionRule(cover.datePositionY)}}.phone>.cover>.button{${buttonPaint}${positionRule(cover.buttonPositionY)}}.phone>.cover>.line{${linePaint}${positionRule(cover.linePositionY)}}</style>`
   const source = String(html || '')
   const withButtonText = source.replace(/(<button\s+class=["']button["'][^>]*>)[\s\S]*?(<\/button>)/i, `$1${buttonLabel}$2`)
   if (withButtonText.includes('id="wedding-cover-decoration-colors"')) return withButtonText.replace(/<style id="wedding-cover-decoration-colors">[\s\S]*?<\/style>/i, css)
