@@ -21,7 +21,7 @@ const applyCoverDecorationColors = (html, project) => {
   const validColor = (value, fallback) => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback
   const ornamentColor = validColor(cover.ornamentColor, '#ffffff')
   const lineColor = validColor(cover.lineColor, validColor(project?.appearance?.accentColor, '#c9a86a'))
-  const css = `<style id="wedding-cover-decoration-colors">.phone>.cover>.ornament{color:${ornamentColor}!important;background:none!important;-webkit-text-fill-color:${ornamentColor}!important}.phone>.cover>.line{background:${lineColor}!important}</style>`
+  const css = `<style id="wedding-cover-decoration-colors">.phone>.cover>.ornament{color:${ornamentColor}!important;background:none!important;-webkit-text-fill-color:${ornamentColor}!important}.phone>.cover>.line{background:linear-gradient(90deg,transparent,${lineColor},transparent)!important}</style>`
   const source = String(html || '')
   if (source.includes('id="wedding-cover-decoration-colors"')) return source
   return source.replace('</head>', `${css}</head>`)
