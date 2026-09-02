@@ -16,6 +16,17 @@ const applyConfirmationTexts = (html, project) => {
   })
 }
 
+const applyCoverDecorationColors = (html, project) => {
+  const cover = project?.coverSection || {}
+  const validColor = (value, fallback) => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback
+  const ornamentColor = validColor(cover.ornamentColor, '#ffffff')
+  const lineColor = validColor(cover.lineColor, validColor(project?.appearance?.accentColor, '#c9a86a'))
+  const css = `<style id="wedding-cover-decoration-colors">.phone>.cover>.ornament{color:${ornamentColor}!important;background:none!important;-webkit-text-fill-color:${ornamentColor}!important}.phone>.cover>.line{background:${lineColor}!important}</style>`
+  const source = String(html || '')
+  if (source.includes('id="wedding-cover-decoration-colors"')) return source
+  return source.replace('</head>', `${css}</head>`)
+}
+
 const applyPreviewTextDefaults = (html) => {
   const previewDefaults = `<style id="wedding-preview-text-defaults">
     .phone,
@@ -135,7 +146,7 @@ function PreviewWedding({ project, refreshKey = 0 }) {
     }
 
     try {
-      const html = buildBridgeHTML(applyPreviewTextDefaults(applyConfirmationTexts(renderWeddingHTML(projectRef.current), projectRef.current)))
+      const html = buildBridgeHTML(applyPreviewTextDefaults(applyCoverDecorationColors(applyConfirmationTexts(renderWeddingHTML(projectRef.current), projectRef.current), projectRef.current)))
       const doc = iframe.contentDocument || iframe.contentWindow?.document
       if (!doc) return undefined
       doc.open()
@@ -156,7 +167,7 @@ function PreviewWedding({ project, refreshKey = 0 }) {
     if (!iframe || !initializedRef.current) return
 
     try {
-      const html = applyPreviewTextDefaults(applyConfirmationTexts(renderWeddingHTML(project), project))
+      const html = applyPreviewTextDefaults(applyCoverDecorationColors(applyConfirmationTexts(renderWeddingHTML(project), project), project))
       iframe.contentWindow?.postMessage({
         type: 'WEDDING_PREVIEW_UPDATE',
         html,
