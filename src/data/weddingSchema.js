@@ -13,7 +13,7 @@ export const createDefaultWeddingProject = () => ({
       button:{fontFamily:"Arial,sans-serif",fontSize:13,color:'#ffffff',mode:'solid',gradient:'',fontWeight:600,lineHeight:1.2,letterSpacing:.5}
     }
   },
-  coverSection:{eyebrow:'Estás cordialmente invitado a la boda de',title:'Nombre & Nombre',subtitle:'',date:'',venue:'',backgroundImage:'',ornamentColor:'#ffffff',lineColor:''},
+  coverSection:{eyebrow:'Estás cordialmente invitado a la boda de',eyebrowColor:'#ffffff',eyebrowMode:'solid',eyebrowGradient:'',title:'Nombre & Nombre',titleColor:'#ffffff',titleMode:'solid',titleGradient:'',subtitle:'',date:'',dateColor:'#ffffff',dateMode:'solid',dateGradient:'',venue:'',backgroundImage:'',ornamentColor:'#ffffff',ornamentMode:'solid',ornamentGradient:'',lineColor:'',lineMode:'solid',lineGradient:'',buttonLabel:'Abrir invitación',buttonColor:'#ffffff',buttonMode:'solid',buttonGradient:''},
   couple:{name1:'',name2:'',photo:'',photoOverlayOpacity:0.55,quote:''}, music:{enabled:false,url:'',title:''}, story:{sectionTitle:'Nuestra historia',title:'Nuestra historia',text:'',images:[]},
   event:{sectionTitle:'El gran día',date:'',time:'',ceremonyTitle:'Ceremonia',ceremonyVenue:'',ceremonyAddress:'',ceremonyMapsUrl:'',receptionTitle:'Recepción',receptionVenue:'',receptionAddress:'',receptionMapsUrl:''},
   countdown:{enabled:true,targetDate:'',sectionTitle:'La cuenta regresiva comienza'},
