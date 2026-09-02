@@ -38,10 +38,13 @@ const applyCoverDecorationColors = (html, project) => {
     ? `background:${lineGradient}!important;-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 20%,#000 80%,transparent 100%)!important;mask-image:linear-gradient(90deg,transparent 0%,#000 20%,#000 80%,transparent 100%)!important;`
     : `background:linear-gradient(90deg,transparent 0%,${lineColor} 20%,${lineColor} 80%,transparent 100%)!important;-webkit-mask-image:none!important;mask-image:none!important;`
 
+  const buttonLabel = String(cover.buttonLabel ?? 'Abrir invitación')
+    .replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))
   const css = `<style id="wedding-cover-decoration-colors">.phone>.cover>.ornament{${ornamentPaint}}.phone>.cover>.eyebrow{${eyebrowPaint}}.phone>.cover>h1{${titlePaint}}.phone>.cover>.date{${datePaint}}.phone>.cover>.button{${buttonPaint}}.phone>.cover>.line{${linePaint}}</style>`
   const source = String(html || '')
-  if (source.includes('id="wedding-cover-decoration-colors"')) return source.replace(/<style id="wedding-cover-decoration-colors">[\s\S]*?<\/style>/i, css)
-  return source.replace('</head>', `${css}</head>`)
+  const withButtonText = source.replace(/(<button\s+class=["']button["'][^>]*>)[\s\S]*?(<\/button>)/i, `$1${buttonLabel}$2`)
+  if (withButtonText.includes('id="wedding-cover-decoration-colors"')) return withButtonText.replace(/<style id="wedding-cover-decoration-colors">[\s\S]*?<\/style>/i, css)
+  return withButtonText.replace('</head>', `${css}</head>`)
 }
 
 const applyPreviewTextDefaults = (html) => {
