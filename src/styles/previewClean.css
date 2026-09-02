@@ -1,19 +1,19 @@
 .creator-preview{border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important}.creator-preview .preview-toolbar{background:transparent!important;border:0!important;padding:0 0 10px!important;min-height:58px!important}.creator-preview .preview-stage{background:transparent!important;border:0!important;padding:0!important;overflow:visible!important;display:flex!important;align-items:center!important;justify-content:center!important;flex:1 1 auto!important;min-height:0!important}.creator-preview .preview-device-shell{box-shadow:0 24px 70px rgb(15 23 42 / 22%),inset 0 0 0 1px rgb(255 255 255 / 8%)!important}
 
-/* La VP queda libre de los recortes del workspace; el teléfono puede sobresalir verticalmente sin moverse horizontalmente. */
+/* La VP queda libre de los recortes del workspace; el teléfono conserva su ancho y reduce únicamente su altura un 20%. */
 .workspace{overflow:visible!important}
-.creator-preview .preview-stage>.preview-device-shell{height:min(900px,calc(100vh - 125px))!important;width:auto!important;max-width:none!important;aspect-ratio:77.9 / 162.9!important;flex:0 0 auto!important;position:relative!important;top:-115px!important}
+.creator-preview .preview-stage>.preview-device-shell{height:min(720px,calc((100vh - 125px)*.8))!important;width:auto!important;max-width:none!important;aspect-ratio:77.9 / 162.9!important;flex:0 0 auto!important;position:relative!important;top:-115px!important}
 .creator-preview .preview-device-shell-pro{width:auto!important}
 .creator-preview .preview-device-shell-pro .preview-device-screen .wedding-preview-frame{transform:translate(-50%,-50%) scale(.56)!important}
 
 @media(max-width:1080px){
-  .creator-preview .preview-stage>.preview-device-shell{height:min(780px,calc(100vh - 125px))!important;top:-90px!important}
+  .creator-preview .preview-stage>.preview-device-shell{height:min(624px,calc((100vh - 125px)*.8))!important;top:-90px!important}
 }
 
 @media(max-width:860px){
-  .creator-preview .preview-stage>.preview-device-shell{height:min(680px,calc(100vh - 150px))!important;top:-70px!important}
+  .creator-preview .preview-stage>.preview-device-shell{height:min(544px,calc((100vh - 150px)*.8))!important;top:-70px!important}
 }
 
 @media(max-width:640px){
-  .creator-preview .preview-stage>.preview-device-shell{height:min(620px,calc(100vh - 170px))!important;top:-45px!important}
+  .creator-preview .preview-stage>.preview-device-shell{height:min(496px,calc((100vh - 170px)*.8))!important;top:-45px!important}
 }
