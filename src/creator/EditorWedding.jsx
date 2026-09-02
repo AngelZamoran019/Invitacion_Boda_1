@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import AppearanceControls, { ColorPicker, GradientBuilder } from './AppearanceControls.jsx'
+import { WEDDING_FONTS } from '../fonts/weddingFonts.js'
 
 const sectionGroups = [
   { id: 'design', title: 'Diseño', items: [['appearance', 'Apariencia'], ['coverSection', 'Portada']] },
@@ -8,9 +9,7 @@ const sectionGroups = [
 
 const updateAt = (setProject, updater) => setProject((current) => ({ ...updater(current), updated: new Date().toISOString() }))
 
-const FONT_OPTIONS = [
-  { value: 'Arial', label: 'Arial' },
-]
+const FONT_OPTIONS = WEDDING_FONTS
 
 function TextField({ label, value, onChange, placeholder = '', multiline = false, type = 'text' }) {
   return <label className="editor-field"><span>{label}</span>{multiline ? <textarea value={value ?? ''} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={4} /> : <input type={type} value={value ?? ''} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />}</label>
