@@ -185,6 +185,33 @@ const normalizeCountdownTimer = (html) => {
   return removeCountdownScripts.replace('</body>', `${countdownScript}</body>`)
 }
 
+const applyCoverPositionStyles = (html, project) => {
+  const cover = project?.coverSection || {}
+  const safe = (value) => {
+    const number = Number(value)
+    if (!Number.isFinite(number)) return 0
+    return Math.max(-300, Math.min(300, number))
+  }
+
+  const eyebrowY = safe(cover.eyebrowPositionY)
+  const titleY = safe(cover.titlePositionY)
+  const dateY = safe(cover.datePositionY)
+  const buttonY = safe(cover.buttonPositionY)
+  const ornamentY = safe(cover.ornamentPositionY)
+  const lineY = safe(cover.linePositionY)
+
+  const positionCss = `<style id="wedding-cover-position-export">
+    .phone>.cover>.ornament{position:relative!important;top:${ornamentY}px!important}
+    .phone>.cover>.eyebrow{position:relative!important;top:${eyebrowY}px!important}
+    .phone>.cover>h1{position:relative!important;top:${titleY}px!important}
+    .phone>.cover>.date{position:relative!important;top:${dateY}px!important}
+    .phone>.cover>.button{position:relative!important;top:${buttonY}px!important}
+    .phone>.cover>.line{position:relative!important;top:${lineY}px!important}
+  </style>`
+
+  return String(html || '').replace('</head>', `${positionCss}</head>`)
+}
+
 const preserveEditableCase = (html) => `${String(html || '')}<style id="wedding-preserve-editable-case">.eyebrow,.section-title-special,.cover h1,.cover-subtitle,.date,.venue,.text,.section h2,.event-card strong,.event-card span,.event-card small,.countdown span,.dress-card span,.dress-card strong,.rsvp-form label,.success,.button{ text-transform:none !important; }</style>`
 
 export function renderWeddingHTML(project) {
@@ -207,7 +234,8 @@ export function renderWeddingHTML(project) {
   const withDressCode = applyDressCodeFields(html, project)
   const withGifts = applyGiftsFields(withDressCode, project)
   const withEventDate = applyEventDate(removeEventVenues(applyCountdownSectionTitle(applyEventSectionTitle(applyStorySectionTitle(stripUnconfiguredCoupleEyebrow(withGifts), project), project), project), project), project)
-  return preserveEditableCase(withEventDate.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
+  const withCoverPositions = applyCoverPositionStyles(withEventDate, project)
+  return preserveEditableCase(withCoverPositions.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
 }
 
 export default renderWeddingHTML
