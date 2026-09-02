@@ -53,7 +53,24 @@ const applyCoverDecorationColors = (html, project) => {
 
   const buttonLabel = String(cover.buttonLabel ?? 'Abrir invitación')
     .replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))
-  const css = `<style id="wedding-cover-decoration-colors">.phone>.cover>.ornament{${ornamentPaint}${positionRule(cover.ornamentPositionY)}}.phone>.cover>.eyebrow{${eyebrowPaint}${positionRule(cover.eyebrowPositionY)}}.phone>.cover>h1{${titlePaint}${positionRule(cover.titlePositionY)}}.phone>.cover>.date{${datePaint}${positionRule(cover.datePositionY)}}.phone>.cover>.button{${buttonPaint}${positionRule(cover.buttonPositionY)}}.phone>.cover>.line{${linePaint}${positionRule(cover.linePositionY)}}</style>`
+
+  const positionRules = `
+    .phone>.cover>.ornament{${positionRule(cover.ornamentPositionY)}}
+    .phone>.cover>.eyebrow{${positionRule(cover.eyebrowPositionY)}}
+    .phone>.cover>h1{${positionRule(cover.titlePositionY)}}
+    .phone>.cover>.date{${positionRule(cover.datePositionY)}}
+    .phone>.cover>.button{${positionRule(cover.buttonPositionY)}}
+    .phone>.cover>.line{${positionRule(cover.linePositionY)}}
+    .phone>.cover.cover-animation-finished>.ornament{${positionRule(cover.ornamentPositionY)}}
+    .phone>.cover.cover-animation-finished>.eyebrow{${positionRule(cover.eyebrowPositionY)}}
+    .phone>.cover.cover-animation-finished>h1{${positionRule(cover.titlePositionY)}}
+    .phone>.cover.cover-animation-finished>.date{${positionRule(cover.datePositionY)}}
+    .phone>.cover.cover-animation-finished>.button{${positionRule(cover.buttonPositionY)}}
+    .phone>.cover.cover-animation-finished>.line{${positionRule(cover.linePositionY)}}
+  `
+
+  const paintRules = `.phone>.cover>.ornament{${ornamentPaint}}.phone>.cover>.eyebrow{${eyebrowPaint}}.phone>.cover>h1{${titlePaint}}.phone>.cover>.date{${datePaint}}.phone>.cover>.button{${buttonPaint}}.phone>.cover>.line{${linePaint}}`
+  const css = `<style id="wedding-cover-decoration-colors">${paintRules}${positionRules}</style>`
   const source = String(html || '')
   const withButtonText = source.replace(/(<button\s+class=["']button["'][^>]*>)[\s\S]*?(<\/button>)/i, `$1${buttonLabel}$2`)
   if (withButtonText.includes('id="wedding-cover-decoration-colors"')) return withButtonText.replace(/<style id="wedding-cover-decoration-colors">[\s\S]*?<\/style>/i, css)
