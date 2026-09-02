@@ -43,6 +43,7 @@ function App() {
   const [activeProjectId, setActiveProjectId] = useState(null)
   const [activeSection, setActiveSection] = useState('appearance')
   const [previewRefreshKey, setPreviewRefreshKey] = useState(0)
+  const [zoomedDevice, setZoomedDevice] = useState(null)
 
   const activeProject = useMemo(() => projects.find((project) => project.id === activeProjectId) || null, [projects, activeProjectId])
 
@@ -50,6 +51,7 @@ function App() {
     setActiveProjectId(id)
     setActiveSection('appearance')
     setPreviewRefreshKey((current) => current + 1)
+    setZoomedDevice(null)
     setView('editor')
   }
 
@@ -111,6 +113,9 @@ function App() {
     boxSizing: 'border-box',
   }
 
+  const openPreviewZoom = (device) => setZoomedDevice(device)
+  const closePreviewZoom = () => setZoomedDevice(null)
+
   return (
     <main className="app-shell">
       <header className="app-header editor-page-header">
@@ -136,6 +141,7 @@ function App() {
             <div className="preview-stage">
               <div style={previewPairStyle}>
                 <div className="preview-device-shell preview-device-shell-max" style={previewMaxStyle} aria-label="Simulación del POCO X8 Pro Max">
+                  <button className="preview-zoom-button" type="button" onClick={() => openPreviewZoom('max')} title="Ampliar VP del POCO X8 Pro Max" aria-label="Ampliar VP del POCO X8 Pro Max">⌕</button>
                   <div className="preview-device-camera" aria-hidden="true" />
                   <div className="preview-device-buttons" aria-hidden="true" />
                   <div className="preview-device-screen">
@@ -143,6 +149,7 @@ function App() {
                   </div>
                 </div>
                 <div className="preview-device-shell preview-device-shell-pro" style={previewProStyle} aria-label="Simulación del POCO X8 Pro">
+                  <button className="preview-zoom-button" type="button" onClick={() => openPreviewZoom('pro')} title="Ampliar VP del POCO X8 Pro" aria-label="Ampliar VP del POCO X8 Pro">⌕</button>
                   <div className="preview-device-camera" aria-hidden="true" />
                   <div className="preview-device-buttons" aria-hidden="true" />
                   <div className="preview-device-screen">
@@ -154,6 +161,22 @@ function App() {
           </section>
         </main>
       </section>
+
+      {zoomedDevice && (
+        <div className="preview-zoom-overlay" role="dialog" aria-modal="true" aria-label="Vista previa ampliada" onMouseDown={(event) => { if (event.target === event.currentTarget) closePreviewZoom() }}>
+          <div className="preview-zoom-toolbar">
+            <strong>{zoomedDevice === 'max' ? 'POCO X8 Pro Max' : 'POCO X8 Pro'}</strong>
+            <button type="button" onClick={closePreviewZoom} title="Cerrar vista ampliada" aria-label="Cerrar vista ampliada">×</button>
+          </div>
+          <div className="preview-zoom-device-shell">
+            <div className="preview-device-camera" aria-hidden="true" />
+            <div className="preview-device-buttons" aria-hidden="true" />
+            <div className="preview-device-screen">
+              <PreviewWedding project={activeProject} refreshKey={previewRefreshKey} />
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
