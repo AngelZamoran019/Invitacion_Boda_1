@@ -19,11 +19,28 @@ const applyConfirmationTexts = (html, project) => {
 const applyCoverDecorationColors = (html, project) => {
   const cover = project?.coverSection || {}
   const validColor = (value, fallback) => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback
-  const ornamentColor = validColor(cover.ornamentColor, '#ffffff')
+  const validGradient = (value, fallback = '') => typeof value === 'string' && value.includes('gradient(') && (value.match(/#[0-9a-fA-F]{6}/g) || []).length >= 2 ? value : fallback
+  const paint = (mode, color, gradient, fallback) => {
+    const safeColor = validColor(color, fallback)
+    const safeGradient = validGradient(gradient)
+    if (mode === 'gradient' && safeGradient) return `background:${safeGradient}!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;`
+    return `background:none!important;color:${safeColor}!important;-webkit-text-fill-color:${safeColor}!important;`
+  }
+
+  const ornamentPaint = paint(cover.ornamentMode, cover.ornamentColor, cover.ornamentGradient, '#ffffff')
+  const eyebrowPaint = paint(cover.eyebrowMode, cover.eyebrowColor, cover.eyebrowGradient, '#ffffff')
+  const titlePaint = paint(cover.titleMode, cover.titleColor, cover.titleGradient, '#ffffff')
+  const datePaint = paint(cover.dateMode, cover.dateColor, cover.dateGradient, '#ffffff')
+  const buttonPaint = paint(cover.buttonMode, cover.buttonColor, cover.buttonGradient, '#ffffff')
   const lineColor = validColor(cover.lineColor, validColor(project?.appearance?.accentColor, '#c9a86a'))
-  const css = `<style id="wedding-cover-decoration-colors">.phone>.cover>.ornament{color:${ornamentColor}!important;background:none!important;-webkit-text-fill-color:${ornamentColor}!important}.phone>.cover>.line{background:linear-gradient(90deg,transparent,${lineColor},transparent)!important}</style>`
+  const lineGradient = validGradient(cover.lineGradient)
+  const linePaint = cover.lineMode === 'gradient' && lineGradient
+    ? `background:${lineGradient}!important;-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 20%,#000 80%,transparent 100%)!important;mask-image:linear-gradient(90deg,transparent 0%,#000 20%,#000 80%,transparent 100%)!important;`
+    : `background:linear-gradient(90deg,transparent 0%,${lineColor} 20%,${lineColor} 80%,transparent 100%)!important;-webkit-mask-image:none!important;mask-image:none!important;`
+
+  const css = `<style id="wedding-cover-decoration-colors">.phone>.cover>.ornament{${ornamentPaint}}.phone>.cover>.eyebrow{${eyebrowPaint}}.phone>.cover>h1{${titlePaint}}.phone>.cover>.date{${datePaint}}.phone>.cover>.button{${buttonPaint}}.phone>.cover>.line{${linePaint}}</style>`
   const source = String(html || '')
-  if (source.includes('id="wedding-cover-decoration-colors"')) return source
+  if (source.includes('id="wedding-cover-decoration-colors"')) return source.replace(/<style id="wedding-cover-decoration-colors">[\s\S]*?<\/style>/i, css)
   return source.replace('</head>', `${css}</head>`)
 }
 
@@ -146,7 +163,8 @@ function PreviewWedding({ project, refreshKey = 0 }) {
     }
 
     try {
-      const html = buildBridgeHTML(applyPreviewTextDefaults(applyCoverDecorationColors(applyConfirmationTexts(renderWeddingHTML(projectRef.current), projectRef.current), projectRef.current)))
+      const baseHTML = applyPreviewTextDefaults(applyConfirmationTexts(renderWeddingHTML(projectRef.current), projectRef.current))
+      const html = buildBridgeHTML(applyCoverDecorationColors(baseHTML, projectRef.current))
       const doc = iframe.contentDocument || iframe.contentWindow?.document
       if (!doc) return undefined
       doc.open()
@@ -167,7 +185,8 @@ function PreviewWedding({ project, refreshKey = 0 }) {
     if (!iframe || !initializedRef.current) return
 
     try {
-      const html = applyPreviewTextDefaults(applyCoverDecorationColors(applyConfirmationTexts(renderWeddingHTML(project), project), project))
+      const baseHTML = applyPreviewTextDefaults(applyConfirmationTexts(renderWeddingHTML(project), project))
+      const html = applyCoverDecorationColors(baseHTML, project)
       iframe.contentWindow?.postMessage({
         type: 'WEDDING_PREVIEW_UPDATE',
         html,
