@@ -5,6 +5,7 @@ import DashboardWedding from './creator/DashboardWedding.jsx'
 import EditorWedding from './creator/EditorWedding.jsx'
 import PreviewWedding from './creator/PreviewWedding.jsx'
 import { renderWeddingHTML } from './export/weddingOutput.js'
+import { applyCoverPositionsToExport } from './export/applyCoverPositions.js'
 import './styles/app.css'
 import './styles/wedding.css'
 import './styles/dashboard.css'
@@ -24,7 +25,7 @@ function readInitialProjects() {
 }
 
 function downloadWeddingHTML(project) {
-  const html = renderWeddingHTML(project)
+  const html = applyCoverPositionsToExport(renderWeddingHTML(project), project)
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
