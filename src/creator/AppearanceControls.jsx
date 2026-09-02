@@ -19,7 +19,7 @@ const gradientColors = (value) => (value || '').match(/#[0-9a-fA-F]{6}/g) || []
 const safeColor = (value) => HEX_RE.test(String(value || '')) ? String(value) : '#ffffff'
 const safeGradient = (value) => typeof value === 'string' && value.includes('gradient(') && gradientColors(value).length >= 2 ? value : ''
 
-function ColorPicker({ value, onChange }) {
+export function ColorPicker({ value, onChange }) {
   const normalized = safeColor(value)
   const [draft, setDraft] = useState(normalized)
 
@@ -46,7 +46,7 @@ function ColorPicker({ value, onChange }) {
   )
 }
 
-function GradientBuilder({ value, onChange }) {
+export function GradientBuilder({ value, onChange }) {
   const readValue = (input) => {
     const gradient = safeGradient(input)
     const colors = gradientColors(gradient)
