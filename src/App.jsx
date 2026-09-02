@@ -87,10 +87,16 @@ function App() {
 
   if (!activeProject) return null
 
-  const previewDeviceStyle = {
+  const previewMaxStyle = {
     width: '42%',
     maxWidth: '180px',
     flex: '0 1 42%',
+  }
+
+  const previewProStyle = {
+    width: '36%',
+    maxWidth: '155px',
+    flex: '0 1 36%',
   }
 
   const previewPairStyle = {
@@ -128,14 +134,14 @@ function App() {
             </div>
             <div className="preview-stage">
               <div style={previewPairStyle}>
-                <div className="preview-device-shell preview-device-shell-max" style={previewDeviceStyle} aria-label="Simulación del POCO X8 Pro Max">
+                <div className="preview-device-shell preview-device-shell-max" style={previewMaxStyle} aria-label="Simulación del POCO X8 Pro Max">
                   <div className="preview-device-camera" aria-hidden="true" />
                   <div className="preview-device-buttons" aria-hidden="true" />
                   <div className="preview-device-screen">
                     <PreviewWedding project={activeProject} refreshKey={previewRefreshKey} />
                   </div>
                 </div>
-                <div className="preview-device-shell preview-device-shell-pro" style={previewDeviceStyle} aria-label="Simulación del POCO X8 Pro">
+                <div className="preview-device-shell preview-device-shell-pro" style={previewProStyle} aria-label="Simulación del POCO X8 Pro">
                   <div className="preview-device-camera" aria-hidden="true" />
                   <div className="preview-device-buttons" aria-hidden="true" />
                   <div className="preview-device-screen">
