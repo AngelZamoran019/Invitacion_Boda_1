@@ -18,13 +18,14 @@ function TextField({ label, value, onChange, placeholder = '', multiline = false
 }
 
 function CoverStyleDropdown({ label, color, mode, gradient, size, font, set, prefix, includeFont = true, sizeMin = 1, sizeMax = 200, defaultSize = 16 }) {
-  const [open, setOpen] = useState(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [openOption, setOpenOption] = useState(null)
   const activeMode = mode === 'gradient' ? 'gradient' : 'solid'
   const numericSize = Number(size)
   const safeSize = Number.isFinite(numericSize) && numericSize > 0 ? numericSize : defaultSize
   const activeFont = FONT_OPTIONS.some((option) => option.value === font) ? font : 'Arial'
 
-  const toggle = (item) => setOpen((current) => current === item ? null : item)
+  const toggleOption = (item) => setOpenOption((current) => current === item ? null : item)
   const setMode = (nextMode) => set(`${prefix}Mode`, nextMode)
   const setGradient = (value) => {
     set(`${prefix}Gradient`, value)
@@ -33,39 +34,39 @@ function CoverStyleDropdown({ label, color, mode, gradient, size, font, set, pre
 
   return (
     <div className="cover-style-dropdown">
-      <button type="button" className="cover-style-summary" onClick={() => setOpen((current) => current === 'menu' ? null : 'menu')} aria-expanded={open === 'menu'}>
+      <button type="button" className="cover-style-summary" onClick={() => { setMenuOpen((current) => !current); setOpenOption(null) }} aria-expanded={menuOpen}>
         <span>{label}</span>
         <b aria-hidden="true">⌄</b>
       </button>
-      {open === 'menu' && (
+      {menuOpen && (
         <div className="cover-style-menu">
           <div className="cover-style-item">
-            <button type="button" className={activeMode === 'solid' ? 'cover-style-option active' : 'cover-style-option'} onClick={() => toggle('color')} aria-expanded={open === 'color'}>
+            <button type="button" className={activeMode === 'solid' ? 'cover-style-option active' : 'cover-style-option'} onClick={() => toggleOption('color')} aria-expanded={openOption === 'color'}>
               <span>Color</span><b aria-hidden="true">⌄</b>
             </button>
-            {open === 'color' && <div className="cover-style-panel"><ColorPicker value={color} onChange={(value) => { set(`${prefix}Color`, value); setMode('solid') }} /></div>}
+            {openOption === 'color' && <div className="cover-style-panel"><ColorPicker value={color} onChange={(value) => { set(`${prefix}Color`, value); setMode('solid') }} /></div>}
           </div>
 
           <div className="cover-style-item">
-            <button type="button" className={activeMode === 'gradient' ? 'cover-style-option active' : 'cover-style-option'} onClick={() => toggle('gradient')} aria-expanded={open === 'gradient'}>
+            <button type="button" className={activeMode === 'gradient' ? 'cover-style-option active' : 'cover-style-option'} onClick={() => toggleOption('gradient')} aria-expanded={openOption === 'gradient'}>
               <span>Degradado</span><b aria-hidden="true">⌄</b>
             </button>
-            {open === 'gradient' && <div className="cover-style-panel"><GradientBuilder value={gradient} onChange={setGradient} /></div>}
+            {openOption === 'gradient' && <div className="cover-style-panel"><GradientBuilder value={gradient} onChange={setGradient} /></div>}
           </div>
 
           <div className="cover-style-item">
-            <button type="button" className="cover-style-option" onClick={() => toggle('size')} aria-expanded={open === 'size'}>
+            <button type="button" className="cover-style-option" onClick={() => toggleOption('size')} aria-expanded={openOption === 'size'}>
               <span>Tamaño</span><b aria-hidden="true">⌄</b>
             </button>
-            {open === 'size' && <div className="cover-style-panel"><label className="cover-size-field"><span>Tamaño</span><div><input type="number" min={sizeMin} max={sizeMax} step="1" value={safeSize} onChange={(e) => set(`${prefix}Size`, Number(e.target.value))} /><small>px</small></div></label></div>}
+            {openOption === 'size' && <div className="cover-style-panel"><label className="cover-size-field"><span>Tamaño</span><div><input type="number" min={sizeMin} max={sizeMax} step="1" value={safeSize} onChange={(e) => set(`${prefix}Size`, Number(e.target.value))} /><small>px</small></div></label></div>}
           </div>
 
           {includeFont && (
             <div className="cover-style-item">
-              <button type="button" className="cover-style-option" onClick={() => toggle('font')} aria-expanded={open === 'font'}>
+              <button type="button" className="cover-style-option" onClick={() => toggleOption('font')} aria-expanded={openOption === 'font'}>
                 <span>Fuente</span><b aria-hidden="true">⌄</b>
               </button>
-              {open === 'font' && <div className="cover-style-panel"><label className="cover-font-field"><span>Fuente</span><select value={activeFont} onChange={(e) => set(`${prefix}Font`, e.target.value)}>{FONT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label></div>}
+              {openOption === 'font' && <div className="cover-style-panel"><label className="cover-font-field"><span>Fuente</span><select value={activeFont} onChange={(e) => set(`${prefix}Font`, e.target.value)}>{FONT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label></div>}
             </div>
           )}
         </div>
