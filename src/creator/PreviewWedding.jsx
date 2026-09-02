@@ -16,6 +16,32 @@ const applyConfirmationTexts = (html, project) => {
   })
 }
 
+const applyPreviewTextDefaults = (html) => {
+  const previewDefaults = `<style id="wedding-preview-text-defaults">
+    .phone,
+    .phone * {
+      font-family: Arial, Helvetica, sans-serif !important;
+      color: #fff !important;
+    }
+    .phone input,
+    .phone textarea,
+    .phone select,
+    .phone button,
+    .phone option {
+      font-family: Arial, Helvetica, sans-serif !important;
+      color: #fff !important;
+    }
+    .phone input::placeholder,
+    .phone textarea::placeholder {
+      color: #fff !important;
+      opacity: 1 !important;
+    }
+  </style>`
+  const source = String(html || '')
+  if (source.includes('id="wedding-preview-text-defaults"')) return source
+  return source.replace('</head>', `${previewDefaults}</head>`)
+}
+
 function PreviewWedding({ project, refreshKey = 0 }) {
   const iframeRef = useRef(null)
   const projectRef = useRef(project)
@@ -109,7 +135,7 @@ function PreviewWedding({ project, refreshKey = 0 }) {
     }
 
     try {
-      const html = buildBridgeHTML(applyConfirmationTexts(renderWeddingHTML(projectRef.current), projectRef.current))
+      const html = buildBridgeHTML(applyPreviewTextDefaults(applyConfirmationTexts(renderWeddingHTML(projectRef.current), projectRef.current)))
       const doc = iframe.contentDocument || iframe.contentWindow?.document
       if (!doc) return undefined
       doc.open()
@@ -130,7 +156,7 @@ function PreviewWedding({ project, refreshKey = 0 }) {
     if (!iframe || !initializedRef.current) return
 
     try {
-      const html = applyConfirmationTexts(renderWeddingHTML(project), project)
+      const html = applyPreviewTextDefaults(applyConfirmationTexts(renderWeddingHTML(project), project))
       iframe.contentWindow?.postMessage({
         type: 'WEDDING_PREVIEW_UPDATE',
         html,
