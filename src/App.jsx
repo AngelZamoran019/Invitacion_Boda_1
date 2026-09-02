@@ -23,35 +23,8 @@ function readInitialProjects() {
   return [createProjectRecord(createDefaultWeddingProject())]
 }
 
-function applyCoverPositionStyles(html, project) {
-  const cover = project?.coverSection || {}
-  const safe = (value) => {
-    const number = Number(value)
-    if (!Number.isFinite(number)) return 0
-    return Math.max(-300, Math.min(300, number))
-  }
-  const eyebrowY = safe(cover.eyebrowPositionY)
-  const titleY = safe(cover.titlePositionY)
-  const dateY = safe(cover.datePositionY)
-  const buttonY = safe(cover.buttonPositionY)
-  const ornamentY = safe(cover.ornamentPositionY)
-  const lineY = safe(cover.linePositionY)
-
-  const positionCss = `<style id="wedding-cover-position-export">
-    .phone>.cover>.ornament{position:relative!important;top:${ornamentY}px!important}
-    .phone>.cover>.eyebrow{position:relative!important;top:${eyebrowY}px!important}
-    .phone>.cover>h1{position:relative!important;top:${titleY}px!important}
-    .phone>.cover>.date{position:relative!important;top:${dateY}px!important}
-    .phone>.cover>.button{position:relative!important;top:${buttonY}px!important}
-    .phone>.cover>.line{position:relative!important;top:${lineY}px!important}
-  </style>`
-
-  return String(html || '').replace('</head>', `${positionCss}</head>`)
-}
-
 function downloadWeddingHTML(project) {
-  let html = renderWeddingHTML(project)
-  html = applyCoverPositionStyles(html, project)
+  const html = renderWeddingHTML(project)
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
