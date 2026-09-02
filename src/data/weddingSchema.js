@@ -14,12 +14,12 @@ export const createDefaultWeddingProject = () => ({
     }
   },
   coverSection:{
-    eyebrow:'Estás cordialmente invitado a la boda de',eyebrowColor:'#ffffff',eyebrowMode:'solid',eyebrowGradient:'',eyebrowSize:11,eyebrowFont:'Arial',
-    title:'Nombre & Nombre',titleColor:'#ffffff',titleMode:'solid',titleGradient:'',titleSize:42,titleFont:'Arial',
-    subtitle:'',date:'',dateColor:'#ffffff',dateMode:'solid',dateGradient:'',dateSize:12,dateFont:'Arial',
-    venue:'',backgroundImage:'',ornamentColor:'#ffffff',ornamentMode:'solid',ornamentGradient:'',ornamentSize:30,
-    lineColor:'',lineMode:'solid',lineGradient:'',lineSize:70,
-    buttonLabel:'Abrir invitación',buttonColor:'#ffffff',buttonMode:'solid',buttonGradient:'',buttonSize:13,buttonFont:'Arial'
+    eyebrow:'Estás cordialmente invitado a la boda de',eyebrowColor:'#ffffff',eyebrowMode:'solid',eyebrowGradient:'',eyebrowSize:11,eyebrowFont:'Arial',eyebrowPositionY:0,
+    title:'Nombre & Nombre',titleColor:'#ffffff',titleMode:'solid',titleGradient:'',titleSize:42,titleFont:'Arial',titlePositionY:0,
+    subtitle:'',date:'',dateColor:'#ffffff',dateMode:'solid',dateGradient:'',dateSize:12,dateFont:'Arial',datePositionY:0,
+    venue:'',backgroundImage:'',ornamentColor:'#ffffff',ornamentMode:'solid',ornamentGradient:'',ornamentSize:30,ornamentPositionY:0,
+    lineColor:'',lineMode:'solid',lineGradient:'',lineSize:70,linePositionY:0,
+    buttonLabel:'Abrir invitación',buttonColor:'#ffffff',buttonMode:'solid',buttonGradient:'',buttonSize:13,buttonFont:'Arial',buttonPositionY:0
   },
   couple:{name1:'',name2:'',photo:'',photoOverlayOpacity:0.55,quote:''}, music:{enabled:false,url:'',title:''}, story:{sectionTitle:'Nuestra historia',title:'Nuestra historia',text:'',images:[]},
   event:{sectionTitle:'El gran día',date:'',time:'',ceremonyTitle:'Ceremonia',ceremonyVenue:'',ceremonyAddress:'',ceremonyMapsUrl:'',receptionTitle:'Recepción',receptionVenue:'',receptionAddress:'',receptionMapsUrl:''},
