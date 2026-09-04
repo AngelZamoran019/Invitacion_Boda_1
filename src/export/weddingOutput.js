@@ -202,8 +202,8 @@ const applyStoryContentStyles = (html, project) => {
   const source = String(html || '')
   const sectionTitle = escapeHtml(story.sectionTitle || 'Nuestra historia')
   const sections = source.match(/<section\s+class=["']section["'][^>]*>[\s\S]*?<\/section>/gi) || []
-  const escapedTitle = sectionTitle.replace(/[.*+?^()|[\]\\]/g, '\\const applyCoupleContentStyles = (html, project) => {')
-  const target = sections.find((section) => new RegExp('<p\\s+class=["']eyebrow["'][^>]*>\\s*' + escapedTitle + '\\s*<\\/p>', 'i').test(section))
+  const escapedTitle = sectionTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const target = sections.find((section) => new RegExp("<p\\s+class=[\"']eyebrow[\"'][^>]*>\\s*" + escapedTitle + "\\s*</p>", 'i').test(section))
   if (!target) return source
   const marked = source.replace(target, target.replace(/^<section\s+class=["']section["']/, '<section class="section story-content-section"'))
   const css = '<style id="wedding-story-content-styles">.phone>.section.story-content-section>.eyebrow{' + paint(story.sectionTitleMode,story.sectionTitleColor,story.sectionTitleGradient) + 'font-family:' + fontFamily(story.sectionTitleFont) + '!important;font-size:' + safeSize(story.sectionTitleSize,11) + 'px!important;position:relative!important;top:' + safePosition(story.sectionTitlePositionY) + 'px!important;}.phone>.section.story-content-section>h2{' + paint(story.titleMode,story.titleColor,story.titleGradient) + 'font-family:' + fontFamily(story.titleFont) + '!important;font-size:' + safeSize(story.titleSize,32) + 'px!important;position:relative!important;top:' + safePosition(story.titlePositionY) + 'px!important;}.phone>.section.story-content-section>.text{' + paint(story.textMode,story.textColor,story.textGradient) + 'font-family:' + fontFamily(story.textFont) + '!important;font-size:' + safeSize(story.textSize,16) + 'px!important;position:relative!important;top:' + safePosition(story.textPositionY) + 'px!important;}</style>'
