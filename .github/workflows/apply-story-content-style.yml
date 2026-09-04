@@ -14,13 +14,13 @@ jobs:
           ref: main
           fetch-depth: 0
       - name: Apply changes
-        run: python -c "import base64;exec(base64.b64decode('ENCODED_SCRIPT'))"
+        run: node scripts/apply-story-content-style.mjs
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          rm .github/workflows/apply-story-content-style.yml
-          git add src/creator/EditorWedding.jsx src/data/weddingSchema.js src/export/weddingOutput.js .github/workflows/apply-story-content-style.yml
+          rm .github/workflows/apply-story-content-style.yml scripts/apply-story-content-style.mjs
+          git add src/creator/EditorWedding.jsx src/data/weddingSchema.js src/export/weddingOutput.js .github/workflows/apply-story-content-style.yml scripts/apply-story-content-style.mjs
           git diff --cached --quiet && exit 0
           git commit -m "Habilitar contenido color en Nuestra historia"
           git push origin main
