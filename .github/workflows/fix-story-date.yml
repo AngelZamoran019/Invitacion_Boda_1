@@ -1,0 +1,41 @@
+name: Fix story date
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Corregir selector de fecha y comprobar build
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/export/weddingOutput.js')
+          lines = p.read_text(encoding='utf-8').splitlines()
+          for index, line in enumerate(lines):
+              if line.strip().startswith('const eventSection ='):
+                  lines[index] = "  const eventSection = /(<section\\s+class=[\\\"']section[\\\"'][^>]*>\\s*<p\\s+class=[\\\"']eyebrow[\\\"'][^>]*>\\s*El gran día\\s*<\\/p>[\\s\\S]*?)(<div\\s+class=[\\\"']event-card[\\\"'])/i"
+                  break
+          else:
+              raise SystemExit('No se encontró el selector de fecha del evento.')
+          p.write_text('\\n'.join(lines) + '\\n', encoding='utf-8')
+          PY
+          npm install
+          npm run build
+      - name: Guardar reparación y limpiar workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/export/weddingOutput.js
+          git rm -f .github/workflows/fix-story-date.yml
+          git commit -m 'Separar fecha del evento de Nuestra historia'
+          git push
