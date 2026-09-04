@@ -43,9 +43,10 @@ export function buildWeddingHTML(project) {
   const textColor = a.textColor || '#ffffff'
   const font = a.fontFamily || "'Playfair Display', serif"
   const title = c.title || 'Nombre & Nombre'
-  const displayName1 = couple.name1 || 'Nombre'
-  const displaySeparator = couple.separator === 'y' ? 'y' : '&'
-  const displayName2 = couple.name2 || 'Nombre'
+  const invitationNames = String(couple.displayNames || '').trim() || `${couple.name1 || 'Nombre'} ${couple.separator || 'y'} ${couple.name2 || 'Nombre'}`
+  const displayName1 = invitationNames
+  const displaySeparator = ''
+  const displayName2 = ''
 
   const coverStyle = 'background:var(--bg);'
   const storyImage = story.images?.[0] ? `<img class="story-image" src="${esc(story.images[0])}" alt="Nuestra historia">` : ''
@@ -95,7 +96,7 @@ export function buildWeddingHTML(project) {
 
   return `<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="${esc(a.backgroundColor || '#0b1730')}"><meta name="mobile-web-app-capable" content="yes"><title>${esc(title)}</title><style>${style}</style></head><body><main class="phone">
 <section class="cover" style="${coverStyle}"><div class="ornament" style="${accentPaint}">✦</div><p class="eyebrow" style="${textStyle(labelText)}">${esc(c.eyebrow || '')}</p><h1 style="${textStyle(titleText)}">${esc(title)}</h1>${c.subtitle ? `<p class="cover-subtitle" style="${textStyle(subtitleText)}">${esc(c.subtitle)}</p>` : ''}<div class="line"></div>${c.date ? `<p class="date" style="${textStyle(smallText)}">${esc(c.date)}</p>` : ''}${c.venue ? `<p class="venue" style="${textStyle(smallText)}">${esc(c.venue)}</p>` : ''}<button class="button" style="${textStyle(buttonText)}" onclick="document.querySelector('#couple').scrollIntoView({behavior:'smooth'})">Abrir invitación</button></section>
-<section class="section" id="couple">${couplePhoto}<p class="eyebrow" style="${textStyle(labelText)}">Con amor</p><h2 style="${textStyle(sectionText)}">${esc(displayName1)} <span style="${accentPaint}">${esc(displaySeparator)}</span> ${esc(displayName2)}</h2>${couple.quote ? `<p class="text" style="${textStyle(paragraphText)}">“${esc(couple.quote)}”</p>` : ''}</section>
+<section class="section" id="couple">${couplePhoto}<p class="eyebrow" style="${textStyle(labelText)}">Con amor</p><h2 style="${textStyle(sectionText)}">${esc(displayName1)}</h2>${couple.quote ? `<p class="text" style="${textStyle(paragraphText)}">“${esc(couple.quote)}”</p>` : ''}</section>
 ${project.music?.enabled && project.music?.url ? `<section class="section"><p class="eyebrow" style="${textStyle(labelText)}">Nuestra canción</p><h2 style="${textStyle(sectionText)}">${esc(project.music.title || 'Una canción especial')}</h2><audio controls src="${esc(project.music.url)}"></audio></section>` : ''}
 <section class="section"><p class="eyebrow" style="${textStyle(labelText)}">Nuestra historia</p><h2 style="${textStyle(sectionText)}">${esc(story.title || 'Nuestra historia')}</h2>${storyImage}<p class="text" style="${textStyle(paragraphText)}">${esc(story.text || 'Aquí comienza nuestra historia.')}</p></section>
 <section class="section"><p class="eyebrow" style="${textStyle(labelText)}">El gran día</p><h2 style="${textStyle(sectionText)}">${event.date ? esc(new Date(`${event.date}T12:00:00`).toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'})) : 'Nuestra fecha'}</h2>${event.time ? `<p style="${textStyle(smallText)}">${esc(event.time)}</p>` : ''}<div class="event-card"><strong style="${textStyle(smallText)}">${esc(event.ceremonyTitle || 'Ceremonia')}</strong><span style="${textStyle(smallText)}">${esc(event.ceremonyVenue || 'Lugar de ceremonia')}</span><small style="${textStyle(smallText)}">${esc(event.ceremonyAddress || '')}</small>${event.ceremonyMapsUrl ? `<a href="${esc(event.ceremonyMapsUrl)}" target="_blank" rel="noopener noreferrer">Ver ubicación</a>` : ''}</div><div class="event-card"><strong style="${textStyle(smallText)}">${esc(event.receptionTitle || 'Recepción')}</strong><span style="${textStyle(smallText)}">${esc(event.receptionVenue || 'Lugar de recepción')}</span><small style="${textStyle(smallText)}">${esc(event.receptionAddress || '')}</small>${event.receptionMapsUrl ? `<a href="${esc(event.receptionMapsUrl)}" target="_blank" rel="noopener noreferrer">Ver ubicación</a>` : ''}</div></section>

@@ -46,12 +46,6 @@ function CoverDecorationEditor({ label, color, mode, gradient, size, positionY, 
   return <CoverStyleDropdown label={label} color={color} mode={mode} gradient={gradient} size={size} positionY={positionY} set={set} prefix={prefix} includeFont={false} defaultSize={defaultSize} sizeMin={sizeMin} sizeMax={sizeMax} />
 }
 
-function parseCoupleNames(value, fallbackName1 = '', fallbackName2 = '', fallbackSeparator = 'y') {
-  const raw = String(value || '').trim()
-  const match = raw.match(/^(.+?)\s+(&|y)\s+(.+)$/i)
-  if (match) return { name1: match[1].trim(), separator: match[2].toLowerCase() === 'y' ? 'y' : '&', name2: match[3].trim() }
-  return { name1: fallbackName1 || '', separator: fallbackSeparator === '&' ? '&' : 'y', name2: fallbackName2 || '' }
-}
 
 function EditorWedding({ project, setProject, activeSection, setActiveSection }) {
   const [openGroups, setOpenGroups] = useState({ design: true, content: false })
@@ -77,8 +71,8 @@ function EditorWedding({ project, setProject, activeSection, setActiveSection })
       }
       case 'couple': {
         const couple = project.couple || {}
-        const fullNames = `${couple.name1 || ''} ${couple.separator || 'y'} ${couple.name2 || ''}`.trim()
-        return <div className="editor-grid"><TextField label="Nombres" value={fullNames} onChange={(value) => { const parsed = parseCoupleNames(value, couple.name1, couple.name2, couple.separator); set('couple.name1', parsed.name1); set('couple.separator', parsed.separator); set('couple.name2', parsed.name2) }} placeholder="Angel y Danae" /><TextField label="Fotografía de los novios (URL)" value={project.couple.photo} onChange={(v) => set('couple.photo', v)} placeholder="https://..." /><TextField label="Frase" value={project.couple.quote} onChange={(v) => set('couple.quote', v)} multiline /></div>
+        const fullNames = String(couple.displayNames || '').trim() || `${couple.name1 || 'Nombre'} ${couple.separator || 'y'} ${couple.name2 || 'Nombre'}`
+        return <div className="editor-grid"><TextField label="Nombres" value={fullNames} onChange={(value) => set('couple.displayNames', value)} placeholder="Angel y Danae" /><TextField label="Fotografía de los novios (URL)" value={project.couple.photo} onChange={(v) => set('couple.photo', v)} placeholder="https://..." /><TextField label="Frase" value={project.couple.quote} onChange={(v) => set('couple.quote', v)} multiline /></div>
       }
       case 'music': return <div className="editor-grid"><TextField label="Título de la canción" value={project.music.title} onChange={(v) => set('music.title', v)} /><TextField label="URL del audio" value={project.music.url} onChange={(v) => set('music.url', v)} placeholder="https://..." /><label className="toggle-field"><span>Activar música</span><input type="checkbox" checked={project.music.enabled} onChange={(e) => set('music.enabled', e.target.checked)} /></label></div>
       case 'story': return <div className="editor-grid"><TextField label="Título de sección" value={project.story.sectionTitle ?? 'Nuestra historia'} onChange={(v) => set('story.sectionTitle', v)} /><TextField label="Subtítulo" value={project.story.title} onChange={(v) => set('story.title', v)} /><TextField label="Historia" value={project.story.text} onChange={(v) => set('story.text', v)} multiline /><TextField label="Imagen 1 (URL)" value={project.story.images[0] || ''} onChange={(v) => set('story.images', [v, ...project.story.images.slice(1)])} placeholder="https://..." /></div>
