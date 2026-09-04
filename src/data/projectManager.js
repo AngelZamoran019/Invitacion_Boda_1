@@ -9,6 +9,24 @@ const isPlainObject = (value) => (
   !Array.isArray(value)
 )
 
+const normalizeInvitationNames = (project) => {
+  const displayNames = String(project?.couple?.displayNames ?? '').trim()
+  if (!displayNames) return project
+
+  const match = displayNames.match(/^(.+?)\s+(&|y)\s+(.+)$/i)
+  if (!match) return project
+
+  return {
+    ...project,
+    couple: {
+      ...project.couple,
+      name1: match[1].trim(),
+      separator: match[2].toLowerCase() === 'y' ? 'y' : '&',
+      name2: match[3].trim(),
+    },
+  }
+}
+
 const mergeProjectDefaults = (project) => {
   const defaults = createDefaultWeddingProject()
 
@@ -37,7 +55,7 @@ const mergeProjectDefaults = (project) => {
     return result
   }
 
-  return merge(defaults, project)
+  return normalizeInvitationNames(merge(defaults, project))
 }
 
 const readProjects = () => {
