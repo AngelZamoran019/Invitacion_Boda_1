@@ -70,7 +70,7 @@ function EditorWedding({ project, setProject, activeSection, setActiveSection })
       }
       case 'couple': {
         const couple = project.couple || {}
-        const fullNames = String(couple.displayNames || '').trim() || `${couple.name1 || 'Nombre'} ${couple.separator || 'y'} ${couple.name2 || 'Nombre'}`
+        const fullNames = String(couple.displayNames ?? '')
         return <div className="editor-grid"><TextField label="Nombres" value={fullNames} onChange={(value) => set('couple.displayNames', value)} placeholder="Angel y Danae" /><TextField label="Fotografía de los novios (URL)" value={project.couple.photo} onChange={(v) => set('couple.photo', v)} placeholder="https://..." /><TextField label="Frase" value={project.couple.quote} onChange={(v) => set('couple.quote', v)} multiline /></div>
       }
       case 'music': return <div className="editor-grid"><TextField label="Título de la canción" value={project.music.title} onChange={(v) => set('music.title', v)} /><TextField label="URL del audio" value={project.music.url} onChange={(v) => set('music.url', v)} placeholder="https://..." /><label className="toggle-field"><span>Activar música</span><input type="checkbox" checked={project.music.enabled} onChange={(e) => set('music.enabled', e.target.checked)} /></label></div>
