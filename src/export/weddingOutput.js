@@ -186,6 +186,30 @@ const normalizeCountdownTimer = (html) => {
   return removeCountdownScripts.replace('</body>', `${countdownScript}</body>`)
 }
 
+const applyCoupleContentStyles = (html, project) => {
+  const couple = project?.couple || {}
+  const safeColor = (value, fallback = '#ffffff') => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback
+  const safeGradient = (value) => typeof value === 'string' && value.includes('gradient(') && (value.match(/#[0-9a-fA-F]{6}/g) || []).length >= 2 ? value : ''
+  const safeSize = (value, fallback) => { const number = Number(value); return Number.isFinite(number) && number > 0 ? number : fallback }
+  const safePosition = (value) => { const number = Number(value); return Number.isFinite(number) ? Math.max(-300, Math.min(300, number)) : 0 }
+  const namesSize = safeSize(couple.displayNamesSize, 32)
+  const quoteSize = safeSize(couple.quoteSize, 16)
+  const namesPosition = safePosition(couple.displayNamesPositionY)
+  const quotePosition = safePosition(couple.quotePositionY)
+  const namesFont = getWeddingFontFamily(couple.displayNamesFont || 'Arial')
+  const quoteFont = getWeddingFontFamily(couple.quoteFont || 'Arial')
+  const namesGradient = safeGradient(couple.displayNamesGradient)
+  const quoteGradient = safeGradient(couple.quoteGradient)
+  const namesColor = safeColor(couple.displayNamesColor)
+  const quoteColor = safeColor(couple.quoteColor)
+  const namesPaint = couple.displayNamesMode === 'gradient' && namesGradient ? `background:${namesGradient}!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;` : `background:none!important;color:${namesColor}!important;-webkit-text-fill-color:${namesColor}!important;`
+  const quotePaint = couple.quoteMode === 'gradient' && quoteGradient ? `background:${quoteGradient}!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;` : `background:none!important;color:${quoteColor}!important;-webkit-text-fill-color:${quoteColor}!important;`
+  const css = `<style id="wedding-couple-content-styles">.phone>#couple>h2{${namesPaint}font-family:${namesFont}!important;font-size:${namesSize}px!important;position:relative!important;top:${namesPosition}px!important;}.phone>#couple>.text{${quotePaint}font-family:${quoteFont}!important;font-size:${quoteSize}px!important;position:relative!important;top:${quotePosition}px!important;}</style>`
+  const source = String(html || '')
+  if (source.includes('id="wedding-couple-content-styles"')) return source.replace(/<style id="wedding-couple-content-styles">[\s\S]*?<\/style>/i, css)
+  return source.replace('</head>', `${css}</head>`)
+}
+
 const applyCoverPositionStyles = (html, project) => {
   const cover = project?.coverSection || {}
   const safe = (value) => {
@@ -252,7 +276,8 @@ export function renderWeddingHTML(project) {
   const withGifts = applyGiftsFields(withDressCode, project)
   const withEventDate = applyEventDate(removeEventVenues(applyCountdownSectionTitle(applyEventSectionTitle(applyStorySectionTitle(stripUnconfiguredCoupleEyebrow(withGifts), project), project), project), project), project)
   const withCoverPositions = applyCoverPositionStyles(withEventDate, project)
-  const withFonts = applyWeddingFonts(withCoverPositions, project)
+  const withCoupleContentStyles = applyCoupleContentStyles(withCoverPositions, project)
+  const withFonts = applyWeddingFonts(withCoupleContentStyles, project)
   return preserveEditableCase(withFonts.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
 }
 
