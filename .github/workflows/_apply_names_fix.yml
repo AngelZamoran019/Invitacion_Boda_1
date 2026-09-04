@@ -1,0 +1,63 @@
+name: Apply names field fix
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply exact names separation
+        shell: python
+        run: |
+          from pathlib import Path
+
+          editor = Path('src/creator/EditorWedding.jsx')
+          text = editor.read_text(encoding='utf-8')
+          old = '''function parseCoupleNames(value, fallbackName1 = '', fallbackName2 = '', fallbackSeparator = 'y') {\n  const raw = String(value || '').trim()\n  const match = raw.match(/^(.+?)\\s+(&|y)\\s+(.+)$/i)\n  if (match) return { name1: match[1].trim(), separator: match[2].toLowerCase() === 'y' ? 'y' : '&', name2: match[3].trim() }\n  return { name1: fallbackName1 || '', separator: fallbackSeparator === '&' ? '&' : 'y', name2: fallbackName2 || '' }\n}\n'''
+          if old not in text:
+              raise SystemExit('Expected parser block not found')
+          text = text.replace(old, '')
+
+          old = '''      case 'couple': {\n        const couple = project.couple || {}\n        const fullNames = `${couple.name1 || ''} ${couple.separator || 'y'} ${couple.name2 || ''}`.trim()\n        return <div className="editor-grid"><TextField label="Nombres" value={fullNames} onChange={(value) => { const parsed = parseCoupleNames(value, couple.name1, couple.name2, couple.separator); set('couple.name1', parsed.name1); set('couple.separator', parsed.separator); set('couple.name2', parsed.name2) }} placeholder="Angel y Danae" /><TextField label="Fotografía de los novios (URL)" value={project.couple.photo} onChange={(v) => set('couple.photo', v)} placeholder="https://..." /><TextField label="Frase" value={project.couple.quote} onChange={(v) => set('couple.quote', v)} multiline /></div>\n      }'''
+          new = '''      case 'couple': {\n        const couple = project.couple || {}\n        const fullNames = String(couple.displayNames || '').trim() || `${couple.name1 || 'Nombre'} ${couple.separator || 'y'} ${couple.name2 || 'Nombre'}`\n        return <div className="editor-grid"><TextField label="Nombres" value={fullNames} onChange={(value) => set('couple.displayNames', value)} placeholder="Angel y Danae" /><TextField label="Fotografía de los novios (URL)" value={project.couple.photo} onChange={(v) => set('couple.photo', v)} placeholder="https://..." /><TextField label="Frase" value={project.couple.quote} onChange={(v) => set('couple.quote', v)} multiline /></div>\n      }'''
+          if old not in text:
+              raise SystemExit('Expected couple editor block not found')
+          editor.write_text(text.replace(old, new), encoding='utf-8')
+
+          schema = Path('src/data/weddingSchema.js')
+          text = schema.read_text(encoding='utf-8')
+          old = "couple:{name1:'',name2:'',photo:'',photoOverlayOpacity:0.55,quote:''}"
+          new = "couple:{name1:'',name2:'',displayNames:'',photo:'',photoOverlayOpacity:0.55,quote:''}"
+          if old not in text:
+              raise SystemExit('Expected couple schema block not found')
+          schema.write_text(text.replace(old, new), encoding='utf-8')
+
+          output = Path('src/export/exportWedding.js')
+          text = output.read_text(encoding='utf-8')
+          old = "  const displayName1 = couple.name1 || 'Nombre'\n  const displaySeparator = couple.separator === 'y' ? 'y' : '&'\n  const displayName2 = couple.name2 || 'Nombre'"
+          new = "  const invitationNames = String(couple.displayNames || '').trim() || `${couple.name1 || 'Nombre'} ${couple.separator || 'y'} ${couple.name2 || 'Nombre'}`\n  const displayName1 = invitationNames\n  const displaySeparator = ''\n  const displayName2 = ''"
+          if old not in text:
+              raise SystemExit('Expected export names block not found')
+          text = text.replace(old, new)
+          old_html = "<h2 style=\"${textStyle(sectionText)}\">${esc(displayName1)} <span style=\"${accentPaint}\">${esc(displaySeparator)}</span> ${esc(displayName2)}</h2>"
+          new_html = "<h2 style=\"${textStyle(sectionText)}\">${esc(displayName1)}</h2>"
+          if old_html not in text:
+              raise SystemExit('Expected export couple heading not found')
+          output.write_text(text.replace(old_html, new_html), encoding='utf-8')
+
+          Path('.github/workflows/_apply_names_fix.yml').unlink()
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/creator/EditorWedding.jsx src/data/weddingSchema.js src/export/exportWedding.js .github/workflows/_apply_names_fix.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "Corregir campo unico de nombres de invitacion"
+          git push
