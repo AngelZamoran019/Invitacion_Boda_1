@@ -1,18 +1,22 @@
 name: Apply couple content styles
+
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+
 permissions:
   contents: write
+
 jobs:
   apply:
-    if: github.event.head_commit.message != 'Agregar Contenido color a Los novios'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Update project files
+      - name: Apply changes
+        shell: bash
         run: |
-          python - <<'PY'
+          python3 <<'PY'
           from pathlib import Path
 
           editor = Path('src/creator/EditorWedding.jsx')
@@ -30,69 +34,21 @@ jobs:
           s = schema.read_text()
           old = "  couple:{name1:'',name2:'',displayNames:'',photo:'',photoOverlayOpacity:0.55,quote:''}, music:"
           new = "  couple:{name1:'',name2:'',displayNames:'',displayNamesColor:'#ffffff',displayNamesMode:'solid',displayNamesGradient:'',displayNamesSize:32,displayNamesFont:'Arial',displayNamesPositionY:0,photo:'',photoOverlayOpacity:0.55,quote:'',quoteColor:'#ffffff',quoteMode:'solid',quoteGradient:'',quoteSize:16,quoteFont:'Arial',quotePositionY:0}, music:"
-          if old not in s: raise SystemExit('Schema couple target not found')
+          if old not in s: raise SystemExit('Schema target not found')
           schema.write_text(s.replace(old, new, 1))
 
           output = Path('src/export/weddingOutput.js')
           s = output.read_text()
           marker = "const applyCoverPositionStyles = (html, project) => {"
-          helper = r'''const applyCoupleContentStyles = (html, project) => {
-  const couple = project?.couple || {}
-  const safeColor = (value, fallback = '#ffffff') => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback
-  const safeGradient = (value) => typeof value === 'string' && value.includes('gradient(') && (value.match(/#[0-9a-fA-F]{6}/g) || []).length >= 2 ? value : ''
-  const safeSize = (value, fallback) => {
-    const number = Number(value)
-    return Number.isFinite(number) && number > 0 ? number : fallback
-  }
-  const safePosition = (value) => {
-    const number = Number(value)
-    return Number.isFinite(number) ? Math.max(-300, Math.min(300, number)) : 0
-  }
-  const paint = (mode, color, gradient, size, font, fallbackSize) => {
-    const safeGradientValue = safeGradient(gradient)
-    const sizeValue = safeSize(size, fallbackSize)
-    const fontValue = getWeddingFontFamily(font || 'Arial')
-    const positionValue = safePosition(arguments[5])
-    const base = `font-family:${fontValue}!important;font-size:${sizeValue}px!important;position:relative!important;top:${positionValue}px!important;`
-    if (mode === 'gradient' && safeGradientValue) return `${base}background:${safeGradientValue}!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;`
-    return `${base}background:none!important;color:${safeColor(color)}!important;-webkit-text-fill-color:${safeColor(color)}!important;`
-  }
-  const namesPosition = safePosition(couple.displayNamesPositionY)
-  const quotePosition = safePosition(couple.quotePositionY)
-  const namesSize = safeSize(couple.displayNamesSize, 32)
-  const quoteSize = safeSize(couple.quoteSize, 16)
-  const namesFont = getWeddingFontFamily(couple.displayNamesFont || 'Arial')
-  const quoteFont = getWeddingFontFamily(couple.quoteFont || 'Arial')
-  const namesGradient = safeGradient(couple.displayNamesGradient)
-  const quoteGradient = safeGradient(couple.quoteGradient)
-  const namesColor = safeColor(couple.displayNamesColor)
-  const quoteColor = safeColor(couple.quoteColor)
-  const namesPaint = couple.displayNamesMode === 'gradient' && namesGradient
-    ? `background:${namesGradient}!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;`
-    : `background:none!important;color:${namesColor}!important;-webkit-text-fill-color:${namesColor}!important;`
-  const quotePaint = couple.quoteMode === 'gradient' && quoteGradient
-    ? `background:${quoteGradient}!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;`
-    : `background:none!important;color:${quoteColor}!important;-webkit-text-fill-color:${quoteColor}!important;`
-  const css = `<style id="wedding-couple-content-styles">
-    .phone>#couple>h2{${namesPaint}font-family:${namesFont}!important;font-size:${namesSize}px!important;position:relative!important;top:${namesPosition}px!important;}
-    .phone>#couple>.text{${quotePaint}font-family:${quoteFont}!important;font-size:${quoteSize}px!important;position:relative!important;top:${quotePosition}px!important;}
-  </style>`
-  const source = String(html || '')
-  if (source.includes('id="wedding-couple-content-styles"')) return source.replace(/<style id="wedding-couple-content-styles">[\s\S]*?<\/style>/i, css)
-  return source.replace('</head>', `${css}</head>`)
-}
-
-'''
-          if marker not in s: raise SystemExit('Output insertion marker not found')
+          helper = '''const applyCoupleContentStyles = (html, project) => {\n  const couple = project?.couple || {}\n  const safeColor = (value, fallback = '#ffffff') => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback\n  const safeGradient = (value) => typeof value === 'string' && value.includes('gradient(') && (value.match(/#[0-9a-fA-F]{6}/g) || []).length >= 2 ? value : ''\n  const safeSize = (value, fallback) => { const number = Number(value); return Number.isFinite(number) && number > 0 ? number : fallback }\n  const safePosition = (value) => { const number = Number(value); return Number.isFinite(number) ? Math.max(-300, Math.min(300, number)) : 0 }\n  const namesSize = safeSize(couple.displayNamesSize, 32)\n  const quoteSize = safeSize(couple.quoteSize, 16)\n  const namesPosition = safePosition(couple.displayNamesPositionY)\n  const quotePosition = safePosition(couple.quotePositionY)\n  const namesFont = getWeddingFontFamily(couple.displayNamesFont || 'Arial')\n  const quoteFont = getWeddingFontFamily(couple.quoteFont || 'Arial')\n  const namesGradient = safeGradient(couple.displayNamesGradient)\n  const quoteGradient = safeGradient(couple.quoteGradient)\n  const namesColor = safeColor(couple.displayNamesColor)\n  const quoteColor = safeColor(couple.quoteColor)\n  const namesPaint = couple.displayNamesMode === 'gradient' && namesGradient ? `background:${namesGradient}!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;` : `background:none!important;color:${namesColor}!important;-webkit-text-fill-color:${namesColor}!important;`\n  const quotePaint = couple.quoteMode === 'gradient' && quoteGradient ? `background:${quoteGradient}!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;` : `background:none!important;color:${quoteColor}!important;-webkit-text-fill-color:${quoteColor}!important;`\n  const css = `<style id=\"wedding-couple-content-styles\">.phone>#couple>h2{${namesPaint}font-family:${namesFont}!important;font-size:${namesSize}px!important;position:relative!important;top:${namesPosition}px!important;}.phone>#couple>.text{${quotePaint}font-family:${quoteFont}!important;font-size:${quoteSize}px!important;position:relative!important;top:${quotePosition}px!important;}</style>`\n  const source = String(html || '')\n  if (source.includes('id=\"wedding-couple-content-styles\"')) return source.replace(/<style id=\"wedding-couple-content-styles\">[\\s\\S]*?<\\/style>/i, css)\n  return source.replace('</head>', `${css}</head>`)\n}\n\n'''
+          if marker not in s: raise SystemExit('Output marker not found')
           s = s.replace(marker, helper + marker, 1)
           old = "  const withCoverPositions = applyCoverPositionStyles(withEventDate, project)\n  const withFonts = applyWeddingFonts(withCoverPositions, project)"
           new = "  const withCoverPositions = applyCoverPositionStyles(withEventDate, project)\n  const withCoupleContentStyles = applyCoupleContentStyles(withCoverPositions, project)\n  const withFonts = applyWeddingFonts(withCoupleContentStyles, project)"
           if old not in s: raise SystemExit('Output call target not found')
           output.write_text(s.replace(old, new, 1))
-
-          workflow = Path('.github/workflows/apply-couple-content-style.yml')
-          workflow.unlink()
           PY
+          rm -f .github/workflows/apply-couple-content-style.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/creator/EditorWedding.jsx src/data/weddingSchema.js src/export/weddingOutput.js .github/workflows/apply-couple-content-style.yml
