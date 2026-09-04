@@ -46,7 +46,6 @@ function CoverDecorationEditor({ label, color, mode, gradient, size, positionY, 
   return <CoverStyleDropdown label={label} color={color} mode={mode} gradient={gradient} size={size} positionY={positionY} set={set} prefix={prefix} includeFont={false} defaultSize={defaultSize} sizeMin={sizeMin} sizeMax={sizeMax} />
 }
 
-
 function EditorWedding({ project, setProject, activeSection, setActiveSection }) {
   const [openGroups, setOpenGroups] = useState({ design: true, content: false })
   const set = (path, value) => updateAt(setProject, (current) => { const next = structuredClone(current); const keys = path.split('.'); let target = next; keys.slice(0, -1).forEach((key) => { target = target[key] }); target[keys[keys.length - 1]] = value; return next })
