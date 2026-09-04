@@ -1,19 +1,39 @@
-name: Diagnose build push
+name: Repair build
 
 on:
   push:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  build:
+  repair:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
-      - run: npm run build
+      - name: Repair syntax and build
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/export/weddingOutput.js')
+          s = p.read_text(encoding='utf-8')
+          old = "new RegExp('<p\\\\s+class=[\"']eyebrow[\"'][^>]*>\\\\s*' + escapedTitle + '\\\\s*</p>', 'i')"
+          new = 'new RegExp("<p\\\\s+class=[\\\"\\\']eyebrow[\\\"\\\'][^>]*>\\\\s*" + escapedTitle + "\\\\s*</p>", \'i\')'
+          if old not in s:
+              raise SystemExit('Target syntax pattern was not found; no file changed.')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+          npm install
+          npm run build
+      - name: Commit repair and remove temporary workflows
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -f .github/workflows/diagnose-build-push.yml .github/workflows/diagnose-build.yml || true
+          git add src/export/weddingOutput.js
+          git commit -m 'Corregir sintaxis de estilos de historia'
+          git push
