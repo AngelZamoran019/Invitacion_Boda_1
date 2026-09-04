@@ -35,7 +35,7 @@ const helper = `const applyStoryContentStyles = (html, project) => {
   const source = String(html || '')
   const sectionTitle = escapeHtml(story.sectionTitle || 'Nuestra historia')
   const sections = source.match(/<section\\s+class=["']section["'][^>]*>[\\s\\S]*?<\\/section>/gi) || []
-  const escapedTitle = sectionTitle.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')
+  const escapedTitle = sectionTitle.replace(/[.*+?^()|[\\]\\\\]/g, '\\\\$&')
   const target = sections.find((section) => new RegExp(\`<p\\\\s+class=["']eyebrow["'][^>]*>\\\\s*\${escapedTitle}\\\\s*<\\\\/p>\`, 'i').test(section))
   if (!target) return source
   const marked = source.replace(target, target.replace(/^<section\\s+class=["']section["']/, '<section class="section story-content-section"'))
