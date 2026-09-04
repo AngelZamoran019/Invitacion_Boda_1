@@ -42,23 +42,18 @@ export function buildWeddingHTML(project) {
   const accent = a.accentMode === 'gradient' && a.accentGradient ? a.accentGradient : a.accentColor || '#c9a86a'
   const textColor = a.textColor || '#ffffff'
   const font = a.fontFamily || "'Playfair Display', serif"
-  const title = c.title || `${couple.name1 || 'Nombre'} & ${couple.name2 || 'Nombre'}`
-  const coupleMatch = String(title).trim().match(/^(.+?)\s+(&|y)\s+(.+)$/i)
-  const displayName1 = coupleMatch ? coupleMatch[1].trim() : (couple.name1 || 'Nombre')
-  const displaySeparator = coupleMatch ? (coupleMatch[2].toLowerCase() === 'y' ? 'y' : '&') : (couple.separator === 'y' ? 'y' : '&')
-  const displayName2 = coupleMatch ? coupleMatch[3].trim() : (couple.name2 || 'Nombre')
+  const title = c.title || 'Nombre & Nombre'
+  const displayName1 = couple.name1 || 'Nombre'
+  const displaySeparator = couple.separator === 'y' ? 'y' : '&'
+  const displayName2 = couple.name2 || 'Nombre'
 
   const coverStyle = 'background:var(--bg);'
-
   const storyImage = story.images?.[0] ? `<img class="story-image" src="${esc(story.images[0])}" alt="Nuestra historia">` : ''
   const couplePhoto = couple.photo ? `<img class="couple-photo" src="${esc(couple.photo)}" alt="Los novios">` : '<div class="photo-placeholder">Foto de los novios</div>'
   const accentPaint = a.accentMode === 'gradient' && a.accentGradient
     ? `background:${esc(a.accentGradient)};-webkit-background-clip:text;background-clip:text;color:transparent;`
     : `color:${esc(a.accentColor || '#c9a86a')};`
 
-  // Mobile-first: la invitación ocupa siempre todo el ancho disponible del dispositivo.
-  // No se usa una "tarjeta" con bordes laterales en móviles. El límite de 430px
-  // solo se aplica en pantallas grandes para conservar la proporción de la VP.
   const style = `
     :root{--bg:${esc(background)};--accent:${esc(accent)};--text:${esc(textColor)};--font:${esc(font)}}
     *{box-sizing:border-box}
@@ -94,18 +89,8 @@ export function buildWeddingHTML(project) {
     .success{max-width:100%;padding:14px;border:1px solid var(--accent);border-radius:12px;text-align:center;overflow-wrap:anywhere}
     .closing{min-height:430px;background:transparent!important;position:relative;overflow:hidden}
     .closing img{display:block;width:100%;max-width:100%;max-height:55dvh;object-fit:cover;border-radius:22px;margin-bottom:22px}
-    @media(max-width:360px){
-      .cover,.section,.closing{padding-left:16px;padding-right:16px}
-      .dress-grid{gap:7px}
-      .countdown{gap:4px}
-      .countdown div{padding-left:2px;padding-right:2px}
-      .button{padding-left:16px;padding-right:16px}
-    }
-    @media(min-width:700px){
-      html,body{min-height:100%;background:#101010}
-      body{display:grid;place-items:center;padding:3vh 0}
-      .phone{height:94dvh;min-height:620px;border-radius:28px;box-shadow:0 30px 90px rgb(0 0 0 / 40%)}
-    }
+    @media(max-width:360px){.cover,.section,.closing{padding-left:16px;padding-right:16px}.dress-grid{gap:7px}.countdown{gap:4px}.countdown div{padding-left:2px;padding-right:2px}.button{padding-left:16px;padding-right:16px}}
+    @media(min-width:700px){html,body{min-height:100%;background:#101010}body{display:grid;place-items:center;padding:3vh 0}.phone{height:94dvh;min-height:620px;border-radius:28px;box-shadow:0 30px 90px rgb(0 0 0 / 40%)}}
   `
 
   return `<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="${esc(a.backgroundColor || '#0b1730')}"><meta name="mobile-web-app-capable" content="yes"><title>${esc(title)}</title><style>${style}</style></head><body><main class="phone">
