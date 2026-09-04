@@ -21,14 +21,22 @@ jobs:
           from pathlib import Path
           p = Path('src/export/weddingOutput.js')
           lines = p.read_text(encoding='utf-8').splitlines()
-          replacement = '  const target = sections.find((section) => new RegExp("<p\\\\s+class=[\\\"\\\']eyebrow[\\\"\\\'][^>]*>\\\\s*" + escapedTitle + "\\\\s*</p>", \'i\').test(section))'
+          replacements = {
+              'const escapedTitle = sectionTitle.replace(': r"""  const escapedTitle = sectionTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')""",
+              'const target = sections.find((section) =>': r"""  const target = sections.find((section) => new RegExp("<p\\s+class=[\"']eyebrow[\"'][^>]*>\\s*" + escapedTitle + "\\s*</p>", 'i').test(section))""",
+          }
+          found = set()
           for index, line in enumerate(lines):
-              if line.strip().startswith('const target = sections.find((section) =>'):
-                  lines[index] = replacement
-                  break
-          else:
-              raise SystemExit('Target line was not found; no file changed.')
-          p.write_text('\\n'.join(lines) + '\\n', encoding='utf-8')
+              stripped = line.strip()
+              for prefix, replacement in replacements.items():
+                  if stripped.startswith(prefix):
+                      lines[index] = replacement
+                      found.add(prefix)
+                      break
+          missing = set(replacements) - found
+          if missing:
+              raise SystemExit('Expected story syntax lines were not found: ' + ', '.join(sorted(missing)))
+          p.write_text('\n'.join(lines) + '\n', encoding='utf-8')
           PY
           npm install
           npm run build
