@@ -186,6 +186,31 @@ const normalizeCountdownTimer = (html) => {
   return removeCountdownScripts.replace('</body>', `${countdownScript}</body>`)
 }
 
+const applyStoryContentStyles = (html, project) => {
+  const story = project?.story || {}
+  const safeColor = (value, fallback = '#ffffff') => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback
+  const safeGradient = (value) => typeof value === 'string' && value.includes('gradient(') && (value.match(/#[0-9a-fA-F]{6}/g) || []).length >= 2 ? value : ''
+  const safeSize = (value, fallback) => { const number = Number(value); return Number.isFinite(number) && number > 0 ? number : fallback }
+  const safePosition = (value) => { const number = Number(value); return Number.isFinite(number) ? Math.max(-300, Math.min(300, number)) : 0 }
+  const fontFamily = (value) => getWeddingFontFamily(value || 'Arial')
+  const paint = (mode, color, gradient) => {
+    const safeGradientValue = safeGradient(gradient)
+    if (mode === 'gradient' && safeGradientValue) return 'background:' + safeGradientValue + '!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;'
+    const safeColorValue = safeColor(color)
+    return 'background:none!important;color:' + safeColorValue + '!important;-webkit-text-fill-color:' + safeColorValue + '!important;'
+  }
+  const source = String(html || '')
+  const sectionTitle = escapeHtml(story.sectionTitle || 'Nuestra historia')
+  const sections = source.match(/<section\s+class=["']section["'][^>]*>[\s\S]*?<\/section>/gi) || []
+  const escapedTitle = sectionTitle.replace(/[.*+?^()|[\]\\]/g, '\\const applyCoupleContentStyles = (html, project) => {')
+  const target = sections.find((section) => new RegExp('<p\\s+class=["']eyebrow["'][^>]*>\\s*' + escapedTitle + '\\s*<\\/p>', 'i').test(section))
+  if (!target) return source
+  const marked = source.replace(target, target.replace(/^<section\s+class=["']section["']/, '<section class="section story-content-section"'))
+  const css = '<style id="wedding-story-content-styles">.phone>.section.story-content-section>.eyebrow{' + paint(story.sectionTitleMode,story.sectionTitleColor,story.sectionTitleGradient) + 'font-family:' + fontFamily(story.sectionTitleFont) + '!important;font-size:' + safeSize(story.sectionTitleSize,11) + 'px!important;position:relative!important;top:' + safePosition(story.sectionTitlePositionY) + 'px!important;}.phone>.section.story-content-section>h2{' + paint(story.titleMode,story.titleColor,story.titleGradient) + 'font-family:' + fontFamily(story.titleFont) + '!important;font-size:' + safeSize(story.titleSize,32) + 'px!important;position:relative!important;top:' + safePosition(story.titlePositionY) + 'px!important;}.phone>.section.story-content-section>.text{' + paint(story.textMode,story.textColor,story.textGradient) + 'font-family:' + fontFamily(story.textFont) + '!important;font-size:' + safeSize(story.textSize,16) + 'px!important;position:relative!important;top:' + safePosition(story.textPositionY) + 'px!important;}</style>'
+  if (marked.includes('id="wedding-story-content-styles"')) return marked.replace(/<style id="wedding-story-content-styles">[\s\S]*?<\/style>/i, css)
+  return marked.replace('</head>', css + '</head>')
+}
+
 const applyCoupleContentStyles = (html, project) => {
   const couple = project?.couple || {}
   const safeColor = (value, fallback = '#ffffff') => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback
@@ -277,7 +302,8 @@ export function renderWeddingHTML(project) {
   const withEventDate = applyEventDate(removeEventVenues(applyCountdownSectionTitle(applyEventSectionTitle(applyStorySectionTitle(stripUnconfiguredCoupleEyebrow(withGifts), project), project), project), project), project)
   const withCoverPositions = applyCoverPositionStyles(withEventDate, project)
   const withCoupleContentStyles = applyCoupleContentStyles(withCoverPositions, project)
-  const withFonts = applyWeddingFonts(withCoupleContentStyles, project)
+  const withStoryContentStyles = applyStoryContentStyles(withCoupleContentStyles, project)
+  const withFonts = applyWeddingFonts(withStoryContentStyles, project)
   return preserveEditableCase(withFonts.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
 }
 
