@@ -82,7 +82,7 @@ const applyEventDate = (html, project) => {
   if (!date) return String(html || '')
   const source = String(html || '')
   const escapedDate = escapeHtml(date)
-  const eventSection = /(<section\s+class=["']section["'][^>]*>\s*<p\s+class=["']eyebrow["'][^>]*>\s*(?:El gran día|[^<]*)<\/p>[\s\S]*?)(<div\s+class=["']event-card["'])/i
+  const eventSection = /(<section\s+class=["']section["'][^>]*>\s*<p\s+class=["']eyebrow["'][^>]*>\s*El gran día\s*<\/p>[\s\S]*?)(<div\s+class=["']event-card["'])/i
   if (!eventSection.test(source)) return source
   return source.replace(eventSection, (fullMatch, beforeCards, firstCard) => beforeCards.replace(/(<h2\b[^>]*>)[\s\S]*?(<\/h2>)/i, `$1${escapedDate}$2`) + firstCard)
 }
