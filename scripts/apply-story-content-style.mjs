@@ -28,20 +28,20 @@ const helper = `const applyStoryContentStyles = (html, project) => {
   const fontFamily = (value) => getWeddingFontFamily(value || 'Arial')
   const paint = (mode, color, gradient) => {
     const safeGradientValue = safeGradient(gradient)
-    if (mode === 'gradient' && safeGradientValue) return \`background:\${safeGradientValue}!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;\`
+    if (mode === 'gradient' && safeGradientValue) return 'background:' + safeGradientValue + '!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;'
     const safeColorValue = safeColor(color)
-    return \`background:none!important;color:\${safeColorValue}!important;-webkit-text-fill-color:\${safeColorValue}!important;\`
+    return 'background:none!important;color:' + safeColorValue + '!important;-webkit-text-fill-color:' + safeColorValue + '!important;'
   }
   const source = String(html || '')
   const sectionTitle = escapeHtml(story.sectionTitle || 'Nuestra historia')
   const sections = source.match(/<section\\s+class=["']section["'][^>]*>[\\s\\S]*?<\\/section>/gi) || []
   const escapedTitle = sectionTitle.replace(/[.*+?^()|[\\]\\\\]/g, '\\\\$&')
-  const target = sections.find((section) => new RegExp(\`<p\\\\s+class=["']eyebrow["'][^>]*>\\\\s*\${escapedTitle}\\\\s*<\\\\/p>\`, 'i').test(section))
+  const target = sections.find((section) => new RegExp('<p\\\\s+class=["']eyebrow["'][^>]*>\\\\s*' + escapedTitle + '\\\\s*<\\\\/p>', 'i').test(section))
   if (!target) return source
   const marked = source.replace(target, target.replace(/^<section\\s+class=["']section["']/, '<section class="section story-content-section"'))
-  const css = \`<style id="wedding-story-content-styles">.phone>.section.story-content-section>.eyebrow{${paint(story.sectionTitleMode,story.sectionTitleColor,story.sectionTitleGradient)}font-family:\${fontFamily(story.sectionTitleFont)}!important;font-size:\${safeSize(story.sectionTitleSize,11)}px!important;position:relative!important;top:\${safePosition(story.sectionTitlePositionY)}px!important;}.phone>.section.story-content-section>h2{${paint(story.titleMode,story.titleColor,story.titleGradient)}font-family:\${fontFamily(story.titleFont)}!important;font-size:\${safeSize(story.titleSize,32)}px!important;position:relative!important;top:\${safePosition(story.titlePositionY)}px!important;}.phone>.section.story-content-section>.text{${paint(story.textMode,story.textColor,story.textGradient)}font-family:\${fontFamily(story.textFont)}!important;font-size:\${safeSize(story.textSize,16)}px!important;position:relative!important;top:\${safePosition(story.textPositionY)}px!important;}</style>\`
+  const css = '<style id="wedding-story-content-styles">.phone>.section.story-content-section>.eyebrow{' + paint(story.sectionTitleMode,story.sectionTitleColor,story.sectionTitleGradient) + 'font-family:' + fontFamily(story.sectionTitleFont) + '!important;font-size:' + safeSize(story.sectionTitleSize,11) + 'px!important;position:relative!important;top:' + safePosition(story.sectionTitlePositionY) + 'px!important;}.phone>.section.story-content-section>h2{' + paint(story.titleMode,story.titleColor,story.titleGradient) + 'font-family:' + fontFamily(story.titleFont) + '!important;font-size:' + safeSize(story.titleSize,32) + 'px!important;position:relative!important;top:' + safePosition(story.titlePositionY) + 'px!important;}.phone>.section.story-content-section>.text{' + paint(story.textMode,story.textColor,story.textGradient) + 'font-family:' + fontFamily(story.textFont) + '!important;font-size:' + safeSize(story.textSize,16) + 'px!important;position:relative!important;top:' + safePosition(story.textPositionY) + 'px!important;}</style>'
   if (marked.includes('id="wedding-story-content-styles"')) return marked.replace(/<style id="wedding-story-content-styles">[\\s\\S]*?<\\/style>/i, css)
-  return marked.replace('</head>', \`\${css}</head>\`)
+  return marked.replace('</head>', css + '</head>')
 }
 
 `
