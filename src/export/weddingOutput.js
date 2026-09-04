@@ -235,6 +235,40 @@ const applyCoupleContentStyles = (html, project) => {
   return source.replace('</head>', `${css}</head>`)
 }
 
+const applyEventContentStyles = (html, project) => {
+  const event = project?.event || {}
+  const safeColor = (value, fallback = '#ffffff') => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback
+  const safeGradient = (value) => typeof value === 'string' && value.includes('gradient(') && (value.match(/#[0-9a-fA-F]{6}/g) || []).length >= 2 ? value : ''
+  const safeSize = (value, fallback) => { const number = Number(value); return Number.isFinite(number) && number > 0 ? number : fallback }
+  const safePosition = (value) => { const number = Number(value); return Number.isFinite(number) ? Math.max(-300, Math.min(300, number)) : 0 }
+  const fontFamily = (value, fallback) => getWeddingFontFamily(value || fallback)
+  const paint = (mode, color, gradient) => {
+    const safeGradientValue = safeGradient(gradient)
+    if (mode === 'gradient' && safeGradientValue) return 'background:' + safeGradientValue + '!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;'
+    const safeColorValue = safeColor(color)
+    return 'background:none!important;color:' + safeColorValue + '!important;-webkit-text-fill-color:' + safeColorValue + '!important;'
+  }
+  const style = (prefix, fallbackColor, fallbackSize, fallbackFont) => paint(event[prefix + 'Mode'], event[prefix + 'Color'], event[prefix + 'Gradient']) + 'font-family:' + fontFamily(event[prefix + 'Font'], fallbackFont) + '!important;font-size:' + safeSize(event[prefix + 'Size'], fallbackSize) + 'px!important;position:relative!important;top:' + safePosition(event[prefix + 'PositionY']) + 'px!important;'
+  const source = String(html || '')
+  const sectionTitle = escapeHtml(event.sectionTitle || 'El gran día')
+  const sections = source.match(/<section\s+class=["']section["'][^>]*>[\s\S]*?<\/section>/gi) || []
+  const escapedTitle = sectionTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const target = sections.find((section) => new RegExp("<p\\s+class=[\"']eyebrow[\"'][^>]*>\\s*" + escapedTitle + "\\s*</p>", 'i').test(section))
+  if (!target) return source
+  const marked = source.replace(target, target.replace(/^<section\s+class=["']section["']/, '<section class="section event-content-section"'))
+  const css = '<style id="wedding-event-content-styles">' +
+    '.phone>.section.event-content-section>.eyebrow{' + style('sectionTitle','#c9a86a',11,'Arial') + '}' +
+    '.phone>.section.event-content-section>h2{' + style('date','#ffffff',32,"'Playfair Display',serif") + '}' +
+    '.phone>.section.event-content-section>h2 + p{' + style('time','#ffffff',12,'Arial') + '}' +
+    '.phone>.section.event-content-section>.event-card:nth-of-type(1)>strong{' + style('ceremonyTitle','#ffffff',12,'Arial') + '}' +
+    '.phone>.section.event-content-section>.event-card:nth-of-type(2)>strong{' + style('receptionTitle','#ffffff',12,'Arial') + '}' +
+    '.phone>.section.event-content-section>.event-card:nth-of-type(1)>small{' + style('ceremonyAddress','#ffffff',12,'Arial') + '}' +
+    '.phone>.section.event-content-section>.event-card:nth-of-type(2)>small{' + style('receptionAddress','#ffffff',12,'Arial') + '}' +
+    '</style>'
+  if (marked.includes('id="wedding-event-content-styles"')) return marked.replace(/<style id="wedding-event-content-styles">[\s\S]*?<\/style>/i, css)
+  return marked.replace('</head>', css + '</head>')
+}
+
 const applyCoverPositionStyles = (html, project) => {
   const cover = project?.coverSection || {}
   const safe = (value) => {
@@ -303,7 +337,8 @@ export function renderWeddingHTML(project) {
   const withCoverPositions = applyCoverPositionStyles(withEventDate, project)
   const withCoupleContentStyles = applyCoupleContentStyles(withCoverPositions, project)
   const withStoryContentStyles = applyStoryContentStyles(withCoupleContentStyles, project)
-  const withFonts = applyWeddingFonts(withStoryContentStyles, project)
+  const withEventContentStyles = applyEventContentStyles(withStoryContentStyles, project)
+  const withFonts = applyWeddingFonts(withEventContentStyles, project)
   return preserveEditableCase(withFonts.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
 }
 
