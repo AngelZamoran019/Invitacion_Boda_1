@@ -17,22 +17,23 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
           editor = Path('src/creator/EditorWedding.jsx')
           text = editor.read_text(encoding='utf-8')
-          needle = '<TextField label="Google Maps recepción" value={event.receptionMapsUrl} onChange={(v) => set(\'event.receptionMapsUrl\', v)} placeholder="https://maps.google.com/..." />'
-          insert = needle + '<div className="editor-field"><span>Color Ubicación</span><ColorPicker value={event.locationColor ?? \'#ffffff\'} onChange={(value) => set(\'event.locationColor\', value)} /></div>'
           if 'Color Ubicación' not in text:
-              if needle not in text:
+              pattern = r'(<TextField label="Google Maps recepción"[\s\S]*?placeholder="https://maps\.google\.com/\.\.\." />)'
+              replacement = r'\1<div className="editor-field"><span>Color Ubicación</span><ColorPicker value={event.locationColor ?? \'#ffffff\'} onChange={(value) => set(\'event.locationColor\', value)} /></div>'
+              text, count = re.subn(pattern, replacement, text, count=1)
+              if count != 1:
                   raise SystemExit('Editor target not found')
-              text = text.replace(needle, insert, 1)
               editor.write_text(text, encoding='utf-8')
 
           schema = Path('src/data/weddingSchema.js')
           text = schema.read_text(encoding='utf-8')
-          needle = "receptionMapsUrl:''},\n  countdown:"
-          replacement = "receptionMapsUrl:'',locationColor:'#ffffff'},\n  countdown:"
           if 'locationColor' not in text:
+              needle = "receptionMapsUrl:''},\n  countdown:"
+              replacement = "receptionMapsUrl:'',locationColor:'#ffffff'},\n  countdown:"
               if needle not in text:
                   raise SystemExit('Schema target not found')
               text = text.replace(needle, replacement, 1)
@@ -40,22 +41,22 @@ jobs:
 
           output = Path('src/export/exportWedding.js')
           text = output.read_text(encoding='utf-8')
-          needle = "  const event = project.event || {}\n"
-          replacement = needle + "  const locationColor = /^#[0-9a-fA-F]{6}$/.test(String(event.locationColor || '')) ? String(event.locationColor) : '#ffffff'\n"
           if 'const locationColor =' not in text:
+              needle = '  const event = project.event || {}\n'
+              replacement = needle + "  const locationColor = /^#[0-9a-fA-F]{6}$/.test(String(event.locationColor || '')) ? String(event.locationColor) : '#ffffff'\n"
               if needle not in text:
                   raise SystemExit('Export target 1 not found')
               text = text.replace(needle, replacement, 1)
-          needle = '<a href=\\\"${esc(event.ceremonyMapsUrl)}\\\" target=\\\"_blank\\\" rel=\\\"noopener noreferrer\\\">Ver ubicación</a>'
-          replacement = '<a href=\\\"${esc(event.ceremonyMapsUrl)}\\\" target=\\\"_blank\\\" rel=\\\"noopener noreferrer\\\" style=\\\"color:${esc(locationColor)} !important;-webkit-text-fill-color:${esc(locationColor)} !important;\\\">Ver ubicación</a>'
-          if needle not in text:
+          ceremony = r'<a href="${esc(event.ceremonyMapsUrl)}" target="_blank" rel="noopener noreferrer">Ver ubicación</a>'
+          ceremony_replacement = r'<a href="${esc(event.ceremonyMapsUrl)}" target="_blank" rel="noopener noreferrer" style="color:${esc(locationColor)} !important;-webkit-text-fill-color:${esc(locationColor)} !important;">Ver ubicación</a>'
+          if ceremony not in text:
               raise SystemExit('Export ceremony target not found')
-          text = text.replace(needle, replacement, 1)
-          needle = '<a href=\\\"${esc(event.receptionMapsUrl)}\\\" target=\\\"_blank\\\" rel=\\\"noopener noreferrer\\\">Ver ubicación</a>'
-          replacement = '<a href=\\\"${esc(event.receptionMapsUrl)}\\\" target=\\\"_blank\\\" rel=\\\"noopener noreferrer\\\" style=\\\"color:${esc(locationColor)} !important;-webkit-text-fill-color:${esc(locationColor)} !important;\\\">Ver ubicación</a>'
-          if needle not in text:
+          text = text.replace(ceremony, ceremony_replacement, 1)
+          reception = r'<a href="${esc(event.receptionMapsUrl)}" target="_blank" rel="noopener noreferrer">Ver ubicación</a>'
+          reception_replacement = r'<a href="${esc(event.receptionMapsUrl)}" target="_blank" rel="noopener noreferrer" style="color:${esc(locationColor)} !important;-webkit-text-fill-color:${esc(locationColor)} !important;">Ver ubicación</a>'
+          if reception not in text:
               raise SystemExit('Export reception target not found')
-          text = text.replace(needle, replacement, 1)
+          text = text.replace(reception, reception_replacement, 1)
           output.write_text(text, encoding='utf-8')
           PY
       - name: Commit changes
