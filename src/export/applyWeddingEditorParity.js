@@ -1,3 +1,5 @@
+import { getWeddingFontFamily } from '../fonts/weddingFonts.js'
+
 const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))
 
 const safeColor = (value, fallback = '#ffffff') => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback
@@ -17,7 +19,7 @@ const paint = (item, prefix, fallbackSize) => {
   const paintRule = item?.[prefix + 'Mode'] === 'gradient' && gradient
     ? `background:${gradient}!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;`
     : `background:none!important;color:${color}!important;-webkit-text-fill-color:${color}!important;`
-  return `${paintRule}font-size:${safeSize(item?.[prefix + 'Size'], fallbackSize)}px!important;position:relative!important;top:${safePosition(item?.[prefix + 'PositionY'])}px!important;`
+  return `${paintRule}font-family:${getWeddingFontFamily(item?.[prefix + 'Font'] || 'Arial')}!important;font-size:${safeSize(item?.[prefix + 'Size'], fallbackSize)}px!important;position:relative!important;top:${safePosition(item?.[prefix + 'PositionY'])}px!important;`
 }
 
 const applyGiftsParity = (html, project) => {
