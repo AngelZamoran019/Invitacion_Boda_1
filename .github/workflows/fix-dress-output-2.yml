@@ -1,0 +1,68 @@
+name: Fix dress code output mapping 2
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: ${{ !contains(github.event.head_commit.message, '[dress-output-fixed-2]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace dress card mapping safely
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('src/export/weddingOutput.js')
+          text = path.read_text(encoding='utf-8')
+          lines = text.splitlines()
+          start = next(i for i, line in enumerate(lines) if line.startswith('  const updatedSection = target.replace('))
+          end = next(i for i in range(start, len(lines)) if lines[i].startswith('  let withNote = updatedSection'))
+          block = '''  const replaceTagText = (value, tag, replacement) => {
+    const openStart = value.indexOf(`<${tag}`)
+    if (openStart < 0) return value
+    const openEnd = value.indexOf('>', openStart)
+    const closeStart = value.indexOf(`</${tag}>`, openEnd + 1)
+    if (openEnd < 0 || closeStart < 0) return value
+    return value.slice(0, openEnd + 1) + replacement + value.slice(closeStart)
+  }
+  const replaceDressCard = (value, cardIndex, label, attire) => {
+    const marker = '<div class="dress-card"'
+    let cursor = 0
+    let index = 0
+    while (true) {
+      const startIndex = value.indexOf(marker, cursor)
+      if (startIndex < 0) return value
+      if (index === cardIndex) {
+        const endIndex = value.indexOf('</div>', startIndex)
+        if (endIndex < 0) return value
+        const card = value.slice(startIndex, endIndex + 6)
+        const withLabel = replaceTagText(card, 'span', label)
+        const withAttire = replaceTagText(withLabel, 'strong', attire)
+        return value.slice(0, startIndex) + withAttire + value.slice(endIndex + 6)
+      }
+      cursor = startIndex + marker.length
+      index += 1
+    }
+  }
+
+  const updatedSection = target.replace(/(<p\\s+class=["']eyebrow["'][^>]*>)[\\s\\S]*?(<\\/p>)/i, `$1${sectionTitle}$2`)
+    .replace(/(<h2\\b[^>]*>)[\\s\\S]*?(<\\/h2>)/i, `$1${subtitle}$2`)
+  const withFirstCard = replaceDressCard(updatedSection, 0, menLabel, menAttire)
+  const withBothCards = replaceDressCard(withFirstCard, 1, womenLabel, womenAttire)
+'''.splitlines()
+          lines = lines[:start] + block + lines[end:]
+          path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+      - name: Remove temporary workflow and commit
+        run: |
+          rm -f .github/workflows/fix-dress-output-2.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/export/weddingOutput.js .github/workflows/fix-dress-output-2.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: map both dress code cards in VP [dress-output-fixed-2]"
+          git push
