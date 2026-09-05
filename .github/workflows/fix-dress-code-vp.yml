@@ -1,0 +1,73 @@
+name: Fix dress code VP mapping
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: ${{ !contains(github.event.head_commit.message, '[dress-code-vp-fixed]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix dress code field mapping
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('src/export/weddingOutput.js')
+          text = path.read_text(encoding='utf-8')
+          start = text.index('const applyDressCodeFields = (html, project) => {')
+          end = text.index('const applyDressCodeContentStyles = (html, project) => {')
+          new_block = r'''const applyDressCodeFields = (html, project) => {
+  const dress = project?.dressCode || {}
+  const sectionTitle = escapeHtml(dress.sectionTitle || 'Código de vestimenta')
+  const subtitle = escapeHtml(dress.subtitle || 'Elegancia para celebrar')
+  const menLabel = escapeHtml(dress.menLabel ?? 'Hombres')
+  const womenLabel = escapeHtml(dress.womenLabel ?? 'Mujeres')
+  const menAttire = escapeHtml(dress.menAttire ?? dress.men ?? 'Formal')
+  const womenAttire = escapeHtml(dress.womenAttire ?? dress.women ?? 'Formal')
+  const note = String(dress.note ?? '')
+  const source = String(html || '')
+  const target = findDressCodeSection(source)
+  if (!target) return source
+
+  let cardIndex = 0
+  const updatedSection = target
+    .replace(/(<p\s+class=["']eyebrow["'][^>]*>)[\s\S]*?(<\/p>)/i, `$1${sectionTitle}$2`)
+    .replace(/(<h2\b[^>]*>)[\s\S]*?(<\/h2>)/i, `$1${subtitle}$2`)
+    .replace(/(<div\s+class=["']dress-card["'][^>]*>[\s\S]*?<span\b[^>]*>)[\s\S]*?(<\/span>)([\s\S]*?<strong\b[^>]*>)[\s\S]*?(<\/strong>)/gi, (match, spanOpen, spanClose, strongOpen, strongClose) => {
+      const firstCard = cardIndex === 0
+      cardIndex += 1
+      return firstCard
+        ? `${spanOpen}${menLabel}${spanClose}${strongOpen}${menAttire}${strongClose}`
+        : `${spanOpen}${womenLabel}${spanClose}${strongOpen}${womenAttire}${strongClose}`
+    })
+
+  const notePattern = /<p\s+class=["']text["'][^>]*>[\s\S]*?<\/p>/i
+  let withNote = updatedSection
+  if (note) {
+    const noteHtml = `<p class="text">${escapeHtml(note)}</p>`
+    withNote = notePattern.test(updatedSection)
+      ? updatedSection.replace(notePattern, noteHtml)
+      : updatedSection.replace(/<\/section>\s*$/i, `${noteHtml}</section>`)
+  } else if (notePattern.test(updatedSection)) {
+    withNote = updatedSection.replace(notePattern, '')
+  }
+
+  return source.replace(target, withNote)
+}
+
+'''
+          path.write_text(text[:start] + new_block + text[end:], encoding='utf-8')
+      - name: Remove temporary workflow and commit
+        run: |
+          rm -f .github/workflows/fix-dress-code-vp.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/export/weddingOutput.js .github/workflows/fix-dress-code-vp.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: map dress code fields correctly in VP [dress-code-vp-fixed]"
+          git push
