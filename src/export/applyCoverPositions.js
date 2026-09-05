@@ -1,3 +1,5 @@
+import { getWeddingFontFamily } from '../fonts/weddingFonts.js'
+
 const clampPosition = (value) => {
   const number = Number(value)
   if (!Number.isFinite(number)) return 0
@@ -10,7 +12,6 @@ const validSize = (value, fallback) => {
   const numeric = Number(value)
   return Number.isFinite(numeric) && numeric > 0 ? numeric : fallback
 }
-const fontFamily = (value) => value === 'Amoresa' ? "'Amoresa', cursive" : 'Arial, Helvetica, sans-serif'
 const escapeHtml = (value = '') => String(value).replace(/[&<>\"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;' }[char]))
 
 export function applyCoverPositionsToExport(html, project) {
@@ -20,7 +21,7 @@ export function applyCoverPositionsToExport(html, project) {
     const safeColor = validColor(color, fallback)
     const safeGradient = validGradient(gradient)
     const sizeRule = `font-size:${validSize(size, 16)}px!important;`
-    const fontRule = `font-family:${fontFamily(font)}!important;`
+    const fontRule = `font-family:${getWeddingFontFamily(font || 'Arial')}!important;`
     if (mode === 'gradient' && safeGradient) return `background:${safeGradient}!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;${sizeRule}${fontRule}`
     return `background:none!important;color:${safeColor}!important;-webkit-text-fill-color:${safeColor}!important;${sizeRule}${fontRule}`
   }
