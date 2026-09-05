@@ -23,7 +23,7 @@ export const WEDDING_FONTS = [
 
 export const WEDDING_FONT_FACE_CSS = WEDDING_FONTS
   .filter(font => font.file)
-  .map(font => `@font-face{font-family:'${font.value}';src:url('/fonts/${font.file}') format('${font.format}');font-style:normal;font-weight:400;font-display:swap;}`)
+  .map(font => `@font-face{font-family:'${font.value}';src:url('/fonts/${font.file}') format('${font.format}');font-style:normal;font-weight:400;font-display:block;}`)
   .join('\n')
 
 export const getWeddingFontFamily = value => {
