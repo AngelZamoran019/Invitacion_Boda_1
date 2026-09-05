@@ -2,18 +2,20 @@ name: Apply dress code content colors
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
   apply:
-    if: github.actor != 'github-actions[bot]'
+    if: ${{ github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Apply requested controls
+        shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -72,13 +74,12 @@ jobs:
 }
 
 '''
-          output.write_text(text.replace(marker, helper + marker, 1))
-
+          text = text.replace(marker, helper + marker, 1)
           old = "const withCountdownContentStyles = applyCountdownContentStyles(withEventContentStyles, project)\n  const withFonts = applyWeddingFonts(withCountdownContentStyles, project)"
           new = "const withCountdownContentStyles = applyCountdownContentStyles(withEventContentStyles, project)\n  const withDressCodeContentStyles = applyDressCodeContentStyles(withCountdownContentStyles, project)\n  const withFonts = applyWeddingFonts(withDressCodeContentStyles, project)"
           if old not in text:
               raise SystemExit('Output pipeline marker not found')
-          output.write_text(output.read_text().replace(old, new, 1))
+          output.write_text(text.replace(old, new, 1))
           PY
 
       - name: Commit changes
