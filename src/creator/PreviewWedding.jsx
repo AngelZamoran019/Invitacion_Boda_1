@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { getWeddingExportHTML } from '../export/getWeddingExportHTML.js'
 
-const buildPreviewHTML = (project) => getWeddingExportHTML(project)
+const buildPreviewHTML = async (project) => getWeddingExportHTML(project)
 
 const buildBridgeHTML = (html) => {
   const bridge = `<script id="wedding-preview-bridge">(()=>{
@@ -92,47 +92,73 @@ function PreviewWedding({ project, refreshKey = 0 }) {
     const iframe = iframeRef.current
     if (!iframe) return undefined
 
-    const syncProjectToIframe = (nextProject) => {
+    let cancelled = false
+
+    const syncProjectToIframe = async (nextProject) => {
       if (!initializedRef.current || !iframe.contentWindow) return
       try {
-        iframe.contentWindow.postMessage({ type: 'WEDDING_PREVIEW_UPDATE', html: buildPreviewHTML(nextProject) }, '*')
+        const html = await buildPreviewHTML(nextProject)
+        if (cancelled) return
+        iframe.contentWindow.postMessage({ type: 'WEDDING_PREVIEW_UPDATE', html }, '*')
       } catch {
         // Evitar que un cambio de edición rompa el editor.
       }
     }
 
-    const handleLoad = () => {
+    const handleLoad = async () => {
       initializedRef.current = true
-      syncProjectToIframe(projectRef.current)
+      try {
+        const html = await buildPreviewHTML(projectRef.current)
+        if (cancelled) return
+        const bridged = buildBridgeHTML(html)
+        const doc = iframe.contentDocument || iframe.contentWindow?.document
+        if (!doc) return
+        doc.open()
+        doc.write(bridged)
+        doc.close()
+      } catch {
+        // Mantener la VP viva aunque exista un cambio durante la carga.
+      }
     }
 
     iframe.addEventListener('load', handleLoad)
 
     try {
-      const html = buildBridgeHTML(buildPreviewHTML(projectRef.current))
+      initializedRef.current = false
       const doc = iframe.contentDocument || iframe.contentWindow?.document
       if (!doc) return () => iframe.removeEventListener('load', handleLoad)
-      initializedRef.current = false
       doc.open()
-      doc.write(html)
+      doc.write('<!doctype html><html><head><meta charset="utf-8"></head><body></body></html>')
       doc.close()
     } catch {
       // Mantener la VP viva aunque exista un cambio durante la carga.
     }
 
     return () => {
+      cancelled = true
       iframe.removeEventListener('load', handleLoad)
       initializedRef.current = false
     }
   }, [refreshKey])
 
   useEffect(() => {
+    let cancelled = false
     const iframe = iframeRef.current
-    if (!iframe || !initializedRef.current) return
-    try {
-      iframe.contentWindow?.postMessage({ type: 'WEDDING_PREVIEW_UPDATE', html: buildPreviewHTML(project) }, '*')
-    } catch {
-      // Evitar que un cambio de edición rompa el editor.
+    if (!iframe || !initializedRef.current) return undefined
+
+    const sync = async () => {
+      try {
+        const html = await buildPreviewHTML(project)
+        if (cancelled || !initializedRef.current) return
+        iframe.contentWindow?.postMessage({ type: 'WEDDING_PREVIEW_UPDATE', html }, '*')
+      } catch {
+        // Evitar que un cambio de edición rompa el editor.
+      }
+    }
+
+    void sync()
+    return () => {
+      cancelled = true
     }
   }, [project])
 
