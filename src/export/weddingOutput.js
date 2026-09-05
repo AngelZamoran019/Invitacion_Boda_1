@@ -33,6 +33,35 @@ const findDressCodeSection = (source) => {
   return sections.find((section) => /<div\s+class=["']dress-grid["']/i.test(section) && /<div\s+class=["']dress-card["']/i.test(section)) || ''
 }
 
+const replaceTagText = (value, tag, replacement) => {
+  const openStart = value.indexOf(`<${tag}`)
+  if (openStart < 0) return value
+  const openEnd = value.indexOf('>', openStart)
+  const closeStart = value.indexOf(`</${tag}>`, openEnd + 1)
+  if (openEnd < 0 || closeStart < 0) return value
+  return value.slice(0, openEnd + 1) + replacement + value.slice(closeStart)
+}
+
+const replaceDressCard = (value, cardIndex, label, attire) => {
+  const marker = '<div class="dress-card"'
+  let cursor = 0
+  let index = 0
+  while (true) {
+    const startIndex = value.indexOf(marker, cursor)
+    if (startIndex < 0) return value
+    if (index === cardIndex) {
+      const endIndex = value.indexOf('</div>', startIndex)
+      if (endIndex < 0) return value
+      const card = value.slice(startIndex, endIndex + 6)
+      const withLabel = replaceTagText(card, 'span', label)
+      const withAttire = replaceTagText(withLabel, 'strong', attire)
+      return value.slice(0, startIndex) + withAttire + value.slice(endIndex + 6)
+    }
+    cursor = startIndex + marker.length
+    index += 1
+  }
+}
+
 const applyDressCodeFields = (html, project) => {
   const dress = project?.dressCode || {}
   const sectionTitle = escapeHtml(dress.sectionTitle || 'Código de vestimenta')
@@ -48,18 +77,18 @@ const applyDressCodeFields = (html, project) => {
 
   const updatedSection = target.replace(/(<p\s+class=["']eyebrow["'][^>]*>)[\s\S]*?(<\/p>)/i, `$1${sectionTitle}$2`)
     .replace(/(<h2\b[^>]*>)[\s\S]*?(<\/h2>)/i, `$1${subtitle}$2`)
-    .replace(/(<div\s+class=["']dress-card["'][^>]*>[\s\S]*?<span\b[^>]*>)[\s\S]*?(<\/span>)([\s\S]*?<strong\b[^>]*>)[\s\S]*?(<\/strong>)/i, `$1${menLabel}$2$3${menAttire}$4`)
-    .replace(/(<div\s+class=["']dress-card["'][^>]*>[\s\S]*?<span\b[^>]*>)[\s\S]*?(<\/span>)([\s\S]*?<strong\b[^>]*>)[\s\S]*?(<\/strong>)/i, `$1${womenLabel}$2$3${womenAttire}$4`)
+  const withFirstCard = replaceDressCard(updatedSection, 0, menLabel, menAttire)
+  const withBothCards = replaceDressCard(withFirstCard, 1, womenLabel, womenAttire)
 
-  let withNote = updatedSection
+  let withNote = withBothCards
   const notePattern = /<p\s+class=["']text["'][^>]*>[\s\S]*?<\/p>/i
   if (note) {
     const noteHtml = `<p class="text">${escapeHtml(note)}</p>`
-    withNote = notePattern.test(updatedSection)
-      ? updatedSection.replace(notePattern, noteHtml)
-      : updatedSection.replace(/<\/section>\s*$/i, `${noteHtml}</section>`)
-  } else if (notePattern.test(updatedSection)) {
-    withNote = updatedSection.replace(notePattern, '')
+    withNote = notePattern.test(withBothCards)
+      ? withBothCards.replace(notePattern, noteHtml)
+      : withBothCards.replace(/<\/section>\s*$/i, `${noteHtml}</section>`)
+  } else if (notePattern.test(withBothCards)) {
+    withNote = withBothCards.replace(notePattern, '')
   }
 
   return source.replace(target, withNote)
