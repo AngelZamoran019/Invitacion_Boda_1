@@ -1,0 +1,47 @@
+name: Fix dress code output mapping
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: ${{ !contains(github.event.head_commit.message, '[dress-output-fixed]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix first and second dress cards
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('src/export/weddingOutput.js')
+          text = path.read_text(encoding='utf-8')
+          old = '''  const updatedSection = target.replace(/(<p\\s+class=["']eyebrow["'][^>]*>)[\\s\\S]*?(<\\/p>)/i, `$1${sectionTitle}$2`)
+    .replace(/(<h2\\b[^>]*>)[\\s\\S]*?(<\\/h2>)/i, `$1${subtitle}$2`)
+    .replace(/(<div\\s+class=["']dress-card["'][^>]*>[\\s\\S]*?<span\\b[^>]*>)[\\s\\S]*?(<\\/span>)([\\s\\S]*?<strong\\b[^>]*>)[\\s\\S]*?(<\\/strong>)/i, `$1${menLabel}$2$3${menAttire}$4`)
+    .replace(/(<div\\s+class=["']dress-card["'][^>]*>[\\s\\S]*?<span\\b[^>]*>)[\\s\\S]*?(<\\/span>)([\\s\\S]*?<strong\\b[^>]*>)[\\s\\S]*?(<\\/strong>)/i, `$1${womenLabel}$2$3${womenAttire}$4`)'''
+          new = '''  let cardIndex = 0
+  const updatedSection = target.replace(/(<p\\s+class=["']eyebrow["'][^>]*>)[\\s\\S]*?(<\\/p>)/i, `$1${sectionTitle}$2`)
+    .replace(/(<h2\\b[^>]*>)[\\s\\S]*?(<\\/h2>)/i, `$1${subtitle}$2`)
+    .replace(/(<div\\s+class=["']dress-card["'][^>]*>[\\s\\S]*?<span\\b[^>]*>)[\\s\\S]*?(<\\/span>)([\\s\\S]*?<strong\\b[^>]*>)[\\s\\S]*?(<\\/strong>)/gi, (match, spanOpen, spanClose, strongOpen, strongClose) => {
+      const replacement = cardIndex === 0
+        ? `${spanOpen}${menLabel}${spanClose}${strongOpen}${menAttire}${strongClose}`
+        : `${spanOpen}${womenLabel}${spanClose}${strongOpen}${womenAttire}${strongClose}`
+      cardIndex += 1
+      return replacement
+    })'''
+          if old not in text:
+              raise SystemExit('Dress output block not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+      - name: Remove temporary workflow and commit
+        run: |
+          rm -f .github/workflows/fix-dress-output.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/export/weddingOutput.js .github/workflows/fix-dress-output.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: map dress code cards correctly [dress-output-fixed]"
+          git push
