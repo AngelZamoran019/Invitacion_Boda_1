@@ -1,0 +1,68 @@
+name: Sync VP export parity
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'chore: sync VP export parity') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch export parity
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/export/weddingOutput.js')
+          s = p.read_text(encoding='utf-8')
+
+          old = '''  return source.replace(target, (section) => {
+    let result = section.replace(/(<p\\s+class=["']eyebrow["'][^>]*>)[\\s\\S]*?(<\\/p>)/i, `$1${sectionTitle}$2`)
+    result = result.replace(/(<h2\\b[^>]*>)[\\s\\S]*?(<\\/h2>)/i, `$1${subtitle}$2`)
+    return result
+  })
+}'''
+          new = '''  return source.replace(target, (section) => {
+    let result = section.replace(/^<section\\s+class=["']section["']/, '<section class="section gifts-content-section"')
+    result = result.replace(/(<p\\s+class=["']eyebrow["'][^>]*>)[\\s\\S]*?(<\\/p>)/i, `$1${sectionTitle}$2`)
+    result = result.replace(/(<h2\\b[^>]*>)[\\s\\S]*?(<\\/h2>)/i, `$1${subtitle}$2`)
+    const buttonLabel = escapeHtml(gifts.buttonLabel ?? 'Ver mesa de regalos')
+    result = result.replace(/(<a\\s+[^>]*class=["'][^"']*\\bbutton\\b[^"']*["'][^>]*>)[\\s\\S]*?(<\\/a>)/i, `$1${buttonLabel}$2`)
+    return result
+  })
+}'''
+          if old not in s:
+              raise SystemExit('gifts parity marker not found')
+          s = s.replace(old, new, 1)
+
+          marker = "const applyClosingContentStyles = (html, project) => {"
+          fn = '''const applyConfirmationSuccessMessage = (html, project) => {
+  const confirmation = project?.confirmation || {}
+  const successMessage = escapeHtml(confirmation.successMessage ?? '¡Gracias! Hemos recibido tu confirmación.')
+  const source = String(html || '')
+  const scriptPattern = /document\\.getElementById\\('rsvp-success'\\)\\.innerHTML='[^']*'/
+  if (!scriptPattern.test(source)) return source
+  return source.replace(scriptPattern, `document.getElementById('rsvp-success').innerHTML='<div class="success">${successMessage}</div>'`)
+}
+
+'''
+          if marker not in s:
+              raise SystemExit('confirmation insertion marker not found')
+          if 'const applyConfirmationSuccessMessage = ' not in s:
+              s = s.replace(marker, fn + marker, 1)
+
+          old = "  const withConfirmationContentStyles = applyConfirmationContentStyles(withDressCodeContentStyles, project)\n  const withClosingContentStyles = applyClosingContentStyles(withConfirmationContentStyles, project)"
+          new = "  const withConfirmationContentStyles = applyConfirmationContentStyles(withDressCodeContentStyles, project)\n  const withConfirmationSuccessMessage = applyConfirmationSuccessMessage(withConfirmationContentStyles, project)\n  const withClosingContentStyles = applyClosingContentStyles(withConfirmationSuccessMessage, project)"
+          if old not in s:
+              raise SystemExit('pipeline parity marker not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit parity fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/export/weddingOutput.js
+          git diff --cached --quiet || git commit -m 'chore: sync VP export parity'
+          git push
