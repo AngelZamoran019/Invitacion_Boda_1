@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { renderWeddingHTML } from '../export/weddingOutput.js'
+import { getWeddingFontFamily } from '../fonts/weddingFonts.js'
 
 const applyConfirmationTexts = (html, project) => {
   const confirmation = project?.confirmation || {}
@@ -16,16 +17,20 @@ const applyConfirmationTexts = (html, project) => {
   })
 }
 
+const findGiftsSection = (source) => {
+  const sections = String(source || '').match(/<section\s+class=["']section["'][^>]*>[\s\S]*?<\/section>/gi) || []
+  return sections.find(section =>
+    /<p\s+class=["']eyebrow["'][^>]*>\s*Un detalle especial\s*<\/p>/i.test(section) ||
+    /<h2\b[^>]*>\s*Mesa de regalos\s*<\/h2>/i.test(section) ||
+    /Su presencia es nuestro mejor regalo\./i.test(section)
+  ) || ''
+}
+
 const applyGiftsContent = (html, project) => {
   const gifts = project?.gifts || {}
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))
   const source = String(html || '')
-  const sections = source.match(/<section\s+class=["']section["'][^>]*>[\s\S]*?<\/section>/gi) || []
-  const target = sections.find(section => {
-    const hasGiftHeading = /<p\s+class=["']eyebrow["'][^>]*>\s*Un detalle especial\s*<\/p>/i.test(section) || /<h2\b[^>]*>\s*Mesa de regalos\s*<\/h2>/i.test(section)
-    const hasGiftMessage = /Su presencia es nuestro mejor regalo\./i.test(section)
-    return hasGiftHeading || hasGiftMessage
-  })
+  const target = findGiftsSection(source)
   if (!target) return source
 
   const sectionTitle = esc(gifts.sectionTitle ?? 'Un detalle especial')
@@ -34,6 +39,7 @@ const applyGiftsContent = (html, project) => {
   const note = String(gifts.note ?? '')
 
   let updated = target
+    .replace(/^<section\s+class=["']section["']/, '<section class="section gifts-content-section"')
     .replace(/(<p\s+class=["']eyebrow["'][^>]*>)[\s\S]*?(<\/p>)/i, `$1${sectionTitle}$2`)
     .replace(/(<h2\b[^>]*>)[\s\S]*?(<\/h2>)/i, `$1${subtitle}$2`)
 
@@ -57,7 +63,7 @@ const applyGiftsContentStyles = (html, project) => {
   const safeGradient = value => typeof value === 'string' && value.includes('gradient(') && (value.match(/#[0-9a-fA-F]{6}/g) || []).length >= 2 ? value : ''
   const safeSize = (value, fallback) => { const number = Number(value); return Number.isFinite(number) && number > 0 ? number : fallback }
   const safePosition = value => { const number = Number(value); return Number.isFinite(number) ? Math.max(-300, Math.min(300, number)) : 0 }
-  const fontFamily = value => getComputedStyle(document.documentElement).fontFamily && value ? `"${String(value).replace(/"/g, '')}"` : 'Arial, Helvetica, sans-serif'
+  const fontFamily = value => getWeddingFontFamily(value || 'Arial')
   const paint = (prefix, fallbackSize) => {
     const gradient = safeGradient(gifts[prefix + 'Gradient'])
     const color = safeColor(gifts[prefix + 'Color'])
@@ -68,20 +74,17 @@ const applyGiftsContentStyles = (html, project) => {
   }
 
   const source = String(html || '')
-  const sections = source.match(/<section\s+class=["']section["'][^>]*>[\s\S]*?<\/section>/gi) || []
-  const target = sections.find(section => /<p\s+class=["']eyebrow["'][^>]*>\s*(?:Un detalle especial|[^<]*)\s*<\/p>/i.test(section) && /<h2\b[^>]*>/i.test(section) && (/Mesa de regalos/i.test(section) || /Su presencia es nuestro mejor regalo/i.test(section) || /<a\s+[^>]*class=["'][^"']*\bbutton\b/i.test(section)))
+  const target = /<section\s+class=["']section\s+gifts-content-section["'][^>]*>[\s\S]*?<\/section>/i.exec(source)?.[0]
   if (!target) return source
 
-  const markedSection = target.replace(/^<section\s+class=["']section["']/, '<section class="section gifts-content-section"')
-  const marked = source.replace(target, markedSection)
   const css = `<style id="wedding-gifts-content-styles">
     .phone>.section.gifts-content-section>.eyebrow{${paint('sectionTitle', 11)}}
     .phone>.section.gifts-content-section>h2{${paint('subtitle', 32)}}
     .phone>.section.gifts-content-section>.text{${paint('note', 16)}}
     .phone>.section.gifts-content-section>.button,.phone>.section.gifts-content-section>a.button{${paint('buttonLabel', 13)}}
   </style>`
-  if (marked.includes('id="wedding-gifts-content-styles"')) return marked.replace(/<style id="wedding-gifts-content-styles">[\s\S]*?<\/style>/i, css)
-  return marked.replace('</head>', `${css}</head>`)
+  if (source.includes('id="wedding-gifts-content-styles"')) return source.replace(/<style id="wedding-gifts-content-styles">[\s\S]*?<\/style>/i, css)
+  return source.replace('</head>', `${css}</head>`)
 }
 
 const applyCoverDecorationColors = (html, project) => {
@@ -185,7 +188,7 @@ function PreviewWedding({ project, refreshKey = 0 }) {
     const syncProjectToIframe = (nextProject) => {
       if (!initializedRef.current || !iframe.contentWindow) return
       try {
-        const baseHTML = applyPreviewTextDefaults(applyGiftsContent(renderWeddingHTML(nextProject), nextProject), nextProject)
+        const baseHTML = applyPreviewTextDefaults(applyGiftsContent(renderWeddingHTML(nextProject), nextProject))
         const html = applyGiftsContentStyles(applyCoverDecorationColors(baseHTML, nextProject), nextProject)
         iframe.contentWindow.postMessage({ type: 'WEDDING_PREVIEW_UPDATE', html }, '*')
       } catch {
@@ -282,7 +285,7 @@ function PreviewWedding({ project, refreshKey = 0 }) {
     iframe.addEventListener('load', handleLoad)
 
     try {
-      const baseHTML = applyPreviewTextDefaults(applyGiftsContent(renderWeddingHTML(projectRef.current), projectRef.current), projectRef.current)
+      const baseHTML = applyPreviewTextDefaults(applyGiftsContent(renderWeddingHTML(projectRef.current), projectRef.current))
       const html = buildBridgeHTML(applyGiftsContentStyles(applyCoverDecorationColors(baseHTML, projectRef.current), projectRef.current))
       const doc = iframe.contentDocument || iframe.contentWindow?.document
       if (!doc) return () => iframe.removeEventListener('load', handleLoad)
@@ -303,7 +306,7 @@ function PreviewWedding({ project, refreshKey = 0 }) {
   useEffect(() => {
     const iframe = iframeRef.current
     if (!iframe || !initializedRef.current) return
-    const baseHTML = applyPreviewTextDefaults(applyGiftsContent(renderWeddingHTML(project), project), project)
+    const baseHTML = applyPreviewTextDefaults(applyGiftsContent(renderWeddingHTML(project), project))
     const html = applyGiftsContentStyles(applyCoverDecorationColors(baseHTML, project), project)
     iframe.contentWindow?.postMessage({ type: 'WEDDING_PREVIEW_UPDATE', html }, '*')
   }, [project])
