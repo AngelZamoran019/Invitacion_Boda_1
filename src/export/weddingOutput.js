@@ -369,6 +369,41 @@ const applyCountdownContentStyles = (html, project) => {
   return marked.replace('</head>', css + '</head>')
 }
 
+const applyConfirmationContentStyles = (html, project) => {
+  const confirmation = project?.confirmation || {}
+  const safeColor = (value, fallback = '#ffffff') => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback
+  const safeGradient = (value) => typeof value === 'string' && value.includes('gradient(') && (value.match(/#[0-9a-fA-F]{6}/g) || []).length >= 2 ? value : ''
+  const safeSize = (value, fallback) => { const number = Number(value); return Number.isFinite(number) && number > 0 ? number : fallback }
+  const safePosition = (value) => { const number = Number(value); return Number.isFinite(number) ? Math.max(-300, Math.min(300, number)) : 0 }
+  const fontFamily = (value) => getWeddingFontFamily(value || 'Arial')
+  const paint = (prefix, fallbackSize) => {
+    const gradient = safeGradient(confirmation[prefix + 'Gradient'])
+    const color = safeColor(confirmation[prefix + 'Color'])
+    const paintRule = confirmation[prefix + 'Mode'] === 'gradient' && gradient
+      ? `background:${gradient}!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;`
+      : `background:none!important;color:${color}!important;-webkit-text-fill-color:${color}!important;`
+    return `${paintRule}font-family:${fontFamily(confirmation[prefix + 'Font'])}!important;font-size:${safeSize(confirmation[prefix + 'Size'], fallbackSize)}px!important;position:relative!important;top:${safePosition(confirmation[prefix + 'PositionY'])}px!important;`
+  }
+  const source = String(html || '')
+  const sections = source.match(/<section\s+class=["']section["'][^>]*>[\s\S]*?<\/section>/gi) || []
+  const target = sections.find((section) => /\bid=["']confirmacion["']/i.test(section) && /<form\s+[^>]*\bid=["']rsvp["']/i.test(section)) || ''
+  if (!target) return source
+  const marked = source.replace(target, target.replace(/^<section\s+class=["']section["']/, '<section class="section confirmation-content-section"'))
+  const css = '<style id="wedding-confirmation-content-styles">' +
+    '.phone>.section.confirmation-content-section>.eyebrow{' + paint('sectionTitle',11) + '}' +
+    '.phone>.section.confirmation-content-section>h2{' + paint('subtitle',32) + '}' +
+    '.phone>.section.confirmation-content-section>.text{' + paint('message',16) + '}' +
+    '.phone>.section.confirmation-content-section .rsvp-name-label{' + paint('nameLabel',12) + '}' +
+    '.phone>.section.confirmation-content-section .rsvp-attendance-label{' + paint('attendanceLabel',12) + '}' +
+    '.phone>.section.confirmation-content-section .rsvp-guests-label{' + paint('guestsLabel',12) + '}' +
+    '.phone>.section.confirmation-content-section .rsvp-message-label{' + paint('messageFieldLabel',12) + '}' +
+    '.phone>.section.confirmation-content-section .rsvp-form .button,.phone>.section.confirmation-content-section>.button,.phone>.section.confirmation-content-section a.button{' + paint('buttonLabel',13) + '}' +
+    '.phone>.section.confirmation-content-section #rsvp-success,.phone>.section.confirmation-content-section #rsvp-success .success{' + paint('successMessage',16) + '}' +
+    '</style>'
+  if (marked.includes('id="wedding-confirmation-content-styles"')) return marked.replace(/<style id="wedding-confirmation-content-styles">[\s\S]*?<\/style>/i, css)
+  return marked.replace('</head>', css + '</head>')
+}
+
 const applyCoverPositionStyles = (html, project) => {
   const cover = project?.coverSection || {}
   const safe = (value) => {
@@ -440,7 +475,8 @@ export function renderWeddingHTML(project) {
   const withEventContentStyles = applyEventContentStyles(withStoryContentStyles, project)
   const withCountdownContentStyles = applyCountdownContentStyles(withEventContentStyles, project)
   const withDressCodeContentStyles = applyDressCodeContentStyles(withCountdownContentStyles, project)
-  const withFonts = applyWeddingFonts(withDressCodeContentStyles, project)
+  const withConfirmationContentStyles = applyConfirmationContentStyles(withDressCodeContentStyles, project)
+  const withFonts = applyWeddingFonts(withConfirmationContentStyles, project)
   return preserveEditableCase(withFonts.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
 }
 
