@@ -9,7 +9,6 @@ permissions:
 
 jobs:
   fix:
-    if: ${{ !contains(github.event.head_commit.message, '[dress-code-vp-fixed]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +20,7 @@ jobs:
           text = path.read_text(encoding='utf-8')
           start = text.index('const applyDressCodeFields = (html, project) => {')
           end = text.index('const applyDressCodeContentStyles = (html, project) => {')
-          new_block = r'''const applyDressCodeFields = (html, project) => {
+          new_block = '''const applyDressCodeFields = (html, project) => {
   const dress = project?.dressCode || {}
   const sectionTitle = escapeHtml(dress.sectionTitle || 'Código de vestimenta')
   const subtitle = escapeHtml(dress.subtitle || 'Elegancia para celebrar')
@@ -36,9 +35,9 @@ jobs:
 
   let cardIndex = 0
   const updatedSection = target
-    .replace(/(<p\s+class=["']eyebrow["'][^>]*>)[\s\S]*?(<\/p>)/i, `$1${sectionTitle}$2`)
-    .replace(/(<h2\b[^>]*>)[\s\S]*?(<\/h2>)/i, `$1${subtitle}$2`)
-    .replace(/(<div\s+class=["']dress-card["'][^>]*>[\s\S]*?<span\b[^>]*>)[\s\S]*?(<\/span>)([\s\S]*?<strong\b[^>]*>)[\s\S]*?(<\/strong>)/gi, (match, spanOpen, spanClose, strongOpen, strongClose) => {
+    .replace(/(<p\\s+class=["']eyebrow["'][^>]*>)[\\s\\S]*?(<\\/p>)/i, `$1${sectionTitle}$2`)
+    .replace(/(<h2\\b[^>]*>)[\\s\\S]*?(<\\/h2>)/i, `$1${subtitle}$2`)
+    .replace(/(<div\\s+class=["']dress-card["'][^>]*>[\\s\\S]*?<span\\b[^>]*>)[\\s\\S]*?(<\\/span>)([\\s\\S]*?<strong\\b[^>]*>)[\\s\\S]*?(<\\/strong>)/gi, (match, spanOpen, spanClose, strongOpen, strongClose) => {
       const firstCard = cardIndex === 0
       cardIndex += 1
       return firstCard
@@ -46,13 +45,13 @@ jobs:
         : `${spanOpen}${womenLabel}${spanClose}${strongOpen}${womenAttire}${strongClose}`
     })
 
-  const notePattern = /<p\s+class=["']text["'][^>]*>[\s\S]*?<\/p>/i
+  const notePattern = /<p\\s+class=["']text["'][^>]*>[\\s\\S]*?<\\/p>/i
   let withNote = updatedSection
   if (note) {
     const noteHtml = `<p class="text">${escapeHtml(note)}</p>`
     withNote = notePattern.test(updatedSection)
       ? updatedSection.replace(notePattern, noteHtml)
-      : updatedSection.replace(/<\/section>\s*$/i, `${noteHtml}</section>`)
+      : updatedSection.replace(/<\\/section>\\s*$/i, `${noteHtml}</section>`)
   } else if (notePattern.test(updatedSection)) {
     withNote = updatedSection.replace(notePattern, '')
   }
@@ -62,7 +61,7 @@ jobs:
 
 '''
           path.write_text(text[:start] + new_block + text[end:], encoding='utf-8')
-      - name: Remove temporary workflow and commit
+      - name: Commit fix and remove workflow
         run: |
           rm -f .github/workflows/fix-dress-code-vp.yml
           git config user.name "github-actions[bot]"
