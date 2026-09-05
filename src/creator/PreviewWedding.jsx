@@ -33,6 +33,39 @@ const applyConfirmationTexts = (html, project) => {
   return source.replace(target, updated)
 }
 
+const applyConfirmationContentStyles = (html, project) => {
+  const confirmation = project?.confirmation || {}
+  const safeColor = value => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : '#ffffff'
+  const safeGradient = value => typeof value === 'string' && value.includes('gradient(') && (value.match(/#[0-9a-fA-F]{6}/g) || []).length >= 2 ? value : ''
+  const safeSize = (value, fallback) => { const number = Number(value); return Number.isFinite(number) && number > 0 ? number : fallback }
+  const safePosition = value => { const number = Number(value); return Number.isFinite(number) ? Math.max(-300, Math.min(300, number)) : 0 }
+  const fontFamily = value => getWeddingFontFamily(value || 'Arial')
+  const paint = (prefix, fallbackSize) => {
+    const gradient = safeGradient(confirmation[prefix + 'Gradient'])
+    const color = safeColor(confirmation[prefix + 'Color'])
+    const paintRule = confirmation[prefix + 'Mode'] === 'gradient' && gradient
+      ? `background:${gradient}!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;`
+      : `background:none!important;color:${color}!important;-webkit-text-fill-color:${color}!important;`
+    return `${paintRule}font-family:${fontFamily(confirmation[prefix + 'Font'])}!important;font-size:${safeSize(confirmation[prefix + 'Size'], fallbackSize)}px!important;position:relative!important;top:${safePosition(confirmation[prefix + 'PositionY'])}px!important;`
+  }
+
+  const css = `<style id="wedding-confirmation-content-styles">
+    .phone>.section#confirmacion>.eyebrow{${paint('sectionTitle',11)}}
+    .phone>.section#confirmacion>h2{${paint('subtitle',32)}}
+    .phone>.section#confirmacion>.text{${paint('message',16)}}
+    .phone>.section#confirmacion .rsvp-form .button{${paint('buttonLabel',13)}}
+    .phone>.section#confirmacion #rsvp-success,.phone>.section#confirmacion #rsvp-success .success{${paint('successMessage',16)}}
+    .phone>.section:has(.rsvp-form)>.eyebrow{${paint('sectionTitle',11)}}
+    .phone>.section:has(.rsvp-form)>h2{${paint('subtitle',32)}}
+    .phone>.section:has(.rsvp-form)>.text{${paint('message',16)}}
+    .phone>.section:has(.rsvp-form) .rsvp-form .button{${paint('buttonLabel',13)}}
+    .phone>.section:has(.rsvp-form) #rsvp-success,.phone>.section:has(.rsvp-form) #rsvp-success .success{${paint('successMessage',16)}}
+  </style>`
+  const source = String(html || '')
+  if (source.includes('id="wedding-confirmation-content-styles"')) return source.replace(/<style id="wedding-confirmation-content-styles">[\s\S]*?<\/style>/i, css)
+  return source.replace('</head>', `${css}</head>`)
+}
+
 const findGiftsSection = (source) => {
   const sections = String(source || '').match(/<section\s+class=["']section["'][^>]*>[\s\S]*?<\/section>/gi) || []
   return sections.find(section =>
@@ -205,7 +238,7 @@ function PreviewWedding({ project, refreshKey = 0 }) {
       if (!initializedRef.current || !iframe.contentWindow) return
       try {
         const baseHTML = applyPreviewTextDefaults(applyConfirmationTexts(applyGiftsContent(renderWeddingHTML(nextProject), nextProject), nextProject))
-        const html = applyGiftsContentStyles(applyCoverDecorationColors(baseHTML, nextProject), nextProject)
+        const html = applyConfirmationContentStyles(applyGiftsContentStyles(applyCoverDecorationColors(baseHTML, nextProject), nextProject), nextProject)
         iframe.contentWindow.postMessage({ type: 'WEDDING_PREVIEW_UPDATE', html }, '*')
       } catch {
         // Evitar que un cambio de edición rompa el editor.
@@ -302,7 +335,7 @@ function PreviewWedding({ project, refreshKey = 0 }) {
 
     try {
       const baseHTML = applyPreviewTextDefaults(applyConfirmationTexts(applyGiftsContent(renderWeddingHTML(projectRef.current), projectRef.current), projectRef.current))
-      const html = buildBridgeHTML(applyGiftsContentStyles(applyCoverDecorationColors(baseHTML, projectRef.current), projectRef.current))
+      const html = buildBridgeHTML(applyConfirmationContentStyles(applyGiftsContentStyles(applyCoverDecorationColors(baseHTML, projectRef.current), projectRef.current), projectRef.current))
       const doc = iframe.contentDocument || iframe.contentWindow?.document
       if (!doc) return () => iframe.removeEventListener('load', handleLoad)
       initializedRef.current = false
@@ -323,7 +356,7 @@ function PreviewWedding({ project, refreshKey = 0 }) {
     const iframe = iframeRef.current
     if (!iframe || !initializedRef.current) return
     const baseHTML = applyPreviewTextDefaults(applyConfirmationTexts(applyGiftsContent(renderWeddingHTML(project), project), project))
-    const html = applyGiftsContentStyles(applyCoverDecorationColors(baseHTML, project), project)
+    const html = applyConfirmationContentStyles(applyGiftsContentStyles(applyCoverDecorationColors(baseHTML, project), project), project)
     iframe.contentWindow?.postMessage({ type: 'WEDDING_PREVIEW_UPDATE', html }, '*')
   }, [project])
 
