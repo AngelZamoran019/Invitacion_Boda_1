@@ -1,0 +1,87 @@
+name: Add closing content color controls
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'chore: apply closing content color controls') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch closing controls
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          # Schema
+          p = Path('src/data/weddingSchema.js')
+          s = p.read_text(encoding='utf-8')
+          old = "}, closing:{image:'',message:''}\n})"
+          new = "}, closing:{image:'',message:'',messageColor:'#ffffff',messageMode:'solid',messageGradient:'',messageSize:16,messageFont:'Arial',messagePositionY:0,ornamentColor:'#ffffff',ornamentMode:'solid',ornamentGradient:'',ornamentSize:30,ornamentPositionY:0}\n})"
+          if old not in s:
+              raise SystemExit('Schema closing marker not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # Editor
+          p = Path('src/creator/EditorWedding.jsx')
+          s = p.read_text(encoding='utf-8')
+          old = "case 'closing': return <div className=\"editor-grid\"><TextField label=\"Imagen de cierre (URL)\" value={project.closing.image} onChange={(v) => set('closing.image', v)} placeholder=\"https://...\" /><TextField label=\"Mensaje de cierre\" value={project.closing.message} onChange={(v) => set('closing.message', v)} multiline /></div>"
+          new = "case 'closing': { const closing = project.closing || {}; return <div className=\"editor-grid\"><TextField label=\"Imagen de cierre (URL)\" value={closing.image || ''} onChange={(v) => set('closing.image', v)} placeholder=\"https://...\" /><CoverDecorationEditor label=\"Color del diamante\" color={closing.ornamentColor} mode={closing.ornamentMode} gradient={closing.ornamentGradient} size={closing.ornamentSize} positionY={closing.ornamentPositionY} set={set} prefix=\"closing.ornament\" defaultSize={30} sizeMin={8} sizeMax={100} /><CoverTextEditor label=\"Mensaje de cierre\" value={closing.message ?? ''} onChange={(v) => set('closing.message', v)} multiline color={closing.messageColor} mode={closing.messageMode} gradient={closing.messageGradient} size={closing.messageSize} font={closing.messageFont} positionY={closing.messagePositionY} set={set} prefix=\"closing.message\" defaultSize={16} /></div> }"
+          if old not in s:
+              raise SystemExit('Editor closing marker not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # Export/preview pipeline
+          p = Path('src/export/weddingOutput.js')
+          s = p.read_text(encoding='utf-8')
+          marker = "const applyCoverPositionStyles = (html, project) => {"
+          if marker not in s:
+              raise SystemExit('weddingOutput insertion marker not found')
+          fn = r'''const applyClosingContentStyles = (html, project) => {
+  const closing = project?.closing || {}
+  const safeColor = (value, fallback = '#ffffff') => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback
+  const safeGradient = (value) => typeof value === 'string' && value.includes('gradient(') && (value.match(/#[0-9a-fA-F]{6}/g) || []).length >= 2 ? value : ''
+  const safeSize = (value, fallback) => { const number = Number(value); return Number.isFinite(number) && number > 0 ? number : fallback }
+  const safePosition = (value) => { const number = Number(value); return Number.isFinite(number) ? Math.max(-300, Math.min(300, number)) : 0 }
+  const fontFamily = (value) => getWeddingFontFamily(value || 'Arial')
+  const paint = (prefix, fallbackSize) => {
+    const gradient = safeGradient(closing[prefix + 'Gradient'])
+    const color = safeColor(closing[prefix + 'Color'])
+    const paintRule = closing[prefix + 'Mode'] === 'gradient' && gradient
+      ? `background:${gradient}!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;`
+      : `background:none!important;color:${color}!important;-webkit-text-fill-color:${color}!important;`
+    return `${paintRule}font-family:${fontFamily(closing[prefix + 'Font'])}!important;font-size:${safeSize(closing[prefix + 'Size'], fallbackSize)}px!important;position:relative!important;top:${safePosition(closing[prefix + 'PositionY'])}px!important;`
+  }
+  const source = String(html || '')
+  const sections = source.match(/<section\s+class=["']closing["'][^>]*>[\s\S]*?<\/section>/gi) || []
+  const target = sections[0] || ''
+  if (!target) return source
+  const marked = source.replace(target, target.replace(/^<section\s+class=["']closing["']/, '<section class="closing closing-content-section"'))
+  const css = '<style id="wedding-closing-content-styles">' +
+    '.phone>.closing.closing-content-section>.ornament{' + paint('ornament',30) + '}' +
+    '.phone>.closing.closing-content-section>.text{' + paint('message',16) + '}' +
+    '</style>'
+  if (marked.includes('id="wedding-closing-content-styles"')) return marked.replace(/<style id="wedding-closing-content-styles">[\s\S]*?<\/style>/i, css)
+  return marked.replace('</head>', css + '</head>')
+}
+
+'''
+          s = s.replace(marker, fn + marker, 1)
+          old = "const withConfirmationContentStyles = applyConfirmationContentStyles(withDressCodeContentStyles, project)\n  const withFonts = applyWeddingFonts(withConfirmationContentStyles, project)"
+          new = "const withConfirmationContentStyles = applyConfirmationContentStyles(withDressCodeContentStyles, project)\n  const withClosingContentStyles = applyClosingContentStyles(withConfirmationContentStyles, project)\n  const withFonts = applyWeddingFonts(withClosingContentStyles, project)"
+          if old not in s:
+              raise SystemExit('weddingOutput pipeline marker not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/data/weddingSchema.js src/creator/EditorWedding.jsx src/export/weddingOutput.js
+          git diff --cached --quiet || git commit -m 'chore: apply closing content color controls'
+          git push
