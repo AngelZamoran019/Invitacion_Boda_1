@@ -1,0 +1,152 @@
+name: Apply gifts content controls
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[gifts-content-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update gifts editor and schema
+        shell: python
+        run: |
+          from pathlib import Path
+
+          editor = Path('src/creator/EditorWedding.jsx')
+          text = editor.read_text(encoding='utf-8')
+          old = """      case 'gifts': return <div className=\"editor-grid\"><label className=\"toggle-field\"><span>Mostrar mesa de regalos</span><input type=\"checkbox\" checked={project.gifts.enabled} onChange={(e) => set('gifts.enabled', e.target.checked)} /></label><TextField label=\"Título de sección\" value={project.gifts.sectionTitle ?? 'Un detalle especial'} onChange={(v) => set('gifts.sectionTitle', v)} /><TextField label=\"Subtítulo\" value={project.gifts.subtitle ?? 'subtitulo'} onChange={(v) => set('gifts.subtitle', v)} /><TextField label=\"URL\" value={project.gifts.url} onChange={(v) => set('gifts.url', v)} placeholder=\"https://...\" /><TextField label=\"Texto del botón\" value={project.gifts.buttonLabel ?? 'Ver mesa de regalos'} onChange={(v) => set('gifts.buttonLabel', v)} /></div>"""
+          new = """      case 'gifts': { const gifts = project.gifts || {}; return <div className=\"editor-grid\"><label className=\"toggle-field\"><span>Mostrar mesa de regalos</span><input type=\"checkbox\" checked={gifts.enabled} onChange={(e) => set('gifts.enabled', e.target.checked)} /></label><CoverTextEditor label=\"Título de sección\" value={gifts.sectionTitle ?? 'Un detalle especial'} onChange={(v) => set('gifts.sectionTitle', v)} color={gifts.sectionTitleColor} mode={gifts.sectionTitleMode} gradient={gifts.sectionTitleGradient} size={gifts.sectionTitleSize} font={gifts.sectionTitleFont} positionY={gifts.sectionTitlePositionY} set={set} prefix=\"gifts.sectionTitle\" defaultSize={11} /><CoverTextEditor label=\"Subtítulo\" value={gifts.subtitle ?? 'subtitulo'} onChange={(v) => set('gifts.subtitle', v)} color={gifts.subtitleColor} mode={gifts.subtitleMode} gradient={gifts.subtitleGradient} size={gifts.subtitleSize} font={gifts.subtitleFont} positionY={gifts.subtitlePositionY} set={set} prefix=\"gifts.subtitle\" defaultSize={32} /><TextField label=\"URL\" value={gifts.url} onChange={(v) => set('gifts.url', v)} placeholder=\"https://...\" /><CoverTextEditor label=\"Texto del botón\" value={gifts.buttonLabel ?? 'Ver mesa de regalos'} onChange={(v) => set('gifts.buttonLabel', v)} color={gifts.buttonLabelColor} mode={gifts.buttonLabelMode} gradient={gifts.buttonLabelGradient} size={gifts.buttonLabelSize} font={gifts.buttonLabelFont} positionY={gifts.buttonLabelPositionY} set={set} prefix=\"gifts.buttonLabel\" defaultSize={13} /><CoverTextEditor label=\"Notas\" value={gifts.note ?? 'Su presencia es nuestro mejor regalo.'} onChange={(v) => set('gifts.note', v)} multiline color={gifts.noteColor} mode={gifts.noteMode} gradient={gifts.noteGradient} size={gifts.noteSize} font={gifts.noteFont} positionY={gifts.notePositionY} set={set} prefix=\"gifts.note\" defaultSize={16} /></div> }"""
+          if old not in text:
+              raise SystemExit('gifts editor block not found')
+          editor.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          schema = Path('src/data/weddingSchema.js')
+          text = schema.read_text(encoding='utf-8')
+          old = """  gifts:{enabled:true,sectionTitle:'Un detalle especial',subtitle:'subtitulo',url:'',buttonLabel:'Ver mesa de regalos'}, recommendations:[],gallery:[],"""
+          new = """  gifts:{enabled:true,sectionTitle:'Un detalle especial',sectionTitleColor:'#ffffff',sectionTitleMode:'solid',sectionTitleGradient:'',sectionTitleSize:11,sectionTitleFont:'Arial',sectionTitlePositionY:0,subtitle:'subtitulo',subtitleColor:'#ffffff',subtitleMode:'solid',subtitleGradient:'',subtitleSize:32,subtitleFont:'Arial',subtitlePositionY:0,url:'',buttonLabel:'Ver mesa de regalos',buttonLabelColor:'#ffffff',buttonLabelMode:'solid',buttonLabelGradient:'',buttonLabelSize:13,buttonLabelFont:'Arial',buttonLabelPositionY:0,note:'Su presencia es nuestro mejor regalo.',noteColor:'#ffffff',noteMode:'solid',noteGradient:'',noteSize:16,noteFont:'Arial',notePositionY:0}, recommendations:[],gallery:[],"""
+          if old not in text:
+              raise SystemExit('gifts schema block not found')
+          schema.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+      - name: Update gifts output
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('src/export/weddingOutput.js')
+          text = path.read_text(encoding='utf-8')
+
+          old = r'''const applyGiftsFields = (html, project) => {
+  const gifts = project?.gifts || {}
+  const sectionTitle = escapeHtml(gifts.sectionTitle ?? 'Un detalle especial')
+  const subtitle = escapeHtml(gifts.subtitle ?? 'subtitulo')
+  const source = String(html || '')
+  const sectionMarker = /<section\s+class=["']section["'][^>]*>\s*<p\s+class=["']eyebrow["'][^>]*>\s*Un detalle especial\s*<\/p>[\s\S]*?<\/section>/i
+  if (!sectionMarker.test(source)) return source
+
+  return source.replace(sectionMarker, (section) => {
+    let result = section.replace(/(<p\s+class=["']eyebrow["'][^>]*>)[\s\S]*?(<\/p>)/i, `$1${sectionTitle}$2`)
+    result = result.replace(/(<h2\b[^>]*>)[\s\S]*?(<\/h2>)/i, `$1${subtitle}$2`)
+    return result
+  })
+}
+'''
+
+          new = r'''const findGiftsSection = (source) => {
+  const sections = String(source || '').match(/<section\s+class=["']section["'][^>]*>[\s\S]*?<\/section>/gi) || []
+  return sections.find((section) => /<a\s+[^>]*class=["'][^"']*button[^"']*["'][^>]*>/i.test(section) && !/rsvp-form/i.test(section)) || ''
+}
+
+const applyGiftsFields = (html, project) => {
+  const gifts = project?.gifts || {}
+  const sectionTitle = escapeHtml(gifts.sectionTitle ?? 'Un detalle especial')
+  const subtitle = escapeHtml(gifts.subtitle ?? 'subtitulo')
+  const buttonLabel = escapeHtml(gifts.buttonLabel ?? 'Ver mesa de regalos')
+  const note = String(gifts.note ?? 'Su presencia es nuestro mejor regalo.').trim()
+  const source = String(html || '')
+  const target = findGiftsSection(source)
+  if (!target) return source
+
+  let result = target.replace(/(<p\s+class=["']eyebrow["'][^>]*>)[\s\S]*?(<\/p>)/i, `$1${sectionTitle}$2`)
+    .replace(/(<h2\b[^>]*>)[\s\S]*?(<\/h2>)/i, `$1${subtitle}$2`)
+    .replace(/(<a\s+[^>]*class=["'][^"']*button[^"']*["'][^>]*>)[\s\S]*?(<\/a>)/i, `$1${buttonLabel}$2`)
+
+  const notePattern = /<p\s+class=["']text["'][^>]*>[\s\S]*?<\/p>/i
+  if (note) {
+    const noteHtml = `<p class="text">${escapeHtml(note)}</p>`
+    result = notePattern.test(result)
+      ? result.replace(notePattern, noteHtml)
+      : result.replace(/<\/section>\s*$/i, `${noteHtml}</section>`)
+  } else if (notePattern.test(result)) {
+    result = result.replace(notePattern, '')
+  }
+
+  return source.replace(target, result)
+}
+
+const applyGiftsContentStyles = (html, project) => {
+  const gifts = project?.gifts || {}
+  const safeColor = (value, fallback = '#ffffff') => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback
+  const safeGradient = (value) => typeof value === 'string' && value.includes('gradient(') && (value.match(/#[0-9a-fA-F]{6}/g) || []).length >= 2 ? value : ''
+  const safeSize = (value, fallback) => { const number = Number(value); return Number.isFinite(number) && number > 0 ? number : fallback }
+  const safePosition = (value) => { const number = Number(value); return Number.isFinite(number) ? Math.max(-300, Math.min(300, number)) : 0 }
+  const fontFamily = (value, fallback = 'Arial') => getWeddingFontFamily(value || fallback)
+  const paint = (mode, color, gradient) => {
+    const safeGradientValue = safeGradient(gradient)
+    if (mode === 'gradient' && safeGradientValue) return 'background:' + safeGradientValue + '!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;'
+    const safeColorValue = safeColor(color)
+    return 'background:none!important;color:' + safeColorValue + '!important;-webkit-text-fill-color:' + safeColorValue + '!important;'
+  }
+  const style = (prefix, fallbackSize) => paint(gifts[prefix + 'Mode'], gifts[prefix + 'Color'], gifts[prefix + 'Gradient']) + 'font-family:' + fontFamily(gifts[prefix + 'Font']) + '!important;font-size:' + safeSize(gifts[prefix + 'Size'], fallbackSize) + 'px!important;position:relative!important;top:' + safePosition(gifts[prefix + 'PositionY']) + 'px!important;'
+  const source = String(html || '')
+  const target = findGiftsSection(source)
+  if (!target) return source
+  const marked = source.replace(target, target.replace(/^<section\s+class=["']section["']/, '<section class="section gifts-content-section"'))
+  const css = '<style id="wedding-gifts-content-styles">' +
+    '.phone>.section.gifts-content-section>.eyebrow{' + style('sectionTitle',11) + '}' +
+    '.phone>.section.gifts-content-section>h2{' + style('subtitle',32) + '}' +
+    '.phone>.section.gifts-content-section>.button{' + style('buttonLabel',13) + '}' +
+    '.phone>.section.gifts-content-section>.text{' + style('note',16) + '}' +
+    '</style>'
+  if (marked.includes('id="wedding-gifts-content-styles"')) return marked.replace(/<style id="wedding-gifts-content-styles">[\s\S]*?<\/style>/i, css)
+  return marked.replace('</head>', css + '</head>')
+}
+'''
+          if old not in text:
+              raise SystemExit('gifts output block not found')
+          text = text.replace(old, new, 1)
+
+          old_pipeline = """  const withGifts = applyGiftsFields(withDressCode, project)
+"""
+          new_pipeline = """  const withGifts = applyGiftsFields(withDressCode, project)
+"""
+          if old_pipeline not in text:
+              raise SystemExit('gifts pipeline marker not found')
+
+          old_styles = """  const withDressCodeContentStyles = applyDressCodeContentStyles(withCountdownContentStyles, project)
+  const withFonts = applyWeddingFonts(withDressCodeContentStyles, project)
+"""
+          new_styles = """  const withDressCodeContentStyles = applyDressCodeContentStyles(withCountdownContentStyles, project)
+  const withGiftsContentStyles = applyGiftsContentStyles(withDressCodeContentStyles, project)
+  const withFonts = applyWeddingFonts(withGiftsContentStyles, project)
+"""
+          if old_styles not in text:
+              raise SystemExit('gifts style pipeline marker not found')
+          text = text.replace(old_styles, new_styles, 1)
+          path.write_text(text, encoding='utf-8')
+
+      - name: Commit and remove temporary workflow
+        run: |
+          rm -f .github/workflows/apply-gifts-content.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/creator/EditorWedding.jsx src/data/weddingSchema.js src/export/weddingOutput.js .github/workflows/apply-gifts-content.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: add gifts notes and content styling [gifts-content-applied]"
+          git push
