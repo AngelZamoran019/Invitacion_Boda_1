@@ -1,6 +1,6 @@
 import { getWeddingFontFamily } from '../fonts/weddingFonts.js'
 
-const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))
+const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char])
 
 const safeColor = (value, fallback = '#ffffff') => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback
 const safeGradient = value => typeof value === 'string' && value.includes('gradient(') && (value.match(/#[0-9a-fA-F]{6}/g) || []).length >= 2 ? value : ''
@@ -74,9 +74,19 @@ const applyConfirmationSuccessParity = (html, project) => {
   return source.replace(pattern, `$1<div class="success">${successMessage}</div>$2`)
 }
 
+const applyEventTimeSpacingParity = (html) => {
+  const source = String(html || '')
+  const eventSection = /<section\s+class=["']section["'][^>]*>[\s\S]*?<div\s+class=["']event-card["'][\s\S]*?<\/section>/i
+  if (!eventSection.test(source)) return source
+  const css = `<style id="wedding-event-time-spacing-parity">.phone>.section:has(.event-card)>h2+p{margin:0!important;}</style>`
+  if (source.includes('id="wedding-event-time-spacing-parity"')) return source.replace(/<style id="wedding-event-time-spacing-parity">[\s\S]*?<\/style>/i, css)
+  return source.replace('</head>', `${css}</head>`)
+}
+
 export function applyWeddingEditorParity(html, project) {
   const withGifts = applyGiftsParity(html, project)
-  return applyConfirmationSuccessParity(withGifts, project)
+  const withConfirmation = applyConfirmationSuccessParity(withGifts, project)
+  return applyEventTimeSpacingParity(withConfirmation)
 }
 
 export default applyWeddingEditorParity
