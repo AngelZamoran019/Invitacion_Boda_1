@@ -28,31 +28,41 @@ const applyCountdownSectionTitle = (html, project) => {
   return source.replace(marker, `$1${title}$2`)
 }
 
+const findDressCodeSection = (source) => {
+  const sections = String(source || '').match(/<section\s+class=["']section["'][^>]*>[\s\S]*?<\/section>/gi) || []
+  return sections.find((section) => /<div\s+class=["']dress-grid["']/i.test(section) && /<div\s+class=["']dress-card["']/i.test(section)) || ''
+}
+
 const applyDressCodeFields = (html, project) => {
   const dress = project?.dressCode || {}
   const sectionTitle = escapeHtml(dress.sectionTitle || 'Código de vestimenta')
   const subtitle = escapeHtml(dress.subtitle || 'Elegancia para celebrar')
-  const menLabel = escapeHtml(dress.menLabel ?? 'Ellas')
-  const womenLabel = escapeHtml(dress.womenLabel ?? 'Ellos')
+  const menLabel = escapeHtml(dress.menLabel ?? 'Hombres')
+  const womenLabel = escapeHtml(dress.womenLabel ?? 'Mujeres')
   const menAttire = escapeHtml(dress.menAttire ?? dress.men ?? 'Formal')
   const womenAttire = escapeHtml(dress.womenAttire ?? dress.women ?? 'Formal')
+  const note = String(dress.note ?? '')
   const source = String(html || '')
-  const sectionMarker = /<section\s+class=["']section["'][^>]*>\s*<p\s+class=["']eyebrow["'][^>]*>\s*Código de vestimenta\s*<\/p>[\s\S]*?<\/section>/i
-  if (!sectionMarker.test(source)) return source
+  const target = findDressCodeSection(source)
+  if (!target) return source
 
-  return source.replace(sectionMarker, (section) => {
-    let result = section.replace(/(<p\s+class=["']eyebrow["'][^>]*>)[\s\S]*?(<\/p>)/i, `$1${sectionTitle}$2`)
-    result = result.replace(/(<h2\b[^>]*>)[\s\S]*?(<\/h2>)/i, `$1${subtitle}$2`)
-    let cardIndex = 0
-    result = result.replace(/(<div\s+class=["']dress-card["'][^>]*>[\s\S]*?<span\b[^>]*>)[\s\S]*?(<\/span>)([\s\S]*?<strong\b[^>]*>)[\s\S]*?(<\/strong>)/gi, (match, spanOpen, spanClose, strongOpen, strongClose) => {
-      const replacement = cardIndex === 0
-        ? `${spanOpen}${menLabel}${spanClose}${strongOpen}${menAttire}${strongClose}`
-        : `${spanOpen}${womenLabel}${spanClose}${strongOpen}${womenAttire}${strongClose}`
-      cardIndex += 1
-      return replacement
-    })
-    return result
-  })
+  const updatedSection = target.replace(/(<p\s+class=["']eyebrow["'][^>]*>)[\s\S]*?(<\/p>)/i, `$1${sectionTitle}$2`)
+    .replace(/(<h2\b[^>]*>)[\s\S]*?(<\/h2>)/i, `$1${subtitle}$2`)
+    .replace(/(<div\s+class=["']dress-card["'][^>]*>[\s\S]*?<span\b[^>]*>)[\s\S]*?(<\/span>)([\s\S]*?<strong\b[^>]*>)[\s\S]*?(<\/strong>)/i, `$1${menLabel}$2$3${menAttire}$4`)
+    .replace(/(<div\s+class=["']dress-card["'][^>]*>[\s\S]*?<span\b[^>]*>)[\s\S]*?(<\/span>)([\s\S]*?<strong\b[^>]*>)[\s\S]*?(<\/strong>)/i, `$1${womenLabel}$2$3${womenAttire}$4`)
+
+  let withNote = updatedSection
+  const notePattern = /<p\s+class=["']text["'][^>]*>[\s\S]*?<\/p>/i
+  if (note) {
+    const noteHtml = `<p class="text">${escapeHtml(note)}</p>`
+    withNote = notePattern.test(updatedSection)
+      ? updatedSection.replace(notePattern, noteHtml)
+      : updatedSection.replace(/<\/section>\s*$/i, `${noteHtml}</section>`)
+  } else if (notePattern.test(updatedSection)) {
+    withNote = updatedSection.replace(notePattern, '')
+  }
+
+  return source.replace(target, withNote)
 }
 
 const applyDressCodeContentStyles = (html, project) => {
@@ -70,18 +80,17 @@ const applyDressCodeContentStyles = (html, project) => {
   }
   const style = (prefix, fallbackSize = 12) => paint(dress[prefix + 'Mode'], dress[prefix + 'Color'], dress[prefix + 'Gradient']) + 'font-family:' + fontFamily(dress[prefix + 'Font']) + '!important;font-size:' + safeSize(dress[prefix + 'Size'], fallbackSize) + 'px!important;position:relative!important;top:' + safePosition(dress[prefix + 'PositionY']) + 'px!important;'
   const source = String(html || '')
-  const sections = source.match(/<section\s+class=["']section["'][^>]*>[\s\S]*?<\/section>/gi) || []
-  const target = sections.find((section) => /<p\s+class=["']eyebrow["'][^>]*>\s*(?:Código de vestimenta|Elegancia para celebrar)\s*<\/p>/i.test(section) && /<div\s+class=["']dress-card["']/i.test(section))
+  const target = findDressCodeSection(source)
   if (!target) return source
   const marked = source.replace(target, target.replace(/^<section\s+class=["']section["']/, '<section class="section dress-code-content-section"'))
   const css = '<style id="wedding-dress-code-content-styles">' +
     '.phone>.section.dress-code-content-section>.eyebrow{' + style('sectionTitle',11) + '}' +
     '.phone>.section.dress-code-content-section>h2{' + style('subtitle',32) + '}' +
-    '.phone>.section.dress-code-content-section>.dress-card:nth-of-type(1)>span{' + style('menLabel',12) + '}' +
-    '.phone>.section.dress-code-content-section>.dress-card:nth-of-type(2)>span{' + style('womenLabel',12) + '}' +
-    '.phone>.section.dress-code-content-section>.dress-card:nth-of-type(1)>strong{' + style('menAttire',12) + '}' +
-    '.phone>.section.dress-code-content-section>.dress-card:nth-of-type(2)>strong{' + style('womenAttire',12) + '}' +
-    '.phone>.section.dress-code-content-section>.note{' + style('note',12) + '}' +
+    '.phone>.section.dress-code-content-section .dress-card:nth-child(1)>span{' + style('menLabel',12) + '}' +
+    '.phone>.section.dress-code-content-section .dress-card:nth-child(2)>span{' + style('womenLabel',12) + '}' +
+    '.phone>.section.dress-code-content-section .dress-card:nth-child(1)>strong{' + style('menAttire',12) + '}' +
+    '.phone>.section.dress-code-content-section .dress-card:nth-child(2)>strong{' + style('womenAttire',12) + '}' +
+    '.phone>.section.dress-code-content-section>.text{' + style('note',12) + '}' +
     '</style>'
   if (marked.includes('id="wedding-dress-code-content-styles"')) return marked.replace(/<style id="wedding-dress-code-content-styles">[\s\S]*?<\/style>/i, css)
   return marked.replace('</head>', css + '</head>')
