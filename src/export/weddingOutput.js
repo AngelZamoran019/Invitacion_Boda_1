@@ -269,6 +269,36 @@ const applyEventContentStyles = (html, project) => {
   return marked.replace('</head>', css + '</head>')
 }
 
+const applyCountdownContentStyles = (html, project) => {
+  const countdown = project?.countdown || {}
+  const safeColor = (value, fallback = '#ffffff') => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback
+  const safeGradient = (value) => typeof value === 'string' && value.includes('gradient(') && (value.match(/#[0-9a-fA-F]{6}/g) || []).length >= 2 ? value : ''
+  const safeSize = (value, fallback) => { const number = Number(value); return Number.isFinite(number) && number > 0 ? number : fallback }
+  const safePosition = (value) => { const number = Number(value); return Number.isFinite(number) ? Math.max(-300, Math.min(300, number)) : 0 }
+  const fontFamily = (value, fallback = 'Arial') => getWeddingFontFamily(value || fallback)
+  const paint = (mode, color, gradient) => {
+    const safeGradientValue = safeGradient(gradient)
+    if (mode === 'gradient' && safeGradientValue) return 'background:' + safeGradientValue + '!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;'
+    const safeColorValue = safeColor(color)
+    return 'background:none!important;color:' + safeColorValue + '!important;-webkit-text-fill-color:' + safeColorValue + '!important;'
+  }
+  const style = (prefix, fallbackColor, fallbackSize, fallbackFont) => paint(countdown[prefix + 'Mode'], countdown[prefix + 'Color'], countdown[prefix + 'Gradient']) + 'font-family:' + fontFamily(countdown[prefix + 'Font'], fallbackFont) + '!important;font-size:' + safeSize(countdown[prefix + 'Size'], fallbackSize) + 'px!important;position:relative!important;top:' + safePosition(countdown[prefix + 'PositionY']) + 'px!important;'
+  const source = String(html || '')
+  const sectionTitle = escapeHtml(countdown.sectionTitle || 'La cuenta regresiva comienza')
+  const sections = source.match(/<section\s+class=["']section["'][^>]*>[\s\S]*?<\/section>/gi) || []
+  const escapedTitle = sectionTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const target = sections.find((section) => new RegExp("<p\\s+class=[\"']eyebrow[\"'][^>]*>\\s*" + escapedTitle + "\\s*</p>", 'i').test(section))
+  if (!target) return source
+  const marked = source.replace(target, target.replace(/^<section\s+class=["']section["']/, '<section class="section countdown-content-section"'))
+  const css = '<style id="wedding-countdown-content-styles">' +
+    '.phone>.section.countdown-content-section>.eyebrow{' + style('sectionTitle','#ffffff',11,'Arial') + '}' +
+    '.phone>.section.countdown-content-section .countdown strong{' + style('numbers','#ffffff',24,'Arial') + '}' +
+    '.phone>.section.countdown-content-section .countdown span{' + style('text','#ffffff',12,'Arial') + '}' +
+    '</style>'
+  if (marked.includes('id="wedding-countdown-content-styles"')) return marked.replace(/<style id="wedding-countdown-content-styles">[\s\S]*?<\/style>/i, css)
+  return marked.replace('</head>', css + '</head>')
+}
+
 const applyCoverPositionStyles = (html, project) => {
   const cover = project?.coverSection || {}
   const safe = (value) => {
@@ -338,7 +368,8 @@ export function renderWeddingHTML(project) {
   const withCoupleContentStyles = applyCoupleContentStyles(withCoverPositions, project)
   const withStoryContentStyles = applyStoryContentStyles(withCoupleContentStyles, project)
   const withEventContentStyles = applyEventContentStyles(withStoryContentStyles, project)
-  const withFonts = applyWeddingFonts(withEventContentStyles, project)
+  const withCountdownContentStyles = applyCountdownContentStyles(withEventContentStyles, project)
+  const withFonts = applyWeddingFonts(withCountdownContentStyles, project)
   return preserveEditableCase(withFonts.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
 }
 
