@@ -1,11 +1,33 @@
 from pathlib import Path
+import re
+
+p = Path('src/creator/EditorWedding.jsx')
+t = p.read_text()
+start = t.index("case 'dressCode':")
+end = t.index("case 'gifts':", start)
+block = t[start:end]
+repls = {
+'Título de sección': '<CoverTextEditor label="Título de sección" value={dress.sectionTitle ?? \'Código de vestimenta\'} onChange={(v) => set(\'dressCode.sectionTitle\', v)} color={dress.sectionTitleColor} mode={dress.sectionTitleMode} gradient={dress.sectionTitleGradient} size={dress.sectionTitleSize} font={dress.sectionTitleFont} positionY={dress.sectionTitlePositionY} set={set} prefix="dressCode.sectionTitle" defaultSize={11} />',
+'Subtítulo': '<CoverTextEditor label="Subtítulo" value={dress.subtitle ?? \'Elegancia para celebrar\'} onChange={(v) => set(\'dressCode.subtitle\', v)} color={dress.subtitleColor} mode={dress.subtitleMode} gradient={dress.subtitleGradient} size={dress.subtitleSize} font={dress.subtitleFont} positionY={dress.subtitlePositionY} set={set} prefix="dressCode.subtitle" defaultSize={32} />',
+'Hombres': '<CoverTextEditor label="Hombres" value={dress.menLabel ?? \'Ellas\'} onChange={(v) => set(\'dressCode.menLabel\', v)} color={dress.menLabelColor} mode={dress.menLabelMode} gradient={dress.menLabelGradient} size={dress.menLabelSize} font={dress.menLabelFont} positionY={dress.menLabelPositionY} set={set} prefix="dressCode.menLabel" defaultSize={12} />',
+'Mujeres': '<CoverTextEditor label="Mujeres" value={dress.womenLabel ?? \'Ellos\'} onChange={(v) => set(\'dressCode.womenLabel\', v)} color={dress.womenLabelColor} mode={dress.womenLabelMode} gradient={dress.womenLabelGradient} size={dress.womenLabelSize} font={dress.womenLabelFont} positionY={dress.womenLabelPositionY} set={set} prefix="dressCode.womenLabel" defaultSize={12} />',
+'Vestimenta hombre': '<CoverTextEditor label="Vestimenta hombre" value={dress.menAttire ?? dress.men ?? \'Formal\'} onChange={(v) => set(\'dressCode.menAttire\', v)} color={dress.menAttireColor} mode={dress.menAttireMode} gradient={dress.menAttireGradient} size={dress.menAttireSize} font={dress.menAttireFont} positionY={dress.menAttirePositionY} set={set} prefix="dressCode.menAttire" defaultSize={12} />',
+'Vestimenta Mujeres': '<CoverTextEditor label="Vestimenta Mujeres" value={dress.womenAttire ?? dress.women ?? \'Formal\'} onChange={(v) => set(\'dressCode.womenAttire\', v)} color={dress.womenAttireColor} mode={dress.womenAttireMode} gradient={dress.womenAttireGradient} size={dress.womenAttireSize} font={dress.womenAttireFont} positionY={dress.womenAttirePositionY} set={set} prefix="dressCode.womenAttire" defaultSize={12} />',
+'Nota': '<CoverTextEditor label="Nota" value={dress.note ?? \'\'} onChange={(v) => set(\'dressCode.note\', v)} multiline color={dress.noteColor} mode={dress.noteMode} gradient={dress.noteGradient} size={dress.noteSize} font={dress.noteFont} positionY={dress.notePositionY} set={set} prefix="dressCode.note" defaultSize={12} />'
+}
+for label, replacement in repls.items():
+    match = re.search(r'<TextField label="' + re.escape(label) + r'"[\s\S]*?/>', block)
+    if not match:
+        raise SystemExit(f'Field not found: {label}')
+    block = block[:match.start()] + replacement + block[match.end():]
+p.write_text(t[:start] + block + t[end:])
 
 p = Path('src/data/weddingSchema.js')
 t = p.read_text()
 old = "dressCode:{enabled:true,sectionTitle:'Código de vestimenta',subtitle:'Elegancia para celebrar',menLabel:'Ellas',womenLabel:'Ellos',menAttire:'Formal',womenAttire:'Formal',note:''}"
 new = "dressCode:{enabled:true,sectionTitle:'Código de vestimenta',sectionTitleColor:'#ffffff',sectionTitleMode:'solid',sectionTitleGradient:'',sectionTitleSize:11,sectionTitleFont:'Arial',sectionTitlePositionY:0,subtitle:'Elegancia para celebrar',subtitleColor:'#ffffff',subtitleMode:'solid',subtitleGradient:'',subtitleSize:32,subtitleFont:'Arial',subtitlePositionY:0,menLabel:'Ellas',menLabelColor:'#ffffff',menLabelMode:'solid',menLabelGradient:'',menLabelSize:12,menLabelFont:'Arial',menLabelPositionY:0,womenLabel:'Ellos',womenLabelColor:'#ffffff',womenLabelMode:'solid',womenLabelGradient:'',womenLabelSize:12,womenLabelFont:'Arial',womenLabelPositionY:0,menAttire:'Formal',menAttireColor:'#ffffff',menAttireMode:'solid',menAttireGradient:'',menAttireSize:12,menAttireFont:'Arial',menAttirePositionY:0,womenAttire:'Formal',womenAttireColor:'#ffffff',womenAttireMode:'solid',womenAttireGradient:'',womenAttireSize:12,womenAttireFont:'Arial',womenAttirePositionY:0,note:'',noteColor:'#ffffff',noteMode:'solid',noteGradient:'',noteSize:12,noteFont:'Arial',notePositionY:0}"
-if old in t:
-    p.write_text(t.replace(old, new, 1))
+if old in t: t = t.replace(old, new, 1)
+p.write_text(t)
 
 p = Path('src/export/weddingOutput.js')
 t = p.read_text()
@@ -48,6 +70,5 @@ if 'const applyDressCodeContentStyles = ' not in t:
     t = t.replace(marker, helper + marker, 1)
 old = "const withCountdownContentStyles = applyCountdownContentStyles(withEventContentStyles, project)\n  const withFonts = applyWeddingFonts(withCountdownContentStyles, project)"
 new = "const withCountdownContentStyles = applyCountdownContentStyles(withEventContentStyles, project)\n  const withDressCodeContentStyles = applyDressCodeContentStyles(withCountdownContentStyles, project)\n  const withFonts = applyWeddingFonts(withDressCodeContentStyles, project)"
-if old in t:
-    t = t.replace(old, new, 1)
+if old in t: t = t.replace(old, new, 1)
 p.write_text(t)
