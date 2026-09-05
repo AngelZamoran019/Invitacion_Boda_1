@@ -404,6 +404,33 @@ const applyConfirmationContentStyles = (html, project) => {
   return marked.replace('</head>', css + '</head>')
 }
 
+const applyClosingContentStyles = (html, project) => {
+  const closing = project?.closing || {}
+  const safeColor = (value, fallback = '#ffffff') => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback
+  const safeGradient = (value) => typeof value === 'string' && value.includes('gradient(') && (value.match(/#[0-9a-fA-F]{6}/g) || []).length >= 2 ? value : ''
+  const safeSize = (value, fallback) => { const number = Number(value); return Number.isFinite(number) && number > 0 ? number : fallback }
+  const safePosition = (value) => { const number = Number(value); return Number.isFinite(number) ? Math.max(-300, Math.min(300, number)) : 0 }
+  const fontFamily = (value) => getWeddingFontFamily(value || 'Arial')
+  const paint = (prefix, fallbackSize) => {
+    const gradient = safeGradient(closing[prefix + 'Gradient'])
+    const color = safeColor(closing[prefix + 'Color'])
+    const paintRule = closing[prefix + 'Mode'] === 'gradient' && gradient
+      ? `background:${gradient}!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;`
+      : `background:none!important;color:${color}!important;-webkit-text-fill-color:${color}!important;`
+    return `${paintRule}font-family:${fontFamily(closing[prefix + 'Font'])}!important;font-size:${safeSize(closing[prefix + 'Size'], fallbackSize)}px!important;position:relative!important;top:${safePosition(closing[prefix + 'PositionY'])}px!important;`
+  }
+  const source = String(html || '')
+  const target = (source.match(/<section\s+class=["']closing["'][^>]*>[\s\S]*?<\/section>/i) || [])[0] || ''
+  if (!target) return source
+  const marked = source.replace(target, target.replace(/^<section\s+class=["']closing["']/, '<section class="closing closing-content-section"'))
+  const css = '<style id="wedding-closing-content-styles">' +
+    '.phone>.closing.closing-content-section>.ornament{' + paint('ornament',30) + '}' +
+    '.phone>.closing.closing-content-section>.text{' + paint('message',16) + '}' +
+    '</style>'
+  if (marked.includes('id="wedding-closing-content-styles"')) return marked.replace(/<style id="wedding-closing-content-styles">[\s\S]*?<\/style>/i, css)
+  return marked.replace('</head>', css + '</head>')
+}
+
 const applyCoverPositionStyles = (html, project) => {
   const cover = project?.coverSection || {}
   const safe = (value) => {
@@ -476,7 +503,8 @@ export function renderWeddingHTML(project) {
   const withCountdownContentStyles = applyCountdownContentStyles(withEventContentStyles, project)
   const withDressCodeContentStyles = applyDressCodeContentStyles(withCountdownContentStyles, project)
   const withConfirmationContentStyles = applyConfirmationContentStyles(withDressCodeContentStyles, project)
-  const withFonts = applyWeddingFonts(withConfirmationContentStyles, project)
+  const withClosingContentStyles = applyClosingContentStyles(withConfirmationContentStyles, project)
+  const withFonts = applyWeddingFonts(withClosingContentStyles, project)
   return preserveEditableCase(withFonts.replace(/>Invalid Date/gi, `>${escapeHtml(cleanEventDateText(project?.event?.date || ''))}`))
 }
 
