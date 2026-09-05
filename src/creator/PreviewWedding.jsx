@@ -53,7 +53,10 @@ const applyConfirmationContentStyles = (html, project) => {
     .phone>.section#confirmacion>.eyebrow{${paint('sectionTitle',11)}}
     .phone>.section#confirmacion>h2{${paint('subtitle',32)}}
     .phone>.section#confirmacion>.text{${paint('message',16)}}
-    .phone>.section#confirmacion .rsvp-form .button{${paint('buttonLabel',13)}}
+    .phone>.section#confirmacion .rsvp-form .button{${paint('buttonLabel',13)}}\n    .phone>.section#confirmacion .rsvp-form .rsvp-name-label{${paint('nameLabel',12)}}
+    .phone>.section#confirmacion .rsvp-form .rsvp-attendance-label{${paint('attendanceLabel',12)}}
+    .phone>.section#confirmacion .rsvp-form .rsvp-guests-label{${paint('guestsLabel',12)}}
+    .phone>.section#confirmacion .rsvp-form .rsvp-message-label{${paint('messageFieldLabel',12)}}
     .phone>.section#confirmacion #rsvp-success,.phone>.section#confirmacion #rsvp-success .success{${paint('successMessage',16)}}
     .phone>.section:has(.rsvp-form)>.eyebrow{${paint('sectionTitle',11)}}
     .phone>.section:has(.rsvp-form)>h2{${paint('subtitle',32)}}
