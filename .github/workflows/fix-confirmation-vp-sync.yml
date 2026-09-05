@@ -1,0 +1,33 @@
+name: Fix confirmation preview styles
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'chore: apply confirmation preview style sync') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch confirmation preview styles
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/creator/PreviewWedding.jsx')
+          text = path.read_text(encoding='utf-8')
+          marker = '.phone>.section#confirmacion .rsvp-form .button{${paint(\'buttonLabel\',13)}}'
+          additions = """    .phone>.section#confirmacion .rsvp-form .rsvp-name-label{${paint('nameLabel',12)}}\n    .phone>.section#confirmacion .rsvp-form .rsvp-attendance-label{${paint('attendanceLabel',12)}}\n    .phone>.section#confirmacion .rsvp-form .rsvp-guests-label{${paint('guestsLabel',12)}}\n    .phone>.section#confirmacion .rsvp-form .rsvp-message-label{${paint('messageFieldLabel',12)}}\n"""
+          if 'rsvp-name-label{${paint(\'nameLabel\',12)}' not in text:
+              if marker not in text:
+                  raise SystemExit('No se encontró el punto de inserción de estilos de Confirmación')
+              text = text.replace(marker, marker + '\n' + additions.rstrip(), 1)
+              path.write_text(text, encoding='utf-8')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/creator/PreviewWedding.jsx
+          git diff --cached --quiet || git commit -m 'chore: apply confirmation preview style sync'
+          git push
