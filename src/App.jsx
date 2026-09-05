@@ -25,8 +25,8 @@ function readInitialProjects() {
   return [createProjectRecord(createDefaultWeddingProject())]
 }
 
-function downloadWeddingHTML(project) {
-  const html = getWeddingExportHTML(project)
+async function downloadWeddingHTML(project) {
+  const html = await getWeddingExportHTML(project)
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -83,7 +83,7 @@ function App() {
     }
   }
 
-  const handleExport = (project) => downloadWeddingHTML(project)
+  const handleExport = (project) => { void downloadWeddingHTML(project) }
   const openPreviewZoom = () => setZoomedDevice(true)
   const closePreviewZoom = () => setZoomedDevice(false)
 
