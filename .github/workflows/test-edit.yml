@@ -1,4 +1,4 @@
-name: Test edit
+name: Apply dress code content colors
 on:
   push:
     branches:
@@ -6,8 +6,17 @@ on:
 permissions:
   contents: write
 jobs:
-  test:
+  apply:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo ok
+      - name: Apply requested controls
+        run: |
+          echo 'CmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aApwPVBhdGgoJ3NyYy9kYXRhL3dlZGRpbmdTY2hlbWEuanMnKQp0PXAucmVhZF90ZXh0KCkKb2xkPSJkcmVzc0NvZGU6e2VuYWJsZWQ6dHJ1ZSxzZWN0aW9uVGl0bGU6J0PDs2RpZ28gZGUgdmVzdGltZW50YScsc3VidGl0' | base64 -d | python
+          echo 'REPLACE_WITH_OUTPUT_SCRIPT' | base64 -d | python
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/creator/EditorWedding.jsx src/data/weddingSchema.js src/export/weddingOutput.js
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "feat: add dress code content colors"
+          git push
