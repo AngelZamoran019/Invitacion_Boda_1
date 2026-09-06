@@ -31,18 +31,16 @@ const buildBridgeHTML = (html) => {
     if(!style){
       style=document.createElement('style')
       style.id='wedding-preview-scroll-reveal-styles'
-      style.textContent='.phone .wedding-scroll-reveal-item{opacity:0;transform:translate3d(0,18px,0);transition:opacity 1.35s cubic-bezier(.22,1,.36,1),transform 1.5s cubic-bezier(.22,1,.36,1);will-change:auto}.phone .wedding-scroll-reveal-item.wedding-scroll-visible{opacity:1;transform:none}.phone .wedding-reveal-word{display:inline-block;opacity:0;transform:translate3d(0,14px,0);transition:opacity .975s cubic-bezier(.22,1,.36,1),transform 1.08s cubic-bezier(.22,1,.36,1);transition-delay:var(--wedding-word-delay,0ms)}.phone .wedding-scroll-reveal-item.wedding-scroll-visible .wedding-reveal-word{opacity:1;transform:none}@media(prefers-reduced-motion:reduce){.phone .wedding-scroll-reveal-item,.phone .wedding-reveal-word{opacity:1!important;transform:none!important;transition:none!important}}'
+      style.textContent='.phone .wedding-scroll-reveal-item{opacity:0;transform:translate3d(0,18px,0);transition:opacity 2.7s cubic-bezier(.22,1,.36,1),transform 3s cubic-bezier(.22,1,.36,1);will-change:auto}.phone .wedding-scroll-reveal-item.wedding-scroll-visible{opacity:1;transform:none}.phone .wedding-reveal-word{display:inline-block;opacity:0;transform:translate3d(0,14px,0);transition:opacity 1.95s cubic-bezier(.22,1,.36,1),transform 2.16s cubic-bezier(.22,1,.36,1);transition-delay:var(--wedding-word-delay,0ms)}.phone .wedding-scroll-reveal-item.wedding-scroll-visible .wedding-reveal-word{opacity:1;transform:none}@media(prefers-reduced-motion:reduce){.phone .wedding-scroll-reveal-item,.phone .wedding-reveal-word{opacity:1!important;transform:none!important;transition:none!important}}'
       document.head.appendChild(style)
     }
 
     const sections=Array.from(el.querySelectorAll(':scope>.section,:scope>.closing'))
     const targets=[]
     sections.forEach(section=>{
-      const elements=Array.from(section.querySelectorAll('h1,h2,h3,h4,h5,h6,p,img,button,a,li,.card,.countdown-item,.event-item'))
-      const direct=Array.from(section.children).filter(child=>child.tagName!=='SCRIPT'&&child.tagName!=='STYLE')
-      const candidates=elements.length?elements:direct
+      const elements=Array.from(section.querySelectorAll('*')).filter(node=>node.tagName!=='SCRIPT'&&node.tagName!=='STYLE')
       const unique=[]
-      candidates.forEach(node=>{
+      elements.forEach(node=>{
         if(!node||node===section||node.closest('script,style'))return
         if(!unique.includes(node))unique.push(node)
       })
@@ -57,10 +55,10 @@ const buildBridgeHTML = (html) => {
         if(heading.dataset.weddingWordsReady==='true')return
         const text=String(heading.textContent||'').trim()
         if(!text||text.length>48)return
-        const words=text.split(/(\\s+)/)
+        const words=text.split(/(\s+)/)
         heading.textContent=''
         words.forEach((word,index)=>{
-          if(/^\\s+$/.test(word)){heading.appendChild(document.createTextNode(word));return}
+          if(/^\s+$/.test(word)){heading.appendChild(document.createTextNode(word));return}
           const span=document.createElement('span')
           span.className='wedding-reveal-word'
           span.textContent=word
