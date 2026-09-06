@@ -92,7 +92,7 @@ const animationScript = `<script id="wedding-scroll-animations-script">(()=>{
         const span=document.createElement('span')
         span.className=mode==='letters'?'wedding-reveal-letter':'wedding-reveal-word'
         span.textContent=token
-        span.style.setProperty('--wedding-reveal-delay',`${Math.min(index,24)*28}ms`)
+        span.style.setProperty('--wedding-reveal-delay',`\${Math.min(index,24)*28}ms`)
         fragment.appendChild(span)
         index+=1
       })
