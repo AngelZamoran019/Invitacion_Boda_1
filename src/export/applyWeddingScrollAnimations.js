@@ -1,135 +1,91 @@
 const animationCss = `<style id="wedding-scroll-animations">
-  .phone > .section.wedding-scroll-reveal,
-  .phone > .closing.wedding-scroll-reveal {
+  .phone .wedding-scroll-reveal-item {
     opacity: 0;
-    transform: translateY(16px);
-    transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1), transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    transform: translate3d(0,18px,0);
+    transition: opacity .5s cubic-bezier(.22,1,.36,1), transform .5s cubic-bezier(.22,1,.36,1);
+    transition-delay: var(--wedding-reveal-delay,0ms);
+    will-change: auto;
   }
 
-  .phone > .section.wedding-scroll-reveal.wedding-scroll-visible,
-  .phone > .closing.wedding-scroll-reveal.wedding-scroll-visible {
+  .phone .wedding-scroll-reveal-item.wedding-scroll-visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 
-  .phone > .section.wedding-scroll-reveal > .eyebrow,
-  .phone > .closing.wedding-scroll-reveal > .eyebrow {
+  .phone .wedding-reveal-word {
+    display: inline-block;
     opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-    transition-delay: 80ms;
+    transform: translate3d(0,14px,0);
+    transition: opacity .5s cubic-bezier(.22,1,.36,1), transform .5s cubic-bezier(.22,1,.36,1);
+    transition-delay: var(--wedding-word-delay,0ms);
   }
 
-  .phone > .section.wedding-scroll-reveal > h2,
-  .phone > .closing.wedding-scroll-reveal > h2 {
-    opacity: 0;
-    transform: translateY(12px);
-    clip-path: inset(0 0 100% 0);
-    transition: opacity 0.6s ease, transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), clip-path 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-    transition-delay: 140ms;
-  }
-
-  .phone > .section.wedding-scroll-reveal > .text,
-  .phone > .section.wedding-scroll-reveal > p:not(.eyebrow),
-  .phone > .closing.wedding-scroll-reveal > .text,
-  .phone > .closing.wedding-scroll-reveal > p:not(.eyebrow) {
-    opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 0.55s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-    transition-delay: 230ms;
-  }
-
-  .phone > .section.wedding-scroll-reveal.wedding-scroll-visible > .eyebrow,
-  .phone > .closing.wedding-scroll-reveal.wedding-scroll-visible > .eyebrow,
-  .phone > .section.wedding-scroll-reveal.wedding-scroll-visible > h2,
-  .phone > .closing.wedding-scroll-reveal.wedding-scroll-visible > h2,
-  .phone > .section.wedding-scroll-reveal.wedding-scroll-visible > .text,
-  .phone > .section.wedding-scroll-reveal.wedding-scroll-visible > p:not(.eyebrow),
-  .phone > .closing.wedding-scroll-reveal.wedding-scroll-visible > .text,
-  .phone > .closing.wedding-scroll-reveal.wedding-scroll-visible > p:not(.eyebrow) {
+  .phone .wedding-scroll-reveal-item.wedding-scroll-visible .wedding-reveal-word {
     opacity: 1;
-    transform: translateY(0);
-    clip-path: inset(0 0 0 0);
+    transform: none;
   }
 
-  .phone > .section.wedding-scroll-reveal > img,
-  .phone > .section.wedding-scroll-reveal > .event-card,
-  .phone > .section.wedding-scroll-reveal > .dress-grid,
-  .phone > .section.wedding-scroll-reveal > .countdown,
-  .phone > .section.wedding-scroll-reveal > .rsvp-form,
-  .phone > .section.wedding-scroll-reveal > .success,
-  .phone > .section.wedding-scroll-reveal > audio,
-  .phone > .section.wedding-scroll-reveal > .button,
-  .phone > .closing.wedding-scroll-reveal > img,
-  .phone > .closing.wedding-scroll-reveal > .button {
-    opacity: 0;
-    transform: translateY(10px) scale(0.99);
-    transition: opacity 0.6s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-    transition-delay: 300ms;
-  }
-
-  .phone > .section.wedding-scroll-reveal.wedding-scroll-visible > img,
-  .phone > .section.wedding-scroll-reveal.wedding-scroll-visible > .event-card,
-  .phone > .section.wedding-scroll-reveal.wedding-scroll-visible > .dress-grid,
-  .phone > .section.wedding-scroll-reveal.wedding-scroll-visible > .countdown,
-  .phone > .section.wedding-scroll-reveal.wedding-scroll-visible > .rsvp-form,
-  .phone > .section.wedding-scroll-reveal.wedding-scroll-visible > .success,
-  .phone > .section.wedding-scroll-reveal.wedding-scroll-visible > audio,
-  .phone > .section.wedding-scroll-reveal.wedding-scroll-visible > .button,
-  .phone > .closing.wedding-scroll-reveal.wedding-scroll-visible > img,
-  .phone > .closing.wedding-scroll-reveal.wedding-scroll-visible > .button {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .phone > .section.wedding-scroll-reveal,
-    .phone > .closing.wedding-scroll-reveal,
-    .phone > .section.wedding-scroll-reveal > .eyebrow,
-    .phone > .closing.wedding-scroll-reveal > .eyebrow,
-    .phone > .section.wedding-scroll-reveal > h2,
-    .phone > .closing.wedding-scroll-reveal > h2,
-    .phone > .section.wedding-scroll-reveal > .text,
-    .phone > .section.wedding-scroll-reveal > p:not(.eyebrow),
-    .phone > .closing.wedding-scroll-reveal > .text,
-    .phone > .closing.wedding-scroll-reveal > p:not(.eyebrow) {
-      opacity: 1 !important;
-      transform: none !important;
-      clip-path: none !important;
-      transition: none !important;
+  @media(prefers-reduced-motion:reduce){
+    .phone .wedding-scroll-reveal-item,
+    .phone .wedding-reveal-word{
+      opacity:1!important;
+      transform:none!important;
+      transition:none!important;
     }
   }
 </style>`
 
 const animationScript = `<script id="wedding-scroll-animations-script">(()=>{
-  const start=()=>{
+  const install=()=>{
     const phone=document.querySelector('.phone')
-    if(!phone)return
-    if(phone.dataset.weddingScrollAnimationsReady==='true')return
-    phone.dataset.weddingScrollAnimationsReady='true'
+    if(!phone||!window.IntersectionObserver)return
 
-    const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const sections=Array.from(phone.children).filter(element=>element.classList.contains('section')||element.classList.contains('closing'))
-    if(!sections.length)return
+    let observer
+    const sections=Array.from(phone.querySelectorAll(':scope>.section,:scope>.closing'))
+    const targets=[]
 
-    sections.forEach(section=>section.classList.add('wedding-scroll-reveal'))
-
-    if(reduced){
-      sections.forEach(section=>section.classList.add('wedding-scroll-visible'))
-      return
-    }
-
-    const observer=new IntersectionObserver(entries=>{
-      entries.forEach(entry=>{
-        entry.target.classList.toggle('wedding-scroll-visible',entry.isIntersecting)
+    sections.forEach(section=>{
+      const elements=Array.from(section.querySelectorAll('*')).filter(node=>node.tagName!=='SCRIPT'&&node.tagName!=='STYLE')
+      const unique=[]
+      elements.forEach(node=>{
+        if(!node||node===section||node.closest('script,style'))return
+        if(!unique.includes(node))unique.push(node)
       })
-    },{root:phone,threshold:0.12,rootMargin:'-6% 0px -6% 0px'})
 
-    sections.forEach(section=>observer.observe(section))
+      unique.forEach((node,index)=>{
+        node.classList.add('wedding-scroll-reveal-item')
+        node.style.setProperty('--wedding-reveal-delay',(Math.min(index,8)*90)+'ms')
+        targets.push(node)
+      })
+
+      const headings=Array.from(section.querySelectorAll('h2'))
+      headings.forEach(heading=>{
+        if(heading.dataset.weddingWordsReady==='true')return
+        const text=String(heading.textContent||'').trim()
+        if(!text||text.length>48)return
+        const words=text.split(/(\s+)/)
+        heading.textContent=''
+        words.forEach((word,index)=>{
+          if(/^\s+$/.test(word)){heading.appendChild(document.createTextNode(word));return}
+          const span=document.createElement('span')
+          span.className='wedding-reveal-word'
+          span.textContent=word
+          span.style.setProperty('--wedding-word-delay',(index*55)+'ms')
+          heading.appendChild(span)
+        })
+        heading.dataset.weddingWordsReady='true'
+      })
+    })
+
+    observer=new IntersectionObserver(entries=>{
+      entries.forEach(entry=>entry.target.classList.toggle('wedding-scroll-visible',entry.isIntersecting))
+    },{root:phone,threshold:.12,rootMargin:'-9% 0px -9% 0px'})
+
+    targets.forEach(target=>observer.observe(target))
   }
 
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true})
-  else start()
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true})
+  else install()
 })()</script>`
 
 export function applyWeddingScrollAnimations(html) {
