@@ -31,7 +31,7 @@ const buildBridgeHTML = (html) => {
     if(!style){
       style=document.createElement('style')
       style.id='wedding-preview-scroll-reveal-styles'
-      style.textContent='.phone .wedding-scroll-reveal-item{opacity:0;transform:translate3d(0,18px,0);transition:opacity 1.8s cubic-bezier(.22,1,.36,1),transform 2s cubic-bezier(.22,1,.36,1);transition-delay:var(--wedding-reveal-delay,0ms);will-change:auto}.phone .wedding-scroll-reveal-item.wedding-scroll-visible{opacity:1;transform:none}.phone .wedding-reveal-word{display:inline-block;opacity:0;transform:translate3d(0,14px,0);transition:opacity 1.3s cubic-bezier(.22,1,.36,1),transform 1.44s cubic-bezier(.22,1,.36,1);transition-delay:var(--wedding-word-delay,0ms)}.phone .wedding-scroll-reveal-item.wedding-scroll-visible .wedding-reveal-word{opacity:1;transform:none}@media(prefers-reduced-motion:reduce){.phone .wedding-scroll-reveal-item,.phone .wedding-reveal-word{opacity:1!important;transform:none!important;transition:none!important}}'
+      style.textContent='.phone .wedding-scroll-reveal-item{opacity:0;transform:translate3d(0,18px,0);transition:opacity .5s cubic-bezier(.22,1,.36,1),transform .5s cubic-bezier(.22,1,.36,1);transition-delay:var(--wedding-reveal-delay,0ms);will-change:auto}.phone .wedding-scroll-reveal-item.wedding-scroll-visible{opacity:1;transform:none}.phone .wedding-reveal-word{display:inline-block;opacity:0;transform:translate3d(0,14px,0);transition:opacity .5s cubic-bezier(.22,1,.36,1),transform .5s cubic-bezier(.22,1,.36,1);transition-delay:var(--wedding-word-delay,0ms)}.phone .wedding-scroll-reveal-item.wedding-scroll-visible .wedding-reveal-word{opacity:1;transform:none}@media(prefers-reduced-motion:reduce){.phone .wedding-scroll-reveal-item,.phone .wedding-reveal-word{opacity:1!important;transform:none!important;transition:none!important}}'
       document.head.appendChild(style)
     }
 
@@ -46,7 +46,7 @@ const buildBridgeHTML = (html) => {
       })
       unique.forEach((node,index)=>{
         node.classList.add('wedding-scroll-reveal-item')
-        node.style.setProperty('--wedding-reveal-delay',(Math.min(index,8)*180)+'ms')
+        node.style.setProperty('--wedding-reveal-delay',(Math.min(index,8)*90)+'ms')
         targets.push(node)
       })
 
@@ -62,7 +62,7 @@ const buildBridgeHTML = (html) => {
           const span=document.createElement('span')
           span.className='wedding-reveal-word'
           span.textContent=word
-          span.style.setProperty('--wedding-word-delay',(index*70)+'ms')
+          span.style.setProperty('--wedding-word-delay',(index*55)+'ms')
           heading.appendChild(span)
         })
         heading.dataset.weddingWordsReady='true'
