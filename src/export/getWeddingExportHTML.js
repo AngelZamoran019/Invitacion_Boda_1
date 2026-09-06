@@ -1,6 +1,7 @@
 import { renderWeddingHTML } from './weddingOutput.js'
 import { applyCoverPositionsToExport } from './applyCoverPositions.js'
 import { applyWeddingEditorParity } from './applyWeddingEditorParity.js'
+import { applyWeddingScrollAnimations } from './applyWeddingScrollAnimations.js'
 import { embedWeddingFonts } from './embedWeddingFonts.js'
 
 const addClosingScrollSpace = (html) => {
@@ -12,7 +13,8 @@ export async function getWeddingExportHTML(project) {
   const rendered = renderWeddingHTML(project)
   const withCoverSync = applyCoverPositionsToExport(rendered, project)
   const withEditorParity = applyWeddingEditorParity(withCoverSync, project)
-  const withClosingScrollSpace = addClosingScrollSpace(withEditorParity)
+  const withScrollAnimations = applyWeddingScrollAnimations(withEditorParity)
+  const withClosingScrollSpace = addClosingScrollSpace(withScrollAnimations)
   return embedWeddingFonts(withClosingScrollSpace)
 }
 
