@@ -8,7 +8,7 @@ const animationCss = `<style id="wedding-scroll-animations">
   }
 
   .phone .wedding-scroll-reveal-item.wedding-scroll-visible {
-    opacity: 1;
+    opacity: var(--wedding-text-opacity,1);
     transform: none;
   }
 
