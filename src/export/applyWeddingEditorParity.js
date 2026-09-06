@@ -75,6 +75,7 @@ const effectRule = (item = {}, prefix) => {
   const outlineEnabled = item[prefix + 'OutlineEnabled'] === true
   const letterSpacing = Number(item[prefix + 'LetterSpacing'])
   const lineHeight = Number(item[prefix + 'LineHeight'])
+  const textOpacity = Number(item[prefix + 'TextOpacity'])
   const parts = []
   if (shadowEnabled) {
     const x = Number.isFinite(Number(item[prefix + 'ShadowX'])) ? Math.max(-30, Math.min(30, Number(item[prefix + 'ShadowX']))) : 2
@@ -92,51 +93,21 @@ const effectRule = (item = {}, prefix) => {
   }
   if (Number.isFinite(letterSpacing)) parts.push(`letter-spacing:${Math.max(-10, Math.min(30, letterSpacing))}px!important;`)
   if (Number.isFinite(lineHeight) && lineHeight > 0) parts.push(`line-height:${Math.max(0.8, Math.min(4, lineHeight))}!important;`)
+  if (Number.isFinite(textOpacity)) parts.push(`--wedding-text-opacity:${Math.max(0, Math.min(1, textOpacity))};`)
   return parts.join('')
 }
 
 const applyTextEffects = (html, project) => {
   const p = project || {}
   const selectors = [
-    [p.coverSection, 'eyebrow', '.phone>.cover>.eyebrow'],
-    [p.coverSection, 'title', '.phone>.cover>h1'],
-    [p.coverSection, 'date', '.phone>.cover>.date'],
-    [p.coverSection, 'button', '.phone>.cover>.button'],
-    [p.couple, 'displayNames', '.phone>#couple>h2'],
-    [p.couple, 'quote', '.phone>#couple>.text'],
-    [p.story, 'sectionTitle', '.phone>.section.story-content-section>.eyebrow'],
-    [p.story, 'title', '.phone>.section.story-content-section>h2'],
-    [p.story, 'text', '.phone>.section.story-content-section>.text'],
-    [p.event, 'sectionTitle', '.phone>.section.event-content-section>.eyebrow'],
-    [p.event, 'date', '.phone>.section.event-content-section>h2'],
-    [p.event, 'time', '.phone>.section.event-content-section>h2+p'],
-    [p.event, 'ceremonyTitle', '.phone>.section.event-content-section>.event-card:nth-of-type(1)>strong'],
-    [p.event, 'ceremonyAddress', '.phone>.section.event-content-section>.event-card:nth-of-type(1)>small'],
-    [p.event, 'receptionTitle', '.phone>.section.event-content-section>.event-card:nth-of-type(2)>strong'],
-    [p.event, 'receptionAddress', '.phone>.section.event-content-section>.event-card:nth-of-type(2)>small'],
-    [p.countdown, 'sectionTitle', '.phone>.section.countdown-content-section>.eyebrow'],
-    [p.countdown, 'numbers', '.phone>.section.countdown-content-section .countdown strong'],
-    [p.countdown, 'text', '.phone>.section.countdown-content-section .countdown span'],
-    [p.dressCode, 'sectionTitle', '.phone>.section.dress-code-content-section>.eyebrow'],
-    [p.dressCode, 'subtitle', '.phone>.section.dress-code-content-section>h2'],
-    [p.dressCode, 'menLabel', '.phone>.section.dress-code-content-section .dress-card:nth-child(1)>span'],
-    [p.dressCode, 'womenLabel', '.phone>.section.dress-code-content-section .dress-card:nth-child(2)>span'],
-    [p.dressCode, 'menAttire', '.phone>.section.dress-code-content-section .dress-card:nth-child(1)>strong'],
-    [p.dressCode, 'womenAttire', '.phone>.section.dress-code-content-section .dress-card:nth-child(2)>strong'],
-    [p.dressCode, 'note', '.phone>.section.dress-code-content-section>.text'],
-    [p.gifts, 'sectionTitle', '.phone>.section.gifts-content-section>.eyebrow'],
-    [p.gifts, 'subtitle', '.phone>.section.gifts-content-section>h2'],
-    [p.gifts, 'buttonLabel', '.phone>.section.gifts-content-section>.button,.phone>.section.gifts-content-section>a.button'],
-    [p.gifts, 'note', '.phone>.section.gifts-content-section>.text'],
-    [p.confirmation, 'sectionTitle', '.phone>.section.confirmation-content-section>.eyebrow'],
-    [p.confirmation, 'subtitle', '.phone>.section.confirmation-content-section>h2'],
-    [p.confirmation, 'message', '.phone>.section.confirmation-content-section>.text'],
-    [p.confirmation, 'nameLabel', '.phone>.section.confirmation-content-section .rsvp-name-label'],
-    [p.confirmation, 'attendanceLabel', '.phone>.section.confirmation-content-section .rsvp-attendance-label'],
-    [p.confirmation, 'guestsLabel', '.phone>.section.confirmation-content-section .rsvp-guests-label'],
-    [p.confirmation, 'messageFieldLabel', '.phone>.section.confirmation-content-section .rsvp-message-label'],
-    [p.confirmation, 'buttonLabel', '.phone>.section.confirmation-content-section .rsvp-form .button,.phone>.section.confirmation-content-section>.button,.phone>.section.confirmation-content-section a.button'],
-    [p.confirmation, 'successMessage', '.phone>.section.confirmation-content-section #rsvp-success,.phone>.section.confirmation-content-section #rsvp-success .success'],
+    [p.coverSection, 'eyebrow', '.phone>.cover>.eyebrow'], [p.coverSection, 'title', '.phone>.cover>h1'], [p.coverSection, 'date', '.phone>.cover>.date'], [p.coverSection, 'button', '.phone>.cover>.button'],
+    [p.couple, 'displayNames', '.phone>#couple>h2'], [p.couple, 'quote', '.phone>#couple>.text'],
+    [p.story, 'sectionTitle', '.phone>.section.story-content-section>.eyebrow'], [p.story, 'title', '.phone>.section.story-content-section>h2'], [p.story, 'text', '.phone>.section.story-content-section>.text'],
+    [p.event, 'sectionTitle', '.phone>.section.event-content-section>.eyebrow'], [p.event, 'date', '.phone>.section.event-content-section>h2'], [p.event, 'time', '.phone>.section.event-content-section>h2+p'], [p.event, 'ceremonyTitle', '.phone>.section.event-content-section>.event-card:nth-of-type(1)>strong'], [p.event, 'ceremonyAddress', '.phone>.section.event-content-section>.event-card:nth-of-type(1)>small'], [p.event, 'receptionTitle', '.phone>.section.event-content-section>.event-card:nth-of-type(2)>strong'], [p.event, 'receptionAddress', '.phone>.section.event-content-section>.event-card:nth-of-type(2)>small'],
+    [p.countdown, 'sectionTitle', '.phone>.section.countdown-content-section>.eyebrow'], [p.countdown, 'numbers', '.phone>.section.countdown-content-section .countdown strong'], [p.countdown, 'text', '.phone>.section.countdown-content-section .countdown span'],
+    [p.dressCode, 'sectionTitle', '.phone>.section.dress-code-content-section>.eyebrow'], [p.dressCode, 'subtitle', '.phone>.section.dress-code-content-section>h2'], [p.dressCode, 'menLabel', '.phone>.section.dress-code-content-section .dress-card:nth-child(1)>span'], [p.dressCode, 'womenLabel', '.phone>.section.dress-code-content-section .dress-card:nth-child(2)>span'], [p.dressCode, 'menAttire', '.phone>.section.dress-code-content-section .dress-card:nth-child(1)>strong'], [p.dressCode, 'womenAttire', '.phone>.section.dress-code-content-section .dress-card:nth-child(2)>strong'], [p.dressCode, 'note', '.phone>.section.dress-code-content-section>.text'],
+    [p.gifts, 'sectionTitle', '.phone>.section.gifts-content-section>.eyebrow'], [p.gifts, 'subtitle', '.phone>.section.gifts-content-section>h2'], [p.gifts, 'buttonLabel', '.phone>.section.gifts-content-section>.button,.phone>.section.gifts-content-section>a.button'], [p.gifts, 'note', '.phone>.section.gifts-content-section>.text'],
+    [p.confirmation, 'sectionTitle', '.phone>.section.confirmation-content-section>.eyebrow'], [p.confirmation, 'subtitle', '.phone>.section.confirmation-content-section>h2'], [p.confirmation, 'message', '.phone>.section.confirmation-content-section>.text'], [p.confirmation, 'nameLabel', '.phone>.section.confirmation-content-section .rsvp-name-label'], [p.confirmation, 'attendanceLabel', '.phone>.section.confirmation-content-section .rsvp-attendance-label'], [p.confirmation, 'guestsLabel', '.phone>.section.confirmation-content-section .rsvp-guests-label'], [p.confirmation, 'messageFieldLabel', '.phone>.section.confirmation-content-section .rsvp-message-label'], [p.confirmation, 'buttonLabel', '.phone>.section.confirmation-content-section .rsvp-form .button,.phone>.section.confirmation-content-section>.button,.phone>.section.confirmation-content-section a.button'], [p.confirmation, 'successMessage', '.phone>.section.confirmation-content-section #rsvp-success,.phone>.section.confirmation-content-section #rsvp-success .success'],
     [p.closing, 'message', '.phone>.closing.closing-content-section>.text'],
   ]
   const rules = selectors.map(([item, prefix, selector]) => `${selector}{${effectRule(item, prefix)}}`).join('')
