@@ -25,7 +25,7 @@ function GuestPanel({ token, initial, onLogout }) {
   const [editing, setEditing] = useState({ name: '', guests: 1 })
   const [busy, setBusy] = useState(false)
   const session = initial.session
-  const refresh = async () => { try { setData((current) => ({ ...current, ...(await getGuestEntries('panel', token, session)) })) } catch { /* keep current data */ } }
+  const refresh = async () => { try { const latest = await getGuestEntries('panel', token, session); setData((current) => ({ ...current, ...latest })) } catch { /* keep current data */ } }
   useEffect(() => { const timer = window.setInterval(refresh, 5000); return () => window.clearInterval(timer) }, [token, session])
   const filtered = useMemo(() => { const query = search.trim().toLocaleLowerCase('es-MX'); if (!query) return data.entries || []; return (data.entries || []).filter((entry) => entry.name.toLocaleLowerCase('es-MX').includes(query)) }, [data.entries, search])
   const add = async (event) => { event.preventDefault(); if (!draft.name.trim()) return; setBusy(true); try { setData(await createGuestEntry(token, session, { name: draft.name, guests: Number(draft.guests) || 1 })); setDraft({ name: '', guests: 1 }) } catch (err) { window.alert(err?.message || 'No se pudo agregar el invitado.') } finally { setBusy(false) } }
@@ -37,7 +37,7 @@ function GuestPanel({ token, initial, onLogout }) {
 function GuestBase({ token, initial, onLogout }) {
   const [data, setData] = useState(initial)
   const session = initial.session
-  const refresh = async () => { try { setData((current) => ({ ...current, ...(await getGuestEntries('base', token, session)) })) } catch { /* keep current data */ } }
+  const refresh = async () => { try { const latest = await getGuestEntries('base', token, session); setData((current) => ({ ...current, ...latest })) } catch { /* keep current data */ } }
   useEffect(() => { const timer = window.setInterval(refresh, 5000); return () => window.clearInterval(timer) }, [token, session])
   const confirmed = Number(data.confirmedGuests || 0)
   const pending = Number(data.pendingGuests || 0)
