@@ -71,15 +71,21 @@ const createPasswordHash = async (password) => {
   return `${Array.from(salt, (byte) => byte.toString(16).padStart(2, '0')).join('')}:${hash}`
 }
 
+const constantTimeEqual = (left, right) => {
+  const leftBytes = encoder.encode(String(left))
+  const rightBytes = encoder.encode(String(right))
+  if (leftBytes.length !== rightBytes.length) return false
+  let difference = 0
+  for (let index = 0; index < leftBytes.length; index += 1) difference |= leftBytes[index] ^ rightBytes[index]
+  return difference === 0
+}
+
 const verifyPassword = async (password, stored) => {
   const [saltHex, expected] = String(stored || '').split(':')
   if (!saltHex || !expected || saltHex.length !== 32 || expected.length !== 64) return false
   const salt = new Uint8Array(saltHex.match(/.{2}/g).map((value) => Number.parseInt(value, 16)))
   const actual = await hashPassword(password, salt)
-  const actualBytes = encoder.encode(actual)
-  const expectedBytes = encoder.encode(expected)
-  if (actualBytes.length !== expectedBytes.length) return false
-  return crypto.subtle.timingSafeEqual(actualBytes, expectedBytes)
+  return constantTimeEqual(actual, expected)
 }
 
 const readEntries = async (env, spaceId) => {
