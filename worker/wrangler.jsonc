@@ -1,0 +1,16 @@
+{
+  "$schema": "https://developers.cloudflare.com/workers/wrangler/config-schema.json",
+  "name": "invitacion-boda-1-publicaciones",
+  "main": "./src/index.js",
+  "compatibility_date": "2026-09-06",
+  "workers_dev": true,
+  "r2_buckets": [
+    {
+      "binding": "PUBLICATIONS",
+      "bucket_name": "invitacionboda1"
+    }
+  ],
+  "vars": {
+    "ALLOWED_ORIGINS": ""
+  }
+}
