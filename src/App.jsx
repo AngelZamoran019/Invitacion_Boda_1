@@ -5,6 +5,8 @@ import { openWeddingPreview, publishWeddingProject } from './data/publicationCli
 import DashboardWedding from './creator/DashboardWedding.jsx'
 import EditorWedding from './creator/EditorWedding.jsx'
 import PreviewWedding from './creator/PreviewWedding.jsx'
+import GuestControlPanel from './creator/GuestControlPanel.jsx'
+import GuestGenerationModal from './creator/GuestGenerationModal.jsx'
 import { getWeddingExportHTML } from './export/getWeddingExportHTML.js'
 import './styles/app.css'
 import './styles/wedding.css'
@@ -40,11 +42,7 @@ async function downloadWeddingHTML(project) {
 }
 
 function showPublicationLink(url, label) {
-  try {
-    void navigator.clipboard?.writeText(url)
-  } catch {
-    // Clipboard permissions are optional; the link is still shown below.
-  }
+  try { void navigator.clipboard?.writeText(url) } catch { /* Clipboard permissions are optional. */ }
   window.prompt(`${label}\n\nEl enlace se copió al portapapeles cuando el navegador lo permitió. También puedes copiarlo aquí:`, url)
 }
 
@@ -55,8 +53,10 @@ function App() {
   const [activeSection, setActiveSection] = useState('appearance')
   const [previewRefreshKey, setPreviewRefreshKey] = useState(0)
   const [zoomedDevice, setZoomedDevice] = useState(false)
+  const [guestModal, setGuestModal] = useState(null)
 
   const activeProject = useMemo(() => projects.find((project) => project.id === activeProjectId) || null, [projects, activeProjectId])
+  const controlMatch = window.location.pathname.match(/^\/control\/(panel|base)\/([^/]+)$/)
 
   const openEditor = (id) => {
     setActiveProjectId(id)
@@ -94,41 +94,64 @@ function App() {
   }
 
   const handleExport = (project) => {
-    void downloadWeddingHTML(project).catch((error) => {
-      window.alert(error?.message || 'No se pudo exportar la invitación.')
-    })
+    void downloadWeddingHTML(project).catch((error) => window.alert(error?.message || 'No se pudo exportar la invitación.'))
   }
 
   const handlePreview = (project) => {
-    void openWeddingPreview(project).catch((error) => {
-      window.alert(error?.message || 'No se pudo abrir la vista previa.')
-    })
+    void openWeddingPreview(project).catch((error) => window.alert(error?.message || 'No se pudo abrir la vista previa.'))
   }
 
   const handlePublish = (project, mode) => {
     const label = mode === 'free' ? 'Publicar libre' : 'Publicar Limitado'
     const confirmed = window.confirm(`${label}\n\nSe generará un enlace nuevo e independiente para esta publicación. ¿Continuar?`)
     if (!confirmed) return
-
     void publishWeddingProject(project, mode)
       .then((url) => showPublicationLink(url, `${label} completado.`))
       .catch((error) => window.alert(error?.message || 'No se pudo publicar la invitación.'))
   }
 
+  const openGuestModal = (mode, project) => setGuestModal({ mode, projectId: project.id })
+
+  const saveGuestControl = (guestControl) => {
+    const projectId = guestModal?.projectId
+    if (!projectId) return
+    setProjects((currentProjects) => currentProjects.map((project) => {
+      if (project.id !== projectId) return project
+      return saveProject({ ...project, guestControl })
+    }))
+  }
+
   const openPreviewZoom = () => setZoomedDevice(true)
   const closePreviewZoom = () => setZoomedDevice(false)
 
+  if (controlMatch) {
+    return <GuestControlPanel type={controlMatch[1]} token={decodeURIComponent(controlMatch[2])} />
+  }
+
   if (view === 'dashboard') {
+    const modalProject = guestModal ? projects.find((project) => project.id === guestModal.projectId) : null
     return (
-      <DashboardWedding
-        projects={projects}
-        onNew={createNewProject}
-        onEdit={openEditor}
-        onDelete={handleDelete}
-        onExport={handleExport}
-        onPreview={handlePreview}
-        onPublish={handlePublish}
-      />
+      <>
+        <DashboardWedding
+          projects={projects}
+          onNew={createNewProject}
+          onEdit={openEditor}
+          onDelete={handleDelete}
+          onExport={handleExport}
+          onPreview={handlePreview}
+          onPublish={handlePublish}
+          onGeneratePanel={(project) => openGuestModal('panel', project)}
+          onGenerateBase={(project) => openGuestModal('base', project)}
+        />
+        {guestModal && modalProject && (
+          <GuestGenerationModal
+            mode={guestModal.mode}
+            project={modalProject}
+            onClose={() => setGuestModal(null)}
+            onSaved={saveGuestControl}
+          />
+        )}
+      </>
     )
   }
 
@@ -154,35 +177,12 @@ function App() {
         <main className="creator-editor">
           <section className="creator-panel"><EditorWedding project={activeProject} setProject={updateProject} activeSection={activeSection} setActiveSection={setActiveSection} /></section>
           <section className="creator-preview">
-            <div className="preview-toolbar">
-              <div><p className="app-kicker">Vista previa</p><strong>POCO X8 Pro</strong></div>
-              <span className="preview-device-label">Simulador</span>
-            </div>
-            <div className="preview-stage">
-              <div className="preview-device-shell preview-device-shell-pro" aria-label="Simulación del POCO X8 Pro">
-                <button className="preview-zoom-button" type="button" onClick={openPreviewZoom} title="Ampliar VP del POCO X8 Pro" aria-label="Ampliar VP del POCO X8 Pro">⌕</button>
-                <div className="preview-device-camera" aria-hidden="true" />
-                <div className="preview-device-buttons" aria-hidden="true" />
-                <div className="preview-device-screen"><PreviewWedding project={activeProject} refreshKey={previewRefreshKey} /></div>
-              </div>
-            </div>
+            <div className="preview-toolbar"><div><p className="app-kicker">Vista previa</p><strong>POCO X8 Pro</strong></div><span className="preview-device-label">Simulador</span></div>
+            <div className="preview-stage"><div className="preview-device-shell preview-device-shell-pro" aria-label="Simulación del POCO X8 Pro"><button className="preview-zoom-button" type="button" onClick={openPreviewZoom} title="Ampliar VP del POCO X8 Pro" aria-label="Ampliar VP del POCO X8 Pro">⌕</button><div className="preview-device-camera" aria-hidden="true" /><div className="preview-device-buttons" aria-hidden="true" /><div className="preview-device-screen"><PreviewWedding project={activeProject} refreshKey={previewRefreshKey} /></div></div></div>
           </section>
         </main>
       </section>
-
-      {zoomedDevice && (
-        <div className="preview-zoom-overlay" role="dialog" aria-modal="true" aria-label="Vista previa ampliada" onMouseDown={(event) => { if (event.target === event.currentTarget) closePreviewZoom() }}>
-          <div className="preview-zoom-toolbar">
-            <strong>POCO X8 Pro</strong>
-            <button type="button" onClick={closePreviewZoom} title="Cerrar vista ampliada" aria-label="Cerrar vista ampliada">×</button>
-          </div>
-          <div className="preview-zoom-device-shell">
-            <div className="preview-device-camera" aria-hidden="true" />
-            <div className="preview-device-buttons" aria-hidden="true" />
-            <div className="preview-device-screen"><PreviewWedding project={activeProject} refreshKey={previewRefreshKey} /></div>
-          </div>
-        </div>
-      )}
+      {zoomedDevice && <div className="preview-zoom-overlay" role="dialog" aria-modal="true" aria-label="Vista previa ampliada" onMouseDown={(event) => { if (event.target === event.currentTarget) closePreviewZoom() }}><div className="preview-zoom-toolbar"><strong>POCO X8 Pro</strong><button type="button" onClick={closePreviewZoom} title="Cerrar vista ampliada" aria-label="Cerrar vista ampliada">×</button></div><div className="preview-zoom-device-shell"><div className="preview-device-camera" aria-hidden="true" /><div className="preview-device-buttons" aria-hidden="true" /><div className="preview-device-screen"><PreviewWedding project={activeProject} refreshKey={previewRefreshKey} /></div></div></div>}
     </main>
   )
 }
