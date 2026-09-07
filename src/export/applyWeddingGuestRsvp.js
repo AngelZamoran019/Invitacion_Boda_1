@@ -24,6 +24,7 @@ let guestOptions=[];
 let selectedGuestId='';
 let refreshTimer=null;
 let closeGuestSearch=()=>{};
+let guestSearchControl=null;
 
 const setMessage=(message)=>{if(success)success.innerHTML='<div class="success">'+String(message||'')+'</div>';};
 
@@ -60,6 +61,9 @@ const makeGuestSearch=(field)=>{
   list.style.borderRadius='12px';
   list.style.boxShadow='0 12px 30px rgba(0,0,0,.22)';
   list.style.padding='4px';
+  list.style.opacity='1';
+  list.style.visibility='visible';
+  list.style.pointerEvents='auto';
   wrapper.append(search,hidden,list);
   field.replaceWith(wrapper);
 
@@ -71,7 +75,8 @@ const makeGuestSearch=(field)=>{
       const empty=document.createElement('div');
       empty.textContent=normalized?'No se encontraron invitados.':'No hay invitados disponibles.';
       empty.style.padding='12px';
-      empty.style.color='#555';
+      empty.style.setProperty('color','#555','important');
+      empty.style.backgroundColor='#ffffff';
       list.appendChild(empty);
     }else{
       matches.forEach((guest)=>{
@@ -83,14 +88,16 @@ const makeGuestSearch=(field)=>{
         option.style.textAlign='left';
         option.style.cursor='pointer';
         option.style.border='0';
-        option.style.background='#ffffff';
-        option.style.color='#111111';
+        option.style.backgroundColor='#ffffff';
+        option.style.setProperty('color','#111111','important');
         option.style.padding='12px';
         option.style.borderRadius='9px';
         option.style.font='inherit';
         option.style.fontWeight='500';
-        option.addEventListener('mouseenter',()=>{option.style.background='#f1f1f1';});
-        option.addEventListener('mouseleave',()=>{option.style.background='#ffffff';});
+        option.style.opacity='1';
+        option.style.visibility='visible';
+        option.addEventListener('mouseenter',()=>{option.style.backgroundColor='#f1f1f1';});
+        option.addEventListener('mouseleave',()=>{option.style.backgroundColor='#ffffff';});
         option.addEventListener('click',()=>{
           hidden.value=guest.id;
           selectedGuestId=guest.id;
@@ -105,6 +112,7 @@ const makeGuestSearch=(field)=>{
   };
 
   search.addEventListener('focus',()=>renderList(search.value));
+  search.addEventListener('click',()=>renderList(search.value));
   search.addEventListener('input',()=>{
     hidden.value='';
     selectedGuestId='';
@@ -131,6 +139,7 @@ const makeGuestsSelect=(field,placeholder)=>{
 };
 
 const nameControl=makeGuestSearch(nameField);
+guestSearchControl=nameControl;
 const nameHidden=nameControl?.hidden;
 const nameSearch=nameControl?.search;
 const guestSelect=makeGuestsSelect(guestsField,'Selecciona cuántos asistirán');
@@ -183,11 +192,11 @@ const loadGuests=async(silent=false)=>{
     if(!response.ok)throw new Error(payload?.error||'No se pudo cargar la lista de invitados.');
     guestOptions=Array.isArray(payload?.guests)?payload.guests:[];
     renderGuestOptions(true);
-    if(nameControl?.list)nameControl.list.style.display='none';
     if(!guestOptions.length){
       if(button)button.disabled=true;
       if(!silent)setMessage('La lista de invitados todavía no está configurada.');
     }else if(success&&success.textContent&&/lista de invitados/i.test(success.textContent))success.innerHTML='';
+    if(nameSearch&&document.activeElement===nameSearch)guestSearchControl.renderList(nameSearch.value);
   }catch(error){
     if(button)button.disabled=true;
     if(!silent)setMessage(error?.message||'No se pudo cargar la lista de invitados.');
