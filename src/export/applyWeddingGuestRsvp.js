@@ -1,7 +1,7 @@
 const getGuestApiBase = () => {
   const configured = String(import.meta.env.VITE_PUBLICATION_API_URL || '').trim().replace(/\/$/, '')
   if (configured) return configured.replace(/\/publish\/?$/, '')
-  return ''
+  return 'https://netflixmemoriesshare.azamorano017.workers.dev'
 }
 
 export const applyWeddingGuestRsvp = (html, project) => {
@@ -14,8 +14,8 @@ export const applyWeddingGuestRsvp = (html, project) => {
 const form=document.getElementById('rsvp');
 if(!form)return;
 const base=window.__WEDDING_GUEST_BASE__;
-const configured=window.__WEDDING_GUEST_API__||'';
-const api=(configured||window.location.origin)+'/api';
+const configured=window.__WEDDING_GUEST_API__||'https://netflixmemoriesshare.azamorano017.workers.dev';
+const api=configured.replace(/\\/$/,'')+'/api';
 const button=form.querySelector('button[type="submit"]');
 const success=document.getElementById('rsvp-success');
 const nameField=form.elements.name;
@@ -45,24 +45,6 @@ const makeSelect=(field,placeholder)=>{
 const nameSelect=makeSelect(nameField,'Selecciona tu nombre');
 const guestSelect=makeSelect(guestsField,'Selecciona cuántos asistirán');
 
-const renderGuestOptions=(keepName=true)=>{
-  if(!nameSelect||!guestSelect)return;
-  const previousName=keepName?String(nameSelect.value||''):'';
-  nameSelect.innerHTML='<option value="">Selecciona tu nombre</option>';
-  guestOptions.forEach((guest)=>{
-    const option=document.createElement('option');
-    option.value=guest.id;
-    option.textContent=guest.name;
-    nameSelect.appendChild(option);
-  });
-  if(guestOptions.some((guest)=>guest.id===previousName)){
-    nameSelect.value=previousName;
-  }else{
-    nameSelect.value='';
-  }
-  updateGuestOptions();
-};
-
 const updateGuestOptions=()=>{
   if(!nameSelect||!guestSelect)return;
   const selected=guestOptions.find((guest)=>guest.id===nameSelect.value)||null;
@@ -85,6 +67,20 @@ const updateGuestOptions=()=>{
   guestSelect.value=String(Math.min(Math.max(currentValue||1,1),max));
   guestSelect.disabled=false;
   if(button)button.disabled=false;
+};
+
+const renderGuestOptions=(keepName=true)=>{
+  if(!nameSelect||!guestSelect)return;
+  const previousName=keepName?String(nameSelect.value||''):'';
+  nameSelect.innerHTML='<option value="">Selecciona tu nombre</option>';
+  guestOptions.forEach((guest)=>{
+    const option=document.createElement('option');
+    option.value=guest.id;
+    option.textContent=guest.name;
+    nameSelect.appendChild(option);
+  });
+  nameSelect.value=guestOptions.some((guest)=>guest.id===previousName)?previousName:'';
+  updateGuestOptions();
 };
 
 const loadGuests=async(silent=false)=>{
@@ -142,7 +138,6 @@ form.addEventListener('submit',async(event)=>{
   }catch(error){
     if(success)success.innerHTML='<div class="success">'+String(error?.message||'No se pudo registrar la confirmación.')+'</div>';
   }finally{
-    if(button)button.disabled=false;
     updateGuestOptions();
   }
 },true);
