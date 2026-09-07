@@ -129,6 +129,7 @@ const buildBridgeHTML = (html, state) => {
 function PreviewWedding({ project, refreshKey = 0 }) {
   const iframeRef = useRef(null)
   const renderIdRef = useRef(0)
+  const previousRefreshKeyRef = useRef(refreshKey)
 
   useEffect(() => {
     const iframe = iframeRef.current
@@ -136,7 +137,11 @@ function PreviewWedding({ project, refreshKey = 0 }) {
 
     let cancelled = false
     const renderId = ++renderIdRef.current
-    const state = capturePreviewState(iframe)
+    const refreshRequested = previousRefreshKeyRef.current !== refreshKey
+    const state = refreshRequested
+      ? { top: 0, left: 0, open: false, animationDone: false, musicPlaying: false }
+      : capturePreviewState(iframe)
+    previousRefreshKeyRef.current = refreshKey
 
     const render = async () => {
       try {
