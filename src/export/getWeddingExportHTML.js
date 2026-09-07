@@ -9,13 +9,24 @@ const addClosingScrollSpace = (html) => {
   return String(html || '').replace('</head>', `${closingSpaceCss}</head>`)
 }
 
+const disableWeddingMusicAutoplay = (html) => String(html || '').replace(
+  /(<audio\b[^>]*\bid=["']wedding-music["'][^>]*?)\sautoplay(?=\s|>)/i,
+  '$1'
+)
+
+const addWeddingMusicOnOpen = (html) => {
+  const script = '<script id="wedding-music-on-open">(()=>{const start=()=>{const audio=document.querySelector("#wedding-music");if(!audio)return;audio.loop=true;const result=audio.play();if(result?.catch)result.catch(()=>{})};document.addEventListener("DOMContentLoaded",()=>{const button=document.querySelector(".phone>.cover>.button");if(!button)return;button.addEventListener("click",()=>{start()},{once:true})})})()</script>'
+  return String(html || '').replace('</body>', `${script}</body>`)
+}
+
 export async function getWeddingExportHTML(project) {
-  const rendered = renderWeddingHTML(project)
+  const rendered = disableWeddingMusicAutoplay(renderWeddingHTML(project))
   const withCoverSync = applyCoverPositionsToExport(rendered, project)
   const withEditorParity = applyWeddingEditorParity(withCoverSync, project)
   const withScrollAnimations = applyWeddingScrollAnimations(withEditorParity)
   const withClosingScrollSpace = addClosingScrollSpace(withScrollAnimations)
-  return embedWeddingFonts(withClosingScrollSpace)
+  const withWeddingMusic = addWeddingMusicOnOpen(withClosingScrollSpace)
+  return embedWeddingFonts(withWeddingMusic)
 }
 
 export default getWeddingExportHTML
