@@ -1,12 +1,7 @@
-const configuredApiUrl = String(import.meta.env.VITE_PUBLICATION_API_URL || '').trim()
-
-const getApiUrl = () => {
-  if (configuredApiUrl) return configuredApiUrl.replace(/\/$/, '').replace(/\/publish\/?$/, '')
-  return 'https://netflixmemoriesshare.azamorano017.workers.dev/api'
-}
+const GUEST_API_URL = 'https://netflixmemoriesshare.azamorano017.workers.dev/api'
 
 const request = async (path, options = {}) => {
-  const response = await fetch(`${getApiUrl()}${path}`, {
+  const response = await fetch(`${GUEST_API_URL}${path}`, {
     ...options,
     headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
   })
