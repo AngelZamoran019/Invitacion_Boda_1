@@ -54,6 +54,12 @@ const makeGuestSearch=(field)=>{
   list.style.maxHeight='240px';
   list.style.overflowY='auto';
   list.style.display='none';
+  list.style.background='#ffffff';
+  list.style.color='#111111';
+  list.style.border='1px solid rgba(0,0,0,.12)';
+  list.style.borderRadius='12px';
+  list.style.boxShadow='0 12px 30px rgba(0,0,0,.22)';
+  list.style.padding='4px';
   wrapper.append(search,hidden,list);
   field.replaceWith(wrapper);
 
@@ -65,6 +71,7 @@ const makeGuestSearch=(field)=>{
       const empty=document.createElement('div');
       empty.textContent=normalized?'No se encontraron invitados.':'No hay invitados disponibles.';
       empty.style.padding='12px';
+      empty.style.color='#555';
       list.appendChild(empty);
     }else{
       matches.forEach((guest)=>{
@@ -76,8 +83,14 @@ const makeGuestSearch=(field)=>{
         option.style.textAlign='left';
         option.style.cursor='pointer';
         option.style.border='0';
-        option.style.background='transparent';
+        option.style.background='#ffffff';
+        option.style.color='#111111';
         option.style.padding='12px';
+        option.style.borderRadius='9px';
+        option.style.font='inherit';
+        option.style.fontWeight='500';
+        option.addEventListener('mouseenter',()=>{option.style.background='#f1f1f1';});
+        option.addEventListener('mouseleave',()=>{option.style.background='#ffffff';});
         option.addEventListener('click',()=>{
           hidden.value=guest.id;
           selectedGuestId=guest.id;
