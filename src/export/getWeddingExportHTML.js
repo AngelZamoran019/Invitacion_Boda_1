@@ -9,13 +9,15 @@ const addClosingScrollSpace = (html) => {
   return String(html || '').replace('</head>', `${closingSpaceCss}</head>`)
 }
 
-const disableWeddingMusicAutoplay = (html) => String(html || '').replace(
-  /(<audio\b[^>]*\bid=["']wedding-music["'][^>]*?)\sautoplay(?=\s|>)/i,
-  '$1'
-)
+const disableWeddingMusicAutoplay = (html) => String(html || '')
+  .replace(
+    /(<audio\b[^>]*\bid=["']wedding-music["'][^>]*?)\sautoplay(?=\s|>)/i,
+    '$1'
+  )
+  .replace(/\bstartWeddingMusic\(\);?/g, '')
 
 const addWeddingMusicOnOpen = (html) => {
-  const script = '<script id="wedding-music-on-open">(()=>{const start=()=>{const audio=document.querySelector("#wedding-music");if(!audio)return;audio.loop=true;const result=audio.play();if(result?.catch)result.catch(()=>{})};document.addEventListener("DOMContentLoaded",()=>{const button=document.querySelector(".phone>.cover>.button");if(!button)return;button.addEventListener("click",()=>{start()},{once:true})})})()</script>'
+  const script = '<script id="wedding-music-on-open">(()=>{const start=()=>{const audio=document.querySelector("#wedding-music");if(!audio)return;audio.loop=true;const result=audio.play();if(result?.catch)result.catch(()=>{})};document.addEventListener("DOMContentLoaded",()=>{const button=document.querySelector(".phone>.cover>.button");if(!button)return;button.addEventListener("click",()=>{const phone=document.querySelector(".phone");if(phone)phone.classList.add("invite-open");start()},{once:true})})})()</script>'
   return String(html || '').replace('</body>', `${script}</body>`)
 }
 
