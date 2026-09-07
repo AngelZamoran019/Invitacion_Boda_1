@@ -41,6 +41,10 @@ const makeGuestSearch=(field)=>{
   search.setAttribute('aria-label','Buscar invitado por nombre');
   search.style.width='100%';
   search.style.boxSizing='border-box';
+  search.style.backgroundColor='#000000';
+  search.style.setProperty('color','#ffffff','important');
+  search.style.setProperty('caret-color','#ffffff','important');
+  search.style.setProperty('border-color','rgba(255,255,255,.35)','important');
   const hidden=document.createElement('input');
   hidden.type='hidden';
   hidden.name=field.name;
@@ -55,11 +59,11 @@ const makeGuestSearch=(field)=>{
   list.style.maxHeight='240px';
   list.style.overflowY='auto';
   list.style.display='none';
-  list.style.background='#ffffff';
-  list.style.color='#111111';
-  list.style.border='1px solid rgba(0,0,0,.12)';
+  list.style.backgroundColor='#000000';
+  list.style.setProperty('color','#ffffff','important');
+  list.style.border='1px solid rgba(255,255,255,.22)';
   list.style.borderRadius='12px';
-  list.style.boxShadow='0 12px 30px rgba(0,0,0,.22)';
+  list.style.boxShadow='0 12px 30px rgba(0,0,0,.45)';
   list.style.padding='4px';
   list.style.opacity='1';
   list.style.visibility='visible';
@@ -75,8 +79,8 @@ const makeGuestSearch=(field)=>{
       const empty=document.createElement('div');
       empty.textContent=normalized?'No se encontraron invitados.':'No hay invitados disponibles.';
       empty.style.padding='12px';
-      empty.style.setProperty('color','#555','important');
-      empty.style.backgroundColor='#ffffff';
+      empty.style.setProperty('color','#ffffff','important');
+      empty.style.backgroundColor='#000000';
       list.appendChild(empty);
     }else{
       matches.forEach((guest)=>{
@@ -88,16 +92,16 @@ const makeGuestSearch=(field)=>{
         option.style.textAlign='left';
         option.style.cursor='pointer';
         option.style.border='0';
-        option.style.backgroundColor='#ffffff';
-        option.style.setProperty('color','#111111','important');
+        option.style.backgroundColor='#000000';
+        option.style.setProperty('color','#ffffff','important');
         option.style.padding='12px';
         option.style.borderRadius='9px';
         option.style.font='inherit';
         option.style.fontWeight='500';
         option.style.opacity='1';
         option.style.visibility='visible';
-        option.addEventListener('mouseenter',()=>{option.style.backgroundColor='#f1f1f1';});
-        option.addEventListener('mouseleave',()=>{option.style.backgroundColor='#ffffff';});
+        option.addEventListener('mouseenter',()=>{option.style.backgroundColor='#222222';});
+        option.addEventListener('mouseleave',()=>{option.style.backgroundColor='#000000';});
         option.addEventListener('click',()=>{
           hidden.value=guest.id;
           selectedGuestId=guest.id;
