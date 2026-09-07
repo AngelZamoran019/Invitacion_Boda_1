@@ -13,7 +13,7 @@ function getProjectTitle(project) {
   return 'Proyecto de boda'
 }
 
-function DashboardWedding({ projects, onNew, onEdit, onDelete, onExport }) {
+function DashboardWedding({ projects, onNew, onEdit, onDelete, onExport, onPreview, onPublish }) {
   return (
     <main className="projects-page">
       <header className="projects-header">
@@ -56,9 +56,9 @@ function DashboardWedding({ projects, onNew, onEdit, onDelete, onExport }) {
                 <div className="project-actions">
                   <button type="button" className="project-action primary" onClick={() => onEdit(project.id)}>Editar</button>
                   <button type="button" className="project-action" onClick={() => onExport(project)}>Exportar</button>
-                  <button type="button" className="project-action" disabled title="Disponible próximamente">Vista previa</button>
-                  <button type="button" className="project-action" disabled title="Disponible próximamente">Duplicar</button>
-                  <button type="button" className="project-action" disabled title="Disponible próximamente">Publicar</button>
+                  <button type="button" className="project-action" onClick={() => onPreview(project)}>Vista previa</button>
+                  <button type="button" className="project-action" onClick={() => onPublish(project, 'free')}>Publicar libre</button>
+                  <button type="button" className="project-action" onClick={() => onPublish(project, 'limited')}>Publicar Limitado</button>
                   <button type="button" className="project-action danger" onClick={() => onDelete(project.id)}>Eliminar</button>
                 </div>
               </div>
