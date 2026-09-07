@@ -75,12 +75,21 @@ const buildBridgeHTML = (html) => {
     targets.forEach(target=>scrollRevealObserver.observe(target))
   }
 
+  const startWeddingMusic=()=>{
+    const audio=document.querySelector('#wedding-music')
+    if(!audio)return
+    audio.loop=true
+    const result=audio.play()
+    if(result?.catch)result.catch(()=>{})
+  }
+
   document.addEventListener('click',event=>{
     const button=event.target.closest('.cover .button')
     if(!button)return
     event.preventDefault()
     const el=phone()
     if(!el)return
+    startWeddingMusic()
     el.classList.add('invite-open')
     el.scrollTop=0
     requestAnimationFrame(installScrollReveal)
@@ -123,6 +132,7 @@ const buildBridgeHTML = (html) => {
     setTimeout(restore,50)
     setTimeout(restore,150)
     requestAnimationFrame(installScrollReveal)
+    if(state.open)requestAnimationFrame(startWeddingMusic)
   })
 })()</script>`
   return String(html || '').replace('</body>', `${bridge}</body>`)
