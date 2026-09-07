@@ -3,21 +3,45 @@ import { getWeddingExportHTML } from '../export/getWeddingExportHTML.js'
 
 const buildPreviewHTML = async (project) => getWeddingExportHTML(project)
 
-const buildBridgeHTML = (html) => {
-  const bridge = `<script id="wedding-preview-bridge">(()=>{
-  const phone=()=>document.querySelector('.phone')
-  const capture=()=>{const el=phone();const cover=el?.querySelector('.cover');return {top:el?.scrollTop||0,left:el?.scrollLeft||0,open:el?.classList.contains('invite-open')||false,animationDone:cover?.classList.contains('cover-animation-finished')||false}}
+const capturePreviewState = (iframe) => {
+  try {
+    const doc = iframe?.contentDocument || iframe?.contentWindow?.document
+    const phone = doc?.querySelector('.phone')
+    const cover = phone?.querySelector('.cover')
+    const audio = doc?.querySelector('#wedding-music')
+    return {
+      top: phone?.scrollTop || 0,
+      left: phone?.scrollLeft || 0,
+      open: phone?.classList.contains('invite-open') || false,
+      animationDone: cover?.classList.contains('cover-animation-finished') || false,
+      musicPlaying: Boolean(audio && !audio.paused),
+    }
+  } catch {
+    return { top: 0, left: 0, open: false, animationDone: false, musicPlaying: false }
+  }
+}
 
-  const runDocumentScripts=(scripts)=>{
-    scripts.forEach(source=>{
-      if(!source||source.id==='wedding-preview-bridge')return
-      const current=document.getElementById(source.id)
-      if(current)current.remove()
-      const script=document.createElement('script')
-      Array.from(source.attributes||[]).forEach(attribute=>script.setAttribute(attribute.name,attribute.value))
-      script.textContent=source.textContent||''
-      document.body.appendChild(script)
-    })
+const buildBridgeHTML = (html, state) => {
+  const safeState = JSON.stringify(state).replace(/</g, '\\u003c')
+  const bridge = `<script id="wedding-preview-bridge">(()=>{
+  const initialState=${safeState}
+  const phone=()=>document.querySelector('.phone')
+  const restoreState=()=>{
+    const el=phone()
+    if(!el)return
+    if(initialState.open)el.classList.add('invite-open')
+    else el.classList.remove('invite-open')
+    const cover=el.querySelector('.cover')
+    if(initialState.animationDone&&cover){
+      cover.classList.add('cover-animation-finished')
+      cover.setAttribute('data-animation-finished','true')
+    }
+    const restore=()=>{el.scrollTop=initialState.top||0;el.scrollLeft=initialState.left||0}
+    restore()
+    requestAnimationFrame(restore)
+    requestAnimationFrame(()=>requestAnimationFrame(restore))
+    setTimeout(restore,50)
+    setTimeout(restore,150)
   }
 
   let scrollRevealObserver=null
@@ -95,111 +119,45 @@ const buildBridgeHTML = (html) => {
     requestAnimationFrame(installScrollReveal)
   })
 
-  window.addEventListener('message',event=>{
-    if(!event.data||event.data.type!=='WEDDING_PREVIEW_UPDATE')return
-    const state=capture()
-    const parser=new DOMParser()
-    const parsed=parser.parseFromString(event.data.html,'text/html')
-    const currentPhone=phone()
-    const nextPhone=parsed.querySelector('.phone')
-    if(!currentPhone||!nextPhone)return
-
-    document.head.replaceChildren(...Array.from(parsed.head.childNodes).map(node=>node.cloneNode(true)))
-
-    const nextChildren=Array.from(nextPhone.children)
-    const currentChildren=Array.from(currentPhone.children)
-    nextChildren.forEach((nextChild,index)=>{
-      const currentChild=currentChildren[index]
-      if(currentChild)currentChild.replaceWith(nextChild.cloneNode(true))
-      else currentPhone.appendChild(nextChild.cloneNode(true))
-    })
-    while(currentPhone.children.length>nextChildren.length)currentPhone.lastElementChild?.remove()
-
-    if(state.open)currentPhone.classList.add('invite-open')
-    else currentPhone.classList.remove('invite-open')
-
-    const nextCover=currentPhone.querySelector('.cover')
-    if(state.animationDone&&nextCover){
-      nextCover.classList.add('cover-animation-finished')
-      nextCover.setAttribute('data-animation-finished','true')
-    }
-
-    runDocumentScripts(Array.from(parsed.querySelectorAll('script')))
-    const restore=()=>{currentPhone.scrollTop=state.top||0;currentPhone.scrollLeft=state.left||0}
-    restore()
-    requestAnimationFrame(restore)
-    requestAnimationFrame(()=>requestAnimationFrame(restore))
-    setTimeout(restore,50)
-    setTimeout(restore,150)
-    requestAnimationFrame(installScrollReveal)
-    if(state.open)requestAnimationFrame(startWeddingMusic)
-  })
+  restoreState()
+  requestAnimationFrame(installScrollReveal)
+  if(initialState.open&&initialState.musicPlaying)requestAnimationFrame(startWeddingMusic)
 })()</script>`
   return String(html || '').replace('</body>', `${bridge}</body>`)
 }
 
 function PreviewWedding({ project, refreshKey = 0 }) {
   const iframeRef = useRef(null)
-  const projectRef = useRef(project)
-  const initializedRef = useRef(false)
-  projectRef.current = project
+  const renderIdRef = useRef(0)
 
   useEffect(() => {
     const iframe = iframeRef.current
     if (!iframe) return undefined
-    let cancelled = false
 
-    const handleLoad = async () => {
-      initializedRef.current = true
+    let cancelled = false
+    const renderId = ++renderIdRef.current
+    const state = capturePreviewState(iframe)
+
+    const render = async () => {
       try {
-        const html = await buildPreviewHTML(projectRef.current)
-        if (cancelled) return
+        const html = await buildPreviewHTML(project)
+        if (cancelled || renderId !== renderIdRef.current) return
         const doc = iframe.contentDocument || iframe.contentWindow?.document
         if (!doc) return
         doc.open()
-        doc.write(buildBridgeHTML(html))
+        doc.write(buildBridgeHTML(html, state))
         doc.close()
       } catch {
         // Evitar que un cambio de edición rompa el editor.
       }
     }
 
-    iframe.addEventListener('load', handleLoad)
-    try {
-      initializedRef.current = false
-      const doc = iframe.contentDocument || iframe.contentWindow?.document
-      if (!doc) return () => iframe.removeEventListener('load', handleLoad)
-      doc.open()
-      doc.write('<!doctype html><html><head><meta charset="utf-8"></head><body></body></html>')
-      doc.close()
-    } catch {
-      // Mantener la VP viva aunque exista un cambio durante la carga.
-    }
+    void render()
 
     return () => {
       cancelled = true
-      iframe.removeEventListener('load', handleLoad)
-      initializedRef.current = false
     }
-  }, [refreshKey])
-
-  useEffect(() => {
-    let cancelled = false
-    const iframe = iframeRef.current
-    if (!iframe || !initializedRef.current) return undefined
-
-    const sync = async () => {
-      try {
-        const html = await buildPreviewHTML(project)
-        if (cancelled || !initializedRef.current) return
-        iframe.contentWindow?.postMessage({ type: 'WEDDING_PREVIEW_UPDATE', html }, '*')
-      } catch {
-        // Evitar que un cambio de edición rompa el editor.
-      }
-    }
-    void sync()
-    return () => { cancelled = true }
-  }, [project])
+  }, [project, refreshKey])
 
   return (
     <iframe
