@@ -3,6 +3,7 @@
   "name": "invitacion-boda-1-publicaciones",
   "main": "./src/index.js",
   "compatibility_date": "2026-09-06",
+  "account_id": "b516cabbb0bda44afec8a5c1d91a669f",
   "workers_dev": true,
   "r2_buckets": [
     {
