@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { createDefaultWeddingProject } from './data/weddingSchema.js'
 import { createProjectRecord, deleteProject, getProjects, saveProject } from './data/projectManager.js'
+import { openWeddingPreview, publishWeddingProject } from './data/publicationClient.js'
 import DashboardWedding from './creator/DashboardWedding.jsx'
 import EditorWedding from './creator/EditorWedding.jsx'
 import PreviewWedding from './creator/PreviewWedding.jsx'
@@ -36,6 +37,15 @@ async function downloadWeddingHTML(project) {
   link.click()
   link.remove()
   URL.revokeObjectURL(url)
+}
+
+function showPublicationLink(url, label) {
+  try {
+    void navigator.clipboard?.writeText(url)
+  } catch {
+    // Clipboard permissions are optional; the link is still shown below.
+  }
+  window.prompt(`${label}\n\nEl enlace se copió al portapapeles cuando el navegador lo permitió. También puedes copiarlo aquí:`, url)
 }
 
 function App() {
@@ -83,12 +93,43 @@ function App() {
     }
   }
 
-  const handleExport = (project) => { void downloadWeddingHTML(project) }
+  const handleExport = (project) => {
+    void downloadWeddingHTML(project).catch((error) => {
+      window.alert(error?.message || 'No se pudo exportar la invitación.')
+    })
+  }
+
+  const handlePreview = (project) => {
+    void openWeddingPreview(project).catch((error) => {
+      window.alert(error?.message || 'No se pudo abrir la vista previa.')
+    })
+  }
+
+  const handlePublish = (project, mode) => {
+    const label = mode === 'free' ? 'Publicar libre' : 'Publicar Limitado'
+    const confirmed = window.confirm(`${label}\n\nSe generará un enlace nuevo e independiente para esta publicación. ¿Continuar?`)
+    if (!confirmed) return
+
+    void publishWeddingProject(project, mode)
+      .then((url) => showPublicationLink(url, `${label} completado.`))
+      .catch((error) => window.alert(error?.message || 'No se pudo publicar la invitación.'))
+  }
+
   const openPreviewZoom = () => setZoomedDevice(true)
   const closePreviewZoom = () => setZoomedDevice(false)
 
   if (view === 'dashboard') {
-    return <DashboardWedding projects={projects} onNew={createNewProject} onEdit={openEditor} onDelete={handleDelete} onExport={handleExport} />
+    return (
+      <DashboardWedding
+        projects={projects}
+        onNew={createNewProject}
+        onEdit={openEditor}
+        onDelete={handleDelete}
+        onExport={handleExport}
+        onPreview={handlePreview}
+        onPublish={handlePublish}
+      />
+    )
   }
 
   if (!activeProject) return null
