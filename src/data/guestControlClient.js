@@ -2,7 +2,7 @@ const configuredApiUrl = String(import.meta.env.VITE_PUBLICATION_API_URL || '').
 
 const getApiUrl = () => {
   if (configuredApiUrl) return configuredApiUrl.replace(/\/$/, '').replace(/\/publish\/?$/, '')
-  return `${window.location.origin}/api`
+  return 'https://netflixmemoriesshare.azamorano017.workers.dev/api'
 }
 
 const request = async (path, options = {}) => {
@@ -12,7 +12,7 @@ const request = async (path, options = {}) => {
   })
   let payload = null
   try { payload = await response.json() } catch { /* generic error below */ }
-  if (!response.ok) throw new Error(payload?.error || 'No se pudo completar la operación.')
+  if (!response.ok) throw new Error(payload?.error || `No se pudo completar la operación (${response.status}).`)
   return payload
 }
 
