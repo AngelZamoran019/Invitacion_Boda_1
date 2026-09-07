@@ -11,6 +11,7 @@
     }
   ],
   "vars": {
-    "ALLOWED_ORIGINS": ""
+    "ALLOWED_ORIGINS": "",
+    "PUBLIC_BASE_URL": ""
   }
 }
